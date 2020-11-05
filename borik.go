@@ -22,7 +22,7 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-var prefix = getEnv("GIK_PREFIX", "gik!")
+var prefix = getEnv("BORIK_PREFIX", "borik!")
 
 func downloadFile(filepath string, url string) (err error) {
 	out, err := os.Create(filepath)
@@ -62,9 +62,9 @@ func gik(in io.Reader, out io.Writer) {
 }
 
 func main() {
-	Token := os.Getenv("GIK_TOKEN")
+	Token := os.Getenv("BORIK_TOKEN")
 	if Token == "" {
-		log.Println("GIK_TOKEN not defined, required for bot to run.")
+		log.Println("BORIK_TOKEN not defined, required for bot to run.")
 		return
 	}
 
@@ -84,7 +84,7 @@ func main() {
 		return
 	}
 
-	fmt.Println("gik is now running, press CTRL-C to exit.")
+	fmt.Println("borik is now running, press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
@@ -151,7 +151,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	fmt.Println("found imageURI to gik: ", imageURI)
+	fmt.Println("found imageURI to borik: ", imageURI)
 
 	// s.ChannelMessageSend(m.ChannelID, imageURI)
 }
