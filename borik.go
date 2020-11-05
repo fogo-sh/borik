@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,16 +12,16 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/esimov/caire"
+	"github.com/kelseyhightower/envconfig"
 )
 
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
+// Config represents the config that borik will use to run
+type Config struct {
+	Prefix string `default:"borik!"`
+	Token  string `required:"true"`
 }
 
-var prefix = getEnv("BORIK_PREFIX", "borik!")
+var config Config
 
 func downloadFile(filepath string, url string) (err error) {
 	out, err := os.Create(filepath)
@@ -62,13 +61,13 @@ func gik(in io.Reader, out io.Writer) {
 }
 
 func main() {
-	Token := os.Getenv("BORIK_TOKEN")
-	if Token == "" {
-		log.Println("BORIK_TOKEN not defined, required for bot to run.")
+	err := envconfig.Process("borik", &config)
+	if err != nil {
+		fmt.Printf("error loading config: %s\n", err)
 		return
 	}
 
-	dg, err := discordgo.New("Bot " + Token)
+	dg, err := discordgo.New("Bot " + config.Token)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
 		return
@@ -110,7 +109,7 @@ func imageURIFromMessage(m *discordgo.Message) *string {
 }
 
 func imageURIFromCommand(s *discordgo.Session, m *discordgo.MessageCreate) (*string, error) {
-	argument := strings.TrimSpace(strings.TrimPrefix(m.Content, prefix))
+	argument := strings.TrimSpace(strings.TrimPrefix(m.Content, config.Prefix))
 
 	if argument != "" {
 		return &argument, nil
@@ -141,7 +140,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if !strings.HasPrefix(m.Content, prefix) {
+	if !strings.HasPrefix(m.Content, config.Prefix) {
 		return
 	}
 
