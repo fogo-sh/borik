@@ -10,6 +10,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/esimov/caire"
+	"github.com/rs/zerolog/log"
 	"github.com/saturn-sh/borik/bot"
 )
 
@@ -36,18 +37,23 @@ func main() {
 
 	borik.Session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 
+	log.Debug().Msg("Opening Discord connection")
 	err = borik.Session.Open()
 	if err != nil {
-		fmt.Printf("Error opening connection: %s\n", err.Error())
+		log.Error().Err(err).Msg("Error opening connection")
 		return
 	}
 
-	fmt.Println("Borik is now running, press CTRL-C to exit.")
+	log.Info().Msg("Borik is now running, press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
+	log.Info().Msg("Quitting Borik")
 
-	borik.Session.Close()
+	err = borik.Session.Close()
+	if err != nil {
+		log.Error().Err(err).Msg("Error closing Discord connection")
+	}
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {

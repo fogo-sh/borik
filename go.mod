@@ -6,4 +6,5 @@ require (
 	github.com/bwmarrin/discordgo v0.22.0
 	github.com/esimov/caire v1.2.6
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/rs/zerolog v1.20.0
 )
