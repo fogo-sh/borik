@@ -10,17 +10,8 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/esimov/caire"
-	"github.com/kelseyhightower/envconfig"
 	"github.com/saturn-sh/borik/bot"
 )
-
-// Config represents the config that borik will use to run
-type Config struct {
-	Prefix string `default:"borik!"`
-	Token  string `required:"true"`
-}
-
-var config Config
 
 func gik(in io.Reader, out io.Writer) {
 	p := &caire.Processor{
@@ -35,37 +26,32 @@ func gik(in io.Reader, out io.Writer) {
 }
 
 func main() {
-	err := envconfig.Process("borik", &config)
+	borik, err := bot.New()
 	if err != nil {
-		fmt.Printf("error loading config: %s\n", err)
+		fmt.Printf("Error creating Borik instance: %s\n", err.Error())
 		return
 	}
 
-	dg, err := discordgo.New("Bot " + config.Token)
+	borik.Session.AddHandler(messageCreate)
+
+	borik.Session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
+
+	err = borik.Session.Open()
 	if err != nil {
-		fmt.Println("error creating Discord session,", err)
+		fmt.Printf("Error opening connection: %s\n", err.Error())
 		return
 	}
 
-	dg.AddHandler(messageCreate)
-
-	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
-
-	err = dg.Open()
-	if err != nil {
-		fmt.Println("error opening connection,", err)
-		return
-	}
-
-	fmt.Println("borik is now running, press CTRL-C to exit.")
+	fmt.Println("Borik is now running, press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
-	dg.Close()
+	borik.Session.Close()
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	config := bot.Instance.Config
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
