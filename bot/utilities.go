@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/rs/zerolog/log"
 )
 
 // ImageURIFromMessage attempts to retrieve an image URI for a given message.
@@ -55,6 +57,25 @@ func ImageURIFromCommand(s *discordgo.Session, m *discordgo.MessageCreate, comma
 	}
 
 	return "", errors.New("no image found from message")
+}
+
+// DownloadImage downloads an image from a given URL, returing the resulting bytes.
+func DownloadImage(url string) ([]byte, error) {
+	log.Debug().Str("url", url).Msg("Downloading image")
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("error downloading image: %w", err)
+	}
+	defer resp.Body.Close()
+
+	buffer := new(bytes.Buffer)
+
+	_, err = io.Copy(buffer, resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error copying image to buffer: %w", err)
+	}
+
+	return buffer.Bytes(), nil
 }
 
 // DownloadFile downloads a file from a URL to a given path on disk.
