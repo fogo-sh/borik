@@ -6,15 +6,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
 )
 
-// ImageURIFromMessage attempts to retrieve an image URI for a given message.
-func ImageURIFromMessage(m *discordgo.Message) (string, bool) {
+// ImageURLFromMessage attempts to retrieve an image URL from a given message.
+func ImageURLFromMessage(m *discordgo.Message) (string, bool) {
 	if len(m.Embeds) == 1 {
 		embed := m.Embeds[0]
 
@@ -31,32 +29,23 @@ func ImageURIFromMessage(m *discordgo.Message) (string, bool) {
 	return "", false
 }
 
-// ImageURIFromCommand attempts to retrieve an image URI from a given command.
-func ImageURIFromCommand(s *discordgo.Session, m *discordgo.MessageCreate, commandPrefix string) (string, error) {
-	argument := strings.TrimSpace(strings.TrimPrefix(m.Content, commandPrefix))
-
-	if argument != "" {
-		return argument, nil
+// FindImageURL attempts to find an image in a given message, falling back to scanning message history if one cannot be found.
+func FindImageURL(m *discordgo.MessageCreate) (string, error) {
+	if embedURL, found := ImageURLFromMessage(m.Message); found {
+		return embedURL, nil
 	}
 
-	imageURI, found := ImageURIFromMessage(m.Message)
-	if found {
-		return imageURI, nil
-	}
-
-	messages, err := s.ChannelMessages(m.ChannelID, 20, m.ID, "", "")
+	messages, err := Instance.Session.ChannelMessages(m.ChannelID, 20, m.ID, "", "")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error retrieving message history: %w", err)
 	}
 
 	for _, message := range messages {
-		imageURI, found := ImageURIFromMessage(message)
-		if found {
-			return imageURI, nil
+		if embedURL, found := ImageURLFromMessage(message); found {
+			return embedURL, nil
 		}
 	}
-
-	return "", errors.New("no image found from message")
+	return "", errors.New("unable to locate an image")
 }
 
 // DownloadImage downloads an image from a given URL, returing the resulting bytes.
@@ -76,30 +65,4 @@ func DownloadImage(url string) ([]byte, error) {
 	}
 
 	return buffer.Bytes(), nil
-}
-
-// DownloadFile downloads a file from a URL to a given path on disk.
-func DownloadFile(filepath string, url string) (err error) {
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
-
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
