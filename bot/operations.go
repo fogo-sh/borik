@@ -9,7 +9,7 @@ import (
 )
 
 // Magik runs content-aware scaling on an image.
-func Magik(src []byte, dest io.Writer) error {
+func Magik(src []byte, dest io.Writer, scale float64) error {
 	wand := imagick.NewMagickWand()
 	wand.ReadImageBlob(src)
 
@@ -22,7 +22,7 @@ func Magik(src []byte, dest io.Writer) error {
 		Uint("dest_width", width/2).
 		Uint("dest_height", height/2).
 		Msg("Liquid rescaling image")
-	wand.LiquidRescaleImage(uint(width/2), uint(height/2), 1, 0)
+	wand.LiquidRescaleImage(uint(width/2), uint(height/2), scale, 0)
 
 	log.Debug().
 		Uint("dest_width", width).

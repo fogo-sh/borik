@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -25,7 +27,7 @@ type Config struct {
 type Command struct {
 	Name        string
 	Description string
-	Handler     func(event *discordgo.MessageCreate, args interface{})
+	Handler     interface{}
 }
 
 // MarshalJSON marshals a command to json, omitting the handler function.
@@ -95,20 +97,25 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	_ParseCommand(m)
 }
 
-func magikCommand(message *discordgo.MessageCreate, args interface{}) {
-	argsSlice := args.([]string)
-	imageURL := ""
-	if len(argsSlice) <= 1 {
+type _MagikArgs struct {
+	ImageURL string
+	Scale    float64
+}
+
+func magikCommand(message *discordgo.MessageCreate, args _MagikArgs) {
+	if args.Scale == 0 {
+		args.Scale = 1
+	}
+
+	if args.ImageURL == "" {
 		var err error
-		imageURL, err = FindImageURL(message)
+		args.ImageURL, err = FindImageURL(message)
 		if err != nil {
 			log.Error().Err(err).Msg("Error while attempting to find image to process")
 		}
-	} else {
-		imageURL = argsSlice[1]
 	}
 
-	srcBytes, err := DownloadImage(imageURL)
+	srcBytes, err := DownloadImage(args.ImageURL)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to download image to process")
 		return
@@ -116,7 +123,7 @@ func magikCommand(message *discordgo.MessageCreate, args interface{}) {
 	destBuffer := new(bytes.Buffer)
 
 	log.Debug().Msg("Beginning processing image")
-	err = Magik(srcBytes, destBuffer)
+	err = Magik(srcBytes, destBuffer, args.Scale)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to process image")
 		return
@@ -134,26 +141,59 @@ func magikCommand(message *discordgo.MessageCreate, args interface{}) {
 }
 
 // _ParseCommand parses a message for commands, running the resulting command if found.
-func _ParseCommand(message *discordgo.MessageCreate) error {
+func _ParseCommand(message *discordgo.MessageCreate) {
 	log.Debug().Str("message", message.Content).Msg("Parsing command")
 	args, err := shlex.Split(message.Content)
 	if err != nil {
 		log.Error().Err(err).Msg("Error processing message for commands")
-		return fmt.Errorf("error processing message text: %w", err)
+		return
+	}
+	if len(args) == 0 {
+		return
 	}
 
 	command := args[0]
 	if !strings.HasPrefix(command, Instance.Config.Prefix) {
-		return nil
+		return
 	}
 	command = strings.TrimPrefix(command, Instance.Config.Prefix)
 
 	for _, commandObj := range Instance.Commands {
 		if commandObj.Name == command {
 			log.Debug().Interface("command", commandObj).Msg("Found command in message")
-			commandObj.Handler(message, args)
+
+			handlerType := reflect.TypeOf(commandObj.Handler)
+			if inCount := handlerType.NumIn(); inCount != 2 {
+				panic(fmt.Sprintf("Expected handler function taking 2 params, got %d params", inCount))
+			}
+
+			argsParam := handlerType.In(1)
+			argsParamValue := reflect.New(argsParam).Elem()
+			for index, arg := range args[1:] {
+				log.Debug().Int("index", index).Str("value", arg).Msg("Parsing arg")
+				destField := argsParamValue.Field(index)
+
+				switch destField.Kind() {
+				case reflect.String:
+					destField.SetString(arg)
+				case reflect.Int:
+					intVal, err := strconv.Atoi(arg)
+					if err != nil {
+						log.Error().Err(err).Str("arg", arg).Msg("Error while parsing integer command argument")
+					}
+					destField.SetInt(int64(intVal))
+				case reflect.Float64:
+					floatVal, err := strconv.ParseFloat(arg, 64)
+					if err != nil {
+						log.Error().Err(err).Str("arg", arg).Msg("Error while parsing argument to float64")
+					}
+					destField.SetFloat(floatVal)
+				}
+			}
+
+			reflect.ValueOf(commandObj.Handler).Call([]reflect.Value{reflect.ValueOf(message), argsParamValue})
 		}
 	}
 
-	return nil
+	return
 }
