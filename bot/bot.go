@@ -102,7 +102,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	_ParseCommand(m)
+	_ParseCommand(s, m)
 }
 
 type _MagikArgs struct {
@@ -189,7 +189,7 @@ func arcweldCommand(message *discordgo.MessageCreate, args _ArcweldArgs) {
 }
 
 // _ParseCommand parses a message for commands, running the resulting command if found.
-func _ParseCommand(message *discordgo.MessageCreate) {
+func _ParseCommand(session *discordgo.Session, message *discordgo.MessageCreate) {
 	if !strings.HasPrefix(message.Content, Instance.Config.Prefix) {
 		return
 	}
@@ -275,5 +275,7 @@ func _ParseCommand(message *discordgo.MessageCreate) {
 		}
 	}
 
+	session.ChannelTyping(message.ChannelID)
 	reflect.ValueOf(commandObj.Handler).Call([]reflect.Value{reflect.ValueOf(message), argsParamValue})
+	log.Debug().Str("message", message.Content).Msg("Finished handling message")
 }
