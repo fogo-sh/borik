@@ -90,7 +90,7 @@ func New() (*Borik, error) {
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Author.ID == s.State.User.ID {
+	if m.Author.ID == s.State.User.ID || m.Author.Bot {
 		return
 	}
 
@@ -98,8 +98,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 type _MagikArgs struct {
-	ImageURL string
-	Scale    float64
+	ImageURL string  `default:""`
+	Scale    float64 `default:"1"`
 }
 
 func magikCommand(message *discordgo.MessageCreate, args _MagikArgs) {
@@ -112,6 +112,7 @@ func magikCommand(message *discordgo.MessageCreate, args _MagikArgs) {
 		args.ImageURL, err = FindImageURL(message)
 		if err != nil {
 			log.Error().Err(err).Msg("Error while attempting to find image to process")
+			return
 		}
 	}
 
@@ -169,25 +170,55 @@ func _ParseCommand(message *discordgo.MessageCreate) {
 
 			argsParam := handlerType.In(1)
 			argsParamValue := reflect.New(argsParam).Elem()
-			for index, arg := range args[1:] {
-				log.Debug().Int("index", index).Str("value", arg).Msg("Parsing arg")
-				destField := argsParamValue.Field(index)
 
-				switch destField.Kind() {
+			for index := 0; index < argsParamValue.NumField(); index++ {
+				field := argsParamValue.Field(index)
+				fieldCtx := log.With().
+					Int("index", index).
+					Str("arg_type", field.Kind().String()).
+					Str("name", argsParam.Field(index).Name).Logger()
+
+				fieldCtx.Debug().Msg("Parsing arg")
+
+				var value string
+				if index >= len(args)-1 {
+					fieldCtx.Debug().Msg("No value provided, attempting default value")
+					defaultVal, ok := argsParam.Field(index).Tag.Lookup("default")
+					if !ok {
+						log.Error().
+							Str("name", argsParam.Field(index).Name).
+							Str("command", commandObj.Name).
+							Msg("Missing value for required parameter")
+						return
+					}
+					value = defaultVal
+					fieldCtx.Debug().Str("value", value).Msg("Found default value")
+				} else {
+					value = args[index+1]
+				}
+				fieldCtx.Debug().Str("value", value).Msg("Found value to parse")
+
+				switch field.Kind() {
 				case reflect.String:
-					destField.SetString(arg)
+					field.SetString(value)
 				case reflect.Int:
-					intVal, err := strconv.Atoi(arg)
+					intVal, err := strconv.Atoi(value)
 					if err != nil {
-						log.Error().Err(err).Str("arg", arg).Msg("Error while parsing integer command argument")
+						log.Error().
+							Err(err).
+							Str("arg", value).
+							Msg("Error while parsing integer command argument")
 					}
-					destField.SetInt(int64(intVal))
+					field.SetInt(int64(intVal))
 				case reflect.Float64:
-					floatVal, err := strconv.ParseFloat(arg, 64)
+					floatVal, err := strconv.ParseFloat(value, 64)
 					if err != nil {
-						log.Error().Err(err).Str("arg", arg).Msg("Error while parsing argument to float64")
+						log.Error().
+							Err(err).
+							Str("arg", value).
+							Msg("Error while parsing argument to float64")
 					}
-					destField.SetFloat(floatVal)
+					field.SetFloat(floatVal)
 				}
 			}
 
