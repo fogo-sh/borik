@@ -143,6 +143,9 @@ func magikCommand(message *discordgo.MessageCreate, args _MagikArgs) {
 
 // _ParseCommand parses a message for commands, running the resulting command if found.
 func _ParseCommand(message *discordgo.MessageCreate) {
+	if !strings.HasPrefix(message.Content, Instance.Config.Prefix) {
+		return
+	}
 	log.Debug().Str("message", message.Content).Msg("Parsing command")
 	args, err := shlex.Split(message.Content)
 	if err != nil {
@@ -153,11 +156,7 @@ func _ParseCommand(message *discordgo.MessageCreate) {
 		return
 	}
 
-	command := args[0]
-	if !strings.HasPrefix(command, Instance.Config.Prefix) {
-		return
-	}
-	command = strings.TrimPrefix(command, Instance.Config.Prefix)
+	command := strings.TrimPrefix(args[0], Instance.Config.Prefix)
 
 	for _, commandObj := range Instance.Commands {
 		if commandObj.Name == command {
