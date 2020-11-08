@@ -6,12 +6,18 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 	"github.com/saturn-sh/borik/bot"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Printf("Failed to load .env file: %s\n", err.Error())
+	}
+
 	imagick.Initialize()
 	defer imagick.Terminate()
 
