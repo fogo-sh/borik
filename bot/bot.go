@@ -208,6 +208,7 @@ func _ParseCommand(message *discordgo.MessageCreate) {
 							Err(err).
 							Str("arg", value).
 							Msg("Error while parsing integer command argument")
+						return
 					}
 					field.SetInt(int64(intVal))
 				case reflect.Float64:
@@ -217,6 +218,7 @@ func _ParseCommand(message *discordgo.MessageCreate) {
 							Err(err).
 							Str("arg", value).
 							Msg("Error while parsing argument to float64")
+						return
 					}
 					field.SetFloat(floatVal)
 				}
