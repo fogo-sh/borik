@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -75,7 +74,7 @@ func New() (*Borik, error) {
 	magik := Command{
 		Name:        "magik",
 		Description: "Magikify an image",
-		Handler:     magikCommand,
+		Handler:     _MagikCommand,
 	}
 
 	Instance = &Borik{
@@ -87,7 +86,12 @@ func New() (*Borik, error) {
 			"arcweld": {
 				Name:        "arcweld",
 				Description: "Arc-weld an image",
-				Handler:     arcweldCommand,
+				Handler:     _ArcweldCommand,
+			},
+			"help": {
+				Name:        "help",
+				Description: "Help",
+				Handler:     _HelpCommand,
 			},
 		},
 	}
@@ -103,89 +107,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	_ParseCommand(m)
-}
-
-type _MagikArgs struct {
-	ImageURL string  `default:""`
-	Scale    float64 `default:"1"`
-}
-
-func magikCommand(message *discordgo.MessageCreate, args _MagikArgs) {
-	if args.Scale == 0 {
-		args.Scale = 1
-	}
-
-	if args.ImageURL == "" {
-		var err error
-		args.ImageURL, err = FindImageURL(message)
-		if err != nil {
-			log.Error().Err(err).Msg("Error while attempting to find image to process")
-			return
-		}
-	}
-
-	srcBytes, err := DownloadImage(args.ImageURL)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to download image to process")
-		return
-	}
-	destBuffer := new(bytes.Buffer)
-
-	log.Debug().Msg("Beginning processing image")
-	err = Magik(srcBytes, destBuffer, args.Scale)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to process image")
-		return
-	}
-
-	log.Debug().Msg("Image processed, uploading result")
-	_, err = Instance.Session.ChannelFileSend(message.ChannelID, "test.jpeg", destBuffer)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to send image")
-		_, err = Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to send error message")
-		}
-	}
-}
-
-type _ArcweldArgs struct {
-	ImageURL string `default:""`
-}
-
-func arcweldCommand(message *discordgo.MessageCreate, args _ArcweldArgs) {
-	if args.ImageURL == "" {
-		var err error
-		args.ImageURL, err = FindImageURL(message)
-		if err != nil {
-			log.Error().Err(err).Msg("Error while attempting to find image to process")
-			return
-		}
-	}
-
-	srcBytes, err := DownloadImage(args.ImageURL)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to download image to process")
-		return
-	}
-	destBuffer := new(bytes.Buffer)
-
-	log.Debug().Msg("Beginning processing image")
-	err = Arcweld(srcBytes, destBuffer)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to process image")
-		return
-	}
-
-	log.Debug().Msg("Image processed, uploading result")
-	_, err = Instance.Session.ChannelFileSend(message.ChannelID, "test.jpeg", destBuffer)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to send image")
-		_, err = Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to send error message")
-		}
-	}
 }
 
 // _ParseCommand parses a message for commands, running the resulting command if found.
