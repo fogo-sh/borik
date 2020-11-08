@@ -77,6 +77,11 @@ func New() (*Borik, error) {
 		&config,
 		[]Command{
 			{
+				Name:        "",
+				Description: "Magikify an image",
+				Handler:     magikCommand,
+			},
+			{
 				Name:        "magik",
 				Description: "Magikify an image",
 				Handler:     magikCommand,
