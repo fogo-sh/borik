@@ -44,7 +44,7 @@ func (command Command) MarshalJSON() ([]byte, error) {
 type Borik struct {
 	Session  *discordgo.Session
 	Config   *Config
-	Commands []Command
+	Commands map[string]Command
 }
 
 // Instance is the current instance of Borik
@@ -72,21 +72,19 @@ func New() (*Borik, error) {
 	session.AddHandler(messageCreate)
 	session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 
+	magik := Command{
+		Name:        "magik",
+		Description: "Magikify an image",
+		Handler:     magikCommand,
+	}
+
 	Instance = &Borik{
 		session,
 		&config,
-		[]Command{
-			{
-				Name:        "",
-				Description: "Magikify an image",
-				Handler:     magikCommand,
-			},
-			{
-				Name:        "magik",
-				Description: "Magikify an image",
-				Handler:     magikCommand,
-			},
-			{
+		map[string]Command{
+			"magik": magik,
+			"":      magik,
+			"arcweld": {
 				Name:        "arcweld",
 				Description: "Arc-weld an image",
 				Handler:     arcweldCommand,
@@ -207,74 +205,75 @@ func _ParseCommand(message *discordgo.MessageCreate) {
 
 	command := strings.TrimPrefix(args[0], Instance.Config.Prefix)
 
-	for _, commandObj := range Instance.Commands {
-		if commandObj.Name == command {
-			log.Debug().Interface("command", commandObj).Msg("Found command in message")
+	commandObj, ok := Instance.Commands[command]
 
-			handlerType := reflect.TypeOf(commandObj.Handler)
-			if inCount := handlerType.NumIn(); inCount != 2 {
-				panic(fmt.Sprintf("Expected handler function taking 2 params, got %d params", inCount))
+	if !ok {
+		log.Error().Str("command", command).Msg("Unknown command")
+		return
+	}
+
+	log.Debug().Interface("command", commandObj).Msg("Found command in message")
+
+	handlerType := reflect.TypeOf(commandObj.Handler)
+	if inCount := handlerType.NumIn(); inCount != 2 {
+		panic(fmt.Sprintf("Expected handler function taking 2 params, got %d params", inCount))
+	}
+
+	argsParam := handlerType.In(1)
+	argsParamValue := reflect.New(argsParam).Elem()
+
+	for index := 0; index < argsParamValue.NumField(); index++ {
+		field := argsParamValue.Field(index)
+		fieldCtx := log.With().
+			Int("index", index).
+			Str("arg_type", field.Kind().String()).
+			Str("name", argsParam.Field(index).Name).Logger()
+
+		fieldCtx.Debug().Msg("Parsing arg")
+
+		var value string
+		if index >= len(args)-1 {
+			fieldCtx.Debug().Msg("No value provided, attempting default value")
+			defaultVal, ok := argsParam.Field(index).Tag.Lookup("default")
+			if !ok {
+				log.Error().
+					Str("name", argsParam.Field(index).Name).
+					Str("command", commandObj.Name).
+					Msg("Missing value for required parameter")
+				return
 			}
+			value = defaultVal
+			fieldCtx.Debug().Str("value", value).Msg("Found default value")
+		} else {
+			value = args[index+1]
+		}
+		fieldCtx.Debug().Str("value", value).Msg("Found value to parse")
 
-			argsParam := handlerType.In(1)
-			argsParamValue := reflect.New(argsParam).Elem()
-
-			for index := 0; index < argsParamValue.NumField(); index++ {
-				field := argsParamValue.Field(index)
-				fieldCtx := log.With().
-					Int("index", index).
-					Str("arg_type", field.Kind().String()).
-					Str("name", argsParam.Field(index).Name).Logger()
-
-				fieldCtx.Debug().Msg("Parsing arg")
-
-				var value string
-				if index >= len(args)-1 {
-					fieldCtx.Debug().Msg("No value provided, attempting default value")
-					defaultVal, ok := argsParam.Field(index).Tag.Lookup("default")
-					if !ok {
-						log.Error().
-							Str("name", argsParam.Field(index).Name).
-							Str("command", commandObj.Name).
-							Msg("Missing value for required parameter")
-						return
-					}
-					value = defaultVal
-					fieldCtx.Debug().Str("value", value).Msg("Found default value")
-				} else {
-					value = args[index+1]
-				}
-				fieldCtx.Debug().Str("value", value).Msg("Found value to parse")
-
-				switch field.Kind() {
-				case reflect.String:
-					field.SetString(value)
-				case reflect.Int:
-					intVal, err := strconv.Atoi(value)
-					if err != nil {
-						log.Error().
-							Err(err).
-							Str("arg", value).
-							Msg("Error while parsing integer command argument")
-						return
-					}
-					field.SetInt(int64(intVal))
-				case reflect.Float64:
-					floatVal, err := strconv.ParseFloat(value, 64)
-					if err != nil {
-						log.Error().
-							Err(err).
-							Str("arg", value).
-							Msg("Error while parsing argument to float64")
-						return
-					}
-					field.SetFloat(floatVal)
-				}
+		switch field.Kind() {
+		case reflect.String:
+			field.SetString(value)
+		case reflect.Int:
+			intVal, err := strconv.Atoi(value)
+			if err != nil {
+				log.Error().
+					Err(err).
+					Str("arg", value).
+					Msg("Error while parsing integer command argument")
+				return
 			}
-
-			reflect.ValueOf(commandObj.Handler).Call([]reflect.Value{reflect.ValueOf(message), argsParamValue})
+			field.SetInt(int64(intVal))
+		case reflect.Float64:
+			floatVal, err := strconv.ParseFloat(value, 64)
+			if err != nil {
+				log.Error().
+					Err(err).
+					Str("arg", value).
+					Msg("Error while parsing argument to float64")
+				return
+			}
+			field.SetFloat(floatVal)
 		}
 	}
 
-	return
+	reflect.ValueOf(commandObj.Handler).Call([]reflect.Value{reflect.ValueOf(message), argsParamValue})
 }
