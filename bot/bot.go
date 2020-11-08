@@ -90,7 +90,7 @@ func New() (*Borik, error) {
 			},
 			"help": {
 				Name:        "help",
-				Description: "Help",
+				Description: "List available commands",
 				Handler:     _HelpCommand,
 			},
 		},
