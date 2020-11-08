@@ -15,7 +15,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Info().Msg("Failed to load .env file")
+		fmt.Printf("Failed to load .env file: %s\n", err.Error())
 	}
 
 	imagick.Initialize()
