@@ -14,8 +14,8 @@ jobs:
     - name: Push to GitHub Packages
       uses: docker/build-push-action@v1
       with:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        username: nint8835
+        password: ${{ secrets.GHCR_TOKEN }}
         registry: ghcr.io
         repository: saturn-sh/borik
         tags: latest
