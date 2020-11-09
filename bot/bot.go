@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/shlex"
@@ -196,7 +197,14 @@ func _ParseCommand(session *discordgo.Session, message *discordgo.MessageCreate)
 		}
 	}
 
-	session.ChannelTyping(message.ChannelID)
+	typing := func() {
+		log.Debug().Str("channel", message.ChannelID).Msg("Invoking typing indicator in channel")
+		session.ChannelTyping(message.ChannelID)
+	}
+
+	stopTyping := Schedule(typing, 5*time.Second)
 	reflect.ValueOf(commandObj.Handler).Call([]reflect.Value{reflect.ValueOf(message), argsParamValue})
+	stopTyping <- true
+
 	log.Debug().Str("message", message.Content).Msg("Finished handling message")
 }
