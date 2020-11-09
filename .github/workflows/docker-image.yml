@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-    
+
 jobs:
   build:
     name: Build Docker image
@@ -16,6 +16,6 @@ jobs:
       with:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-        registry: docker.pkg.github.com
-        repository: saturn-sh/borik/borik
+        registry: ghcr.io
+        repository: saturn-sh/borik
         tags: latest
