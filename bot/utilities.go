@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
@@ -65,4 +66,22 @@ func DownloadImage(url string) ([]byte, error) {
 	}
 
 	return buffer.Bytes(), nil
+}
+
+// Schedule some func to be ran in a cancelable goroutine on an interval
+func Schedule(what func(), delay time.Duration) chan bool {
+	stop := make(chan bool)
+
+	go func() {
+		for {
+			what()
+			select {
+			case <-time.After(delay):
+			case <-stop:
+				return
+			}
+		}
+	}()
+
+	return stop
 }
