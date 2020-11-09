@@ -1,0 +1,6 @@
+version: "3"
+
+services:
+  borik:
+    build: .
+    env_file: .env
