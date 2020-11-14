@@ -75,21 +75,14 @@ func New() (*Borik, error) {
 	parser.NewCommand("", "Magikify an image", _MagikCommand)
 	parser.NewCommand("magik", "Magikify an image", _MagikCommand)
 	parser.NewCommand("arcweld", "Arc-weld an image", _ArcweldCommand)
+	parser.NewCommand("help", "List available commands", _HelpCommand)
 	log.Debug().Msg("Commands registered")
-
-	// 	"help": {
-	// 		Name:        "help",
-	// 		Description: "List available commands",
-	// 		Handler:     _HelpCommand,
-	// 	},
-	// },
 
 	Instance = &Borik{
 		session,
 		&config,
 		parser,
 	}
-
 	log.Debug().Msg("Borik instance created")
 
 	return Instance, nil
