@@ -3,6 +3,7 @@ package bot
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
@@ -14,6 +15,17 @@ type _MagikArgs struct {
 }
 
 func _MagikCommand(message *discordgo.MessageCreate, args _MagikArgs) {
+	stopTyping := Schedule(
+		func() {
+			log.Debug().Str("channel", message.ChannelID).Msg("Invoking typing indicator in channel")
+			Instance.Session.ChannelTyping(message.ChannelID)
+		},
+		5*time.Second,
+	)
+	defer func() {
+		stopTyping <- true
+	}()
+
 	if args.Scale == 0 {
 		args.Scale = 1
 	}

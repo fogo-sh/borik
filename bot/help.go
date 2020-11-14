@@ -2,33 +2,10 @@ package bot
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
 )
-
-type _ArgDetails struct {
-	Name     string
-	Type     string
-	Default  string
-	Required bool
-}
-
-func _GetArgDetails(command Command) []_ArgDetails {
-	funcType := reflect.TypeOf(command.Handler)
-	argsType := funcType.In(1)
-
-	args := []_ArgDetails{}
-
-	for index := 0; index < argsType.NumField(); index++ {
-		arg := argsType.Field(index)
-
-		defaultVal, hasDefault := arg.Tag.Lookup("default")
-		args = append(args, _ArgDetails{arg.Name, arg.Type.Name(), defaultVal, !hasDefault})
-	}
-	return args
-}
 
 func _HelpCommand(message *discordgo.MessageCreate, args struct{}) {
 	embed := &discordgo.MessageEmbed{
@@ -37,9 +14,9 @@ func _HelpCommand(message *discordgo.MessageCreate, args struct{}) {
 		Color:  (206 << 16) + (147 << 8) + 216,
 	}
 
-	for command, details := range Instance.Commands {
+	for _, details := range Instance.Parser.GetCommands() {
 		argString := ""
-		for _, argDetails := range _GetArgDetails(details) {
+		for _, argDetails := range details.Arguments {
 			if argDetails.Required {
 				argString += fmt.Sprintf(" <%s:%s>", argDetails.Name, argDetails.Type)
 			} else {
@@ -47,7 +24,7 @@ func _HelpCommand(message *discordgo.MessageCreate, args struct{}) {
 			}
 		}
 		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-			Name:  fmt.Sprintf("%s%s%s", Instance.Config.Prefix, command, argString),
+			Name:  fmt.Sprintf("%s%s%s", Instance.Config.Prefix, details.Name, argString),
 			Value: details.Description,
 		})
 	}
