@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/kelseyhightower/envconfig"
@@ -68,4 +69,22 @@ func New() (*Borik, error) {
 	log.Debug().Msg("Borik instance created")
 
 	return Instance, nil
+}
+
+// TypingIndicator invokes a typing indicator in the channel of a message
+func TypingIndicator(message *discordgo.MessageCreate) func() {
+	stopTyping := Schedule(
+		func() {
+			log.Debug().Str("channel", message.ChannelID).Msg("Invoking typing indicator in channel")
+			err := Instance.Session.ChannelTyping(message.ChannelID)
+			if err != nil {
+				log.Error().Err(err).Msg("Error while attempting invoke typing indicator in channel")
+				return
+			}
+		},
+		5*time.Second,
+	)
+	return func() {
+		stopTyping <- true
+	}
 }

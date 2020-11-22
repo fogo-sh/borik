@@ -3,7 +3,6 @@ package bot
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
@@ -14,16 +13,7 @@ type _ArcweldArgs struct {
 }
 
 func _ArcweldCommand(message *discordgo.MessageCreate, args _ArcweldArgs) {
-	stopTyping := Schedule(
-		func() {
-			log.Debug().Str("channel", message.ChannelID).Msg("Invoking typing indicator in channel")
-			Instance.Session.ChannelTyping(message.ChannelID)
-		},
-		5*time.Second,
-	)
-	defer func() {
-		stopTyping <- true
-	}()
+	defer TypingIndicator(message)()
 
 	if args.ImageURL == "" {
 		var err error
