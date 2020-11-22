@@ -58,6 +58,7 @@ func New() (*Borik, error) {
 
 	log.Debug().Msg("Registering commands")
 	parser.NewCommand("", "Magikify an image", _MagikCommand)
+	parser.NewCommand("imagik", "Magikify an image with a scale of -1", _IMagikCommand)
 	parser.NewCommand("magik", "Magikify an image", _MagikCommand)
 	parser.NewCommand("arcweld", "Arc-weld an image", _ArcweldCommand)
 	parser.NewCommand("malt", "Malt an image", _MaltCommand)
