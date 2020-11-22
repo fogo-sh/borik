@@ -1,8 +1,7 @@
 package bot
 
 import (
-	"bytes"
-	"fmt"
+	"io"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
@@ -29,27 +28,8 @@ func _MagikCommand(message *discordgo.MessageCreate, args _MagikArgs) {
 		}
 	}
 
-	srcBytes, err := DownloadImage(args.ImageURL)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to download image to process")
-		return
+	operationWrapper := func(srcBytes []byte, destBuffer io.Writer) error {
+		return Magik(srcBytes, destBuffer, args.Scale)
 	}
-	destBuffer := new(bytes.Buffer)
-
-	log.Debug().Msg("Beginning processing image")
-	err = Magik(srcBytes, destBuffer, args.Scale)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to process image")
-		return
-	}
-
-	log.Debug().Msg("Image processed, uploading result")
-	_, err = Instance.Session.ChannelFileSend(message.ChannelID, "test.jpeg", destBuffer)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to send image")
-		_, err = Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to send error message")
-		}
-	}
+	PrepareAndInvokeOperation(message, args.ImageURL, operationWrapper)
 }

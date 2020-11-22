@@ -1,7 +1,9 @@
 package bot
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -86,5 +88,32 @@ func TypingIndicator(message *discordgo.MessageCreate) func() {
 	)
 	return func() {
 		stopTyping <- true
+	}
+}
+
+// PrepareAndInvokeOperation downloads the image pulled from the image, invokes the given operation with said image, and posts the image in the channel of the message that invoked i
+func PrepareAndInvokeOperation(message *discordgo.MessageCreate, imageURL string, operation func([]byte, io.Writer) error) {
+	srcBytes, err := DownloadImage(imageURL)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to download image to process")
+		return
+	}
+	destBuffer := new(bytes.Buffer)
+
+	log.Debug().Msg("Beginning processing image")
+	err = operation(srcBytes, destBuffer)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to process image")
+		return
+	}
+
+	log.Debug().Msg("Image processed, uploading result")
+	_, err = Instance.Session.ChannelFileSend(message.ChannelID, "test.jpeg", destBuffer)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to send image")
+		_, err = Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send error message")
+		}
 	}
 }
