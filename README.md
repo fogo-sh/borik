@@ -11,7 +11,6 @@ _`TODO`_
 Imagemagick 6 is required, however the version that installs itself if you run `brew install imagemagick@6` doesn't include the `lqr` libary, so using [this](https://github.com/nint8835/homebrew-formulae/blob/main/Formula/imagemagick%406.rb) custom homebrew formula, run:
 
 ```sh
-brew install nint8835/formulae/imagemagick@6 # rosettabrew if using apple silicon
+brew install nint8835/formulae/imagemagick@6
 brew link nint8835/formulae/imagemagick@6 # might not be required, ensures that this formulae is the system imagemagick
 ```
-
