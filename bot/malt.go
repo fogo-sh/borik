@@ -7,11 +7,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type _ArcweldArgs struct {
-	ImageURL string `default:""`
+type _MaltArgs struct {
+	ImageURL string  `default:""`
+	Degree   float64 `default:"45"`
 }
 
-func _ArcweldCommand(message *discordgo.MessageCreate, args _ArcweldArgs) {
+func _MaltCommand(message *discordgo.MessageCreate, args _MaltArgs) {
 	defer TypingIndicator(message)()
 
 	if args.ImageURL == "" {
@@ -24,7 +25,7 @@ func _ArcweldCommand(message *discordgo.MessageCreate, args _ArcweldArgs) {
 	}
 
 	operationWrapper := func(srcBytes []byte, destBuffer io.Writer) error {
-		return Arcweld(srcBytes, destBuffer)
+		return Malt(srcBytes, destBuffer, args.Degree)
 	}
 	PrepareAndInvokeOperation(message, args.ImageURL, operationWrapper)
 }

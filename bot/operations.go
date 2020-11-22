@@ -104,3 +104,39 @@ func Arcweld(src []byte, dest io.Writer) error {
 
 	return nil
 }
+
+// Malt mixes an image via a combination of operations.
+func Malt(src []byte, dest io.Writer, degree float64) error {
+	wand := imagick.NewMagickWand()
+	wand.ReadImageBlob(src)
+
+	width := wand.GetImageWidth()
+	height := wand.GetImageHeight()
+
+	err := wand.SwirlImage(degree)
+	if err != nil {
+		return fmt.Errorf("error while attempting to swirl: %w", err)
+	}
+
+	err = wand.LiquidRescaleImage(uint(width/2), uint(height/2), 1, 0)
+	if err != nil {
+		return fmt.Errorf("error while attempting to liquid rescale: %w", err)
+	}
+
+	err = wand.SwirlImage(degree * -1)
+	if err != nil {
+		return fmt.Errorf("error while attempting to swirl: %w", err)
+	}
+
+	err = wand.LiquidRescaleImage(width, height, 1, 0)
+	if err != nil {
+		return fmt.Errorf("error while attempting to liquid rescale: %w", err)
+	}
+
+	_, err = dest.Write(wand.GetImageBlob())
+	if err != nil {
+		return fmt.Errorf("error writing image: %w", err)
+	}
+
+	return nil
+}

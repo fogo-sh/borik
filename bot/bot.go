@@ -1,8 +1,11 @@
 package bot
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/kelseyhightower/envconfig"
@@ -57,6 +60,7 @@ func New() (*Borik, error) {
 	parser.NewCommand("", "Magikify an image", _MagikCommand)
 	parser.NewCommand("magik", "Magikify an image", _MagikCommand)
 	parser.NewCommand("arcweld", "Arc-weld an image", _ArcweldCommand)
+	parser.NewCommand("malt", "Malt an image", _MaltCommand)
 	parser.NewCommand("help", "List available commands", _HelpCommand)
 	log.Debug().Msg("Commands registered")
 
@@ -68,4 +72,49 @@ func New() (*Borik, error) {
 	log.Debug().Msg("Borik instance created")
 
 	return Instance, nil
+}
+
+// TypingIndicator invokes a typing indicator in the channel of a message
+func TypingIndicator(message *discordgo.MessageCreate) func() {
+	stopTyping := Schedule(
+		func() {
+			log.Debug().Str("channel", message.ChannelID).Msg("Invoking typing indicator in channel")
+			err := Instance.Session.ChannelTyping(message.ChannelID)
+			if err != nil {
+				log.Error().Err(err).Msg("Error while attempting invoke typing indicator in channel")
+				return
+			}
+		},
+		5*time.Second,
+	)
+	return func() {
+		stopTyping <- true
+	}
+}
+
+// PrepareAndInvokeOperation downloads the image pulled from the message, invokes the given operation with said image, and posts the image in the channel of the message that invoked it
+func PrepareAndInvokeOperation(message *discordgo.MessageCreate, imageURL string, operation func([]byte, io.Writer) error) {
+	srcBytes, err := DownloadImage(imageURL)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to download image to process")
+		return
+	}
+	destBuffer := new(bytes.Buffer)
+
+	log.Debug().Msg("Beginning processing image")
+	err = operation(srcBytes, destBuffer)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to process image")
+		return
+	}
+
+	log.Debug().Msg("Image processed, uploading result")
+	_, err = Instance.Session.ChannelFileSend(message.ChannelID, "test.jpeg", destBuffer)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to send image")
+		_, err = Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send error message")
+		}
+	}
 }
