@@ -91,7 +91,7 @@ func TypingIndicator(message *discordgo.MessageCreate) func() {
 	}
 }
 
-// PrepareAndInvokeOperation downloads the image pulled from the image, invokes the given operation with said image, and posts the image in the channel of the message that invoked i
+// PrepareAndInvokeOperation downloads the image pulled from the message, invokes the given operation with said image, and posts the image in the channel of the message that invoked i
 func PrepareAndInvokeOperation(message *discordgo.MessageCreate, imageURL string, operation func([]byte, io.Writer) error) {
 	srcBytes, err := DownloadImage(imageURL)
 	if err != nil {
