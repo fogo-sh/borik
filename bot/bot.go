@@ -23,9 +23,10 @@ type Config struct {
 
 // Borik represents an individual instance of Borik
 type Borik struct {
-	Session *discordgo.Session
-	Config  *Config
-	Parser  *parsley.Parser
+	Session         *discordgo.Session
+	Config          *Config
+	Parser          *parsley.Parser
+	PipelineManager *PipelineManager
 }
 
 // Instance is the current instance of Borik
@@ -62,12 +63,14 @@ func New() (*Borik, error) {
 	parser.NewCommand("arcweld", "Arc-weld an image", _ArcweldCommand)
 	parser.NewCommand("malt", "Malt an image", _MaltCommand)
 	parser.NewCommand("help", "List available commands", _HelpCommand)
+	parser.NewCommand("createpipeline", "Begin creation of a new command pipeline", _CreatePipelineCommand)
 	log.Debug().Msg("Commands registered")
 
 	Instance = &Borik{
 		session,
 		&config,
 		parser,
+		&PipelineManager{make(map[string][]PipelineEntry)},
 	}
 	log.Debug().Msg("Borik instance created")
 
