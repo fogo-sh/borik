@@ -128,7 +128,7 @@ func _RunPipelineCommand(message *discordgo.MessageCreate, args _RunPipelineArgs
 		}
 
 		destBuffer = new(bytes.Buffer)
-		log.Debug().Interface("operation", operation.Operation).Msg("Running operation step")
+		log.Debug().Interface("operation", operation).Msg("Running operation step")
 		err = _OperationMap[operation.Operation](srcBytes, destBuffer, operation.Args)
 
 		if err != nil {
