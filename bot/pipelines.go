@@ -131,7 +131,9 @@ func _CreatePipelineCommand(message *discordgo.MessageCreate, args struct{}) {
 	err := Instance.PipelineManager.CreatePipeline(message)
 	if err != nil {
 		Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror creating new pipeline: %s\n```", err.Error()))
+		return
 	}
+	Instance.Session.ChannelMessageSend(message.ChannelID, "Pipeline created.")
 }
 
 type _DeletePipelineArgs struct {
@@ -142,7 +144,9 @@ func _DeletePipelineCommand(message *discordgo.MessageCreate, args _DeletePipeli
 	err := Instance.PipelineManager.DeletePipeline(message, args.PipelineName)
 	if err != nil {
 		Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror deleting pipeline: %s\n```", err.Error()))
+		return
 	}
+	Instance.Session.ChannelMessageSend(message.ChannelID, "Pipeline deleted.")
 }
 
 func _DebugPipelineCommand(message *discordgo.MessageCreate, args struct{}) {
@@ -263,4 +267,5 @@ func _SavePipelineCommand(message *discordgo.MessageCreate, args _SavePipelineAr
 		Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror saving pipeline: %s\n```", err.Error()))
 		return
 	}
+	Instance.Session.ChannelMessageSend(message.ChannelID, "Pipeline saved!")
 }
