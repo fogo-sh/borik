@@ -21,8 +21,11 @@ var ErrPipelineDoesNotExist = errors.New("specified pipeline does not exist")
 // ErrInvalidPipelineName occurs when a user specifies an invalid pipeline name while saving.
 var ErrInvalidPipelineName = errors.New("invalid pipeline name")
 
-// ErrPipelineAlreadyExists occurs when a user attempts to save a pipeline with an already used name
+// ErrPipelineAlreadyExists occurs when a user attempts to save a pipeline with an already used name.
 var ErrPipelineAlreadyExists = errors.New("specified pipeline already exists")
+
+// ErrPipelineCreatedByAnotherUser occurs when a user attempts to delete a pipeline created by another user.
+var ErrPipelineCreatedByAnotherUser = errors.New("specified pipeline was created by another user")
 
 // PipelineEntry represents a single entry in a command pipeline.
 type PipelineEntry struct {
@@ -73,23 +76,31 @@ func (manager *PipelineManager) DeletePipeline(message *discordgo.MessageCreate,
 		}
 		delete(manager.PendingPipelines, message.Author.ID)
 	}
+	pipeline, found := manager.SavedPipelines[name]
+	if !found {
+		return ErrPipelineDoesNotExist
+	}
+	if pipeline.Creator != message.Author.ID {
+		return ErrPipelineCreatedByAnotherUser
+	}
+	delete(manager.SavedPipelines, name)
 	return nil
 }
 
 // GetPipeline returns a currently stored pipeline.
-func (manager *PipelineManager) GetPipeline(message *discordgo.MessageCreate, name string) ([]PipelineEntry, error) {
+func (manager *PipelineManager) GetPipeline(message *discordgo.MessageCreate, name string) (SavedPipeline, error) {
 	if name == "pending" {
 		entry, found := manager.PendingPipelines[message.Author.ID]
 		if !found {
-			return make([]PipelineEntry, 0), ErrPipelineDoesNotExist
+			return SavedPipeline{}, ErrPipelineDoesNotExist
 		}
-		return entry, nil
+		return SavedPipeline{message.Author.ID, entry}, nil
 	}
 	savedPipeline, found := manager.SavedPipelines[name]
 	if !found {
-		return make([]PipelineEntry, 0), ErrPipelineDoesNotExist
+		return SavedPipeline{}, ErrPipelineDoesNotExist
 	}
-	return savedPipeline.Pipeline, nil
+	return savedPipeline, nil
 }
 
 // SavePipeline saves a pending pipeline.
@@ -147,7 +158,8 @@ type _RunPipelineArgs struct {
 }
 
 func _RunPipelineCommand(message *discordgo.MessageCreate, args _RunPipelineArgs) {
-	pipeline, err := Instance.PipelineManager.GetPipeline(message, args.PipelineName)
+	pipelineObj, err := Instance.PipelineManager.GetPipeline(message, args.PipelineName)
+	pipeline := pipelineObj.Pipeline
 	if err != nil {
 		Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror running pipeline: %s\n```", err.Error()))
 		return
