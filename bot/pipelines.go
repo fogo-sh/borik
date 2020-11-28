@@ -63,6 +63,18 @@ func (manager *PipelineManager) DeletePipeline(message *discordgo.MessageCreate,
 	return nil
 }
 
+// GetPipeline returns a currently stored pipeline.
+func (manager *PipelineManager) GetPipeline(message *discordgo.MessageCreate, name string) ([]PipelineEntry, error) {
+	if name == "pending" {
+		entry, found := manager.PendingPipelines[message.Author.ID]
+		if !found {
+			return make([]PipelineEntry, 0), ErrPipelineDoesNotExist
+		}
+		return entry, nil
+	}
+	return make([]PipelineEntry, 0), nil
+}
+
 func _CreatePipelineCommand(message *discordgo.MessageCreate, args struct{}) {
 	err := Instance.PipelineManager.CreatePipeline(message)
 	if err != nil {
@@ -94,14 +106,10 @@ type _RunPipelineArgs struct {
 }
 
 func _RunPipelineCommand(message *discordgo.MessageCreate, args _RunPipelineArgs) {
-	var pipeline []PipelineEntry
-	if args.PipelineName == "pending" {
-		var found bool
-		pipeline, found = Instance.PipelineManager.PendingPipelines[message.Author.ID]
-		if !found {
-			Instance.Session.ChannelMessageSend(message.ChannelID, "You do not currently have a pending pipeline.")
-			return
-		}
+	pipeline, err := Instance.PipelineManager.GetPipeline(message, args.PipelineName)
+	if err != nil {
+		Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror running pipeline: %s\n```", err.Error()))
+		return
 	}
 
 	if args.ImageURL == "" {
