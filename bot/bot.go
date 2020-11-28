@@ -65,6 +65,7 @@ func New() (*Borik, error) {
 	parser.NewCommand("help", "List available commands", _HelpCommand)
 	parser.NewCommand("createpipeline", "Begin creation of a new command pipeline", _CreatePipelineCommand)
 	parser.NewCommand("runpipeline", "Run a command pipeline", _RunPipelineCommand)
+	parser.NewCommand("deletepipeline", "Delete a command pipeline", _DeletePipelineCommand)
 	parser.NewCommand("debugpipeline", "", _DebugPipelineCommand)
 	log.Debug().Msg("Commands registered")
 

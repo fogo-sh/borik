@@ -55,6 +55,16 @@ func _CreatePipelineCommand(message *discordgo.MessageCreate, args struct{}) {
 	}
 }
 
+type _DeletePipelineArgs struct {
+	PipelineName string
+}
+
+func _DeletePipelineCommand(message *discordgo.MessageCreate, args _DeletePipelineArgs) {
+	if args.PipelineName == "pending" {
+		delete(Instance.PipelineManager.PendingPipelines, message.Author.ID)
+	}
+}
+
 func _DebugPipelineCommand(message *discordgo.MessageCreate, args struct{}) {
 	Instance.Session.ChannelMessageSend(
 		message.ChannelID,
