@@ -66,6 +66,7 @@ func New() (*Borik, error) {
 	parser.NewCommand("createpipeline", "Begin creation of a new command pipeline", _CreatePipelineCommand)
 	parser.NewCommand("runpipeline", "Run a command pipeline", _RunPipelineCommand)
 	parser.NewCommand("deletepipeline", "Delete a command pipeline", _DeletePipelineCommand)
+	parser.NewCommand("savepipeline", "Save a pending pipeline", _SavePipelineCommand)
 	parser.NewCommand("debugpipeline", "", _DebugPipelineCommand)
 	log.Debug().Msg("Commands registered")
 
@@ -73,7 +74,7 @@ func New() (*Borik, error) {
 		session,
 		&config,
 		parser,
-		&PipelineManager{make(map[string][]PipelineEntry)},
+		&PipelineManager{make(map[string]SavedPipeline), make(map[string][]PipelineEntry)},
 	}
 	log.Debug().Msg("Borik instance created")
 

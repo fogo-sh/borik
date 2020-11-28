@@ -15,8 +15,14 @@ var ErrNoPendingPipeline = errors.New("you do not have a pending pipeline - use 
 // ErrPendingPipelineExists occurs when attempting to create a new pipeline for a user with an already existing pending pipeline.
 var ErrPendingPipelineExists = errors.New("you already have an existing pending pipeline")
 
-// ErrPipelineDoesNotExist occurs when attempting to access a pipeline that does not exist
+// ErrPipelineDoesNotExist occurs when attempting to access a pipeline that does not exist.
 var ErrPipelineDoesNotExist = errors.New("specified pipeline does not exist")
+
+// ErrInvalidPipelineName occurs when a user specifies an invalid pipeline name while saving.
+var ErrInvalidPipelineName = errors.New("invalid pipeline name")
+
+// ErrPipelineAlreadyExists occurs when a user attempts to save a pipeline with an already used name
+var ErrPipelineAlreadyExists = errors.New("specified pipeline already exists")
 
 // PipelineEntry represents a single entry in a command pipeline.
 type PipelineEntry struct {
@@ -24,8 +30,15 @@ type PipelineEntry struct {
 	Args      interface{}
 }
 
+// SavedPipeline represents a user-created pipeline.
+type SavedPipeline struct {
+	Creator  string
+	Pipeline []PipelineEntry
+}
+
 // PipelineManager manages the saving, creation, and execution of command pipelines.
 type PipelineManager struct {
+	SavedPipelines   map[string]SavedPipeline
 	PendingPipelines map[string][]PipelineEntry
 }
 
@@ -72,7 +85,35 @@ func (manager *PipelineManager) GetPipeline(message *discordgo.MessageCreate, na
 		}
 		return entry, nil
 	}
-	return make([]PipelineEntry, 0), nil
+	savedPipeline, found := manager.SavedPipelines[name]
+	if !found {
+		return make([]PipelineEntry, 0), ErrPipelineDoesNotExist
+	}
+	return savedPipeline.Pipeline, nil
+}
+
+// SavePipeline saves a pending pipeline.
+func (manager *PipelineManager) SavePipeline(message *discordgo.MessageCreate, name string) error {
+	if name == "pending" {
+		return ErrInvalidPipelineName
+	}
+
+	pendingPipeline, found := manager.PendingPipelines[message.Author.ID]
+	if !found {
+		return ErrNoPendingPipeline
+	}
+
+	_, duplicateFound := manager.SavedPipelines[name]
+	if duplicateFound {
+		return ErrPipelineAlreadyExists
+	}
+
+	manager.SavedPipelines[name] = SavedPipeline{
+		message.Author.ID, pendingPipeline,
+	}
+	delete(manager.PendingPipelines, message.Author.ID)
+
+	return nil
 }
 
 func _CreatePipelineCommand(message *discordgo.MessageCreate, args struct{}) {
@@ -197,5 +238,17 @@ func _RunPipelineCommand(message *discordgo.MessageCreate, args _RunPipelineArgs
 	err = Instance.Session.ChannelMessageDelete(message.ChannelID, statusMsg.ID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to delete status embed")
+	}
+}
+
+type _SavePipelineArgs struct {
+	Name string
+}
+
+func _SavePipelineCommand(message *discordgo.MessageCreate, args _SavePipelineArgs) {
+	err := Instance.PipelineManager.SavePipeline(message, args.Name)
+	if err != nil {
+		Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror saving pipeline: %s\n```", err.Error()))
+		return
 	}
 }
