@@ -15,6 +15,9 @@ var ErrNoPendingPipeline = errors.New("you do not have a pending pipeline - use 
 // ErrPendingPipelineExists occurs when attempting to create a new pipeline for a user with an already existing pending pipeline.
 var ErrPendingPipelineExists = errors.New("you already have an existing pending pipeline")
 
+// ErrPipelineDoesNotExist occurs when attempting to access a pipeline that does not exist
+var ErrPipelineDoesNotExist = errors.New("specified pipeline does not exist")
+
 // PipelineEntry represents a single entry in a command pipeline.
 type PipelineEntry struct {
 	Operation string
@@ -27,12 +30,12 @@ type PipelineManager struct {
 }
 
 // CreatePipeline creates a pending pipeline for a given user.
-func (manager *PipelineManager) CreatePipeline(owner string) error {
-	_, found := manager.PendingPipelines[owner]
+func (manager *PipelineManager) CreatePipeline(message *discordgo.MessageCreate) error {
+	_, found := manager.PendingPipelines[message.Author.ID]
 	if found {
 		return ErrPendingPipelineExists
 	}
-	manager.PendingPipelines[owner] = make([]PipelineEntry, 0)
+	manager.PendingPipelines[message.Author.ID] = make([]PipelineEntry, 0)
 	return nil
 }
 
@@ -48,8 +51,20 @@ func (manager *PipelineManager) AddStep(message *discordgo.MessageCreate, operat
 	return nil
 }
 
+// DeletePipeline deletes a pipeline.
+func (manager *PipelineManager) DeletePipeline(message *discordgo.MessageCreate, name string) error {
+	if name == "pending" {
+		_, found := manager.PendingPipelines[message.Author.ID]
+		if !found {
+			return ErrPipelineDoesNotExist
+		}
+		delete(manager.PendingPipelines, message.Author.ID)
+	}
+	return nil
+}
+
 func _CreatePipelineCommand(message *discordgo.MessageCreate, args struct{}) {
-	err := Instance.PipelineManager.CreatePipeline(message.Author.ID)
+	err := Instance.PipelineManager.CreatePipeline(message)
 	if err != nil {
 		Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror creating new pipeline: %s\n```", err.Error()))
 	}
@@ -60,8 +75,9 @@ type _DeletePipelineArgs struct {
 }
 
 func _DeletePipelineCommand(message *discordgo.MessageCreate, args _DeletePipelineArgs) {
-	if args.PipelineName == "pending" {
-		delete(Instance.PipelineManager.PendingPipelines, message.Author.ID)
+	err := Instance.PipelineManager.DeletePipeline(message, args.PipelineName)
+	if err != nil {
+		Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror deleting pipeline: %s\n```", err.Error()))
 	}
 }
 
