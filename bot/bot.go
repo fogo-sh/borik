@@ -2,6 +2,7 @@ package bot
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -14,11 +15,19 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// PersistenceBackend represents a generic backend capable of persisting data.
+type PersistenceBackend interface {
+	Get(string) (interface{}, error)
+	Put(string, interface{}) error
+}
+
 // Config represents the config that Borik will use to run
 type Config struct {
-	Prefix   string        `default:"borik!"`
-	Token    string        `required:"true"`
-	LogLevel zerolog.Level `default:"1" split_words:"true"`
+	Prefix        string        `default:"borik!"`
+	Token         string        `required:"true"`
+	LogLevel      zerolog.Level `default:"1" split_words:"true"`
+	StorageType   string        `default:"file" split_words:"true"`
+	ConsulAddress string        `default:"" split_words:"true"`
 }
 
 // Borik represents an individual instance of Borik
@@ -27,6 +36,7 @@ type Borik struct {
 	Config          *Config
 	Parser          *parsley.Parser
 	PipelineManager *PipelineManager
+	Storage         *PersistenceBackend
 }
 
 // Instance is the current instance of Borik
@@ -43,6 +53,19 @@ func New() (*Borik, error) {
 
 	zerolog.SetGlobalLevel(config.LogLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+	log.Debug().Msg("Creating persistence backend")
+	var backend PersistenceBackend
+	switch config.StorageType {
+	case "consul":
+		backend, err = NewConsulBackend(config)
+		if err != nil {
+			return nil, fmt.Errorf("error creating persistence backend: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("error creating persistence backend: %w", errors.New("unknown backend type"))
+	}
+	log.Debug().Msg("Persistence backend created")
 
 	log.Debug().Msg("Creating Discord session")
 	session, err := discordgo.New("Bot " + config.Token)
@@ -75,6 +98,7 @@ func New() (*Borik, error) {
 		&config,
 		parser,
 		&PipelineManager{make(map[string]SavedPipeline), make(map[string][]PipelineEntry)},
+		&backend,
 	}
 	log.Debug().Msg("Borik instance created")
 
