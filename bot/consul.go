@@ -20,6 +20,10 @@ func (backend *ConsulBackend) Get(key string) (interface{}, error) {
 		return nil, fmt.Errorf("error retrieving value from consul backend: %w", err)
 	}
 
+	if kvPair == nil {
+		return nil, nil
+	}
+
 	retVal := new(interface{})
 	err = json.Unmarshal(kvPair.Value, retVal)
 	if err != nil {

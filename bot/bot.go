@@ -36,7 +36,7 @@ type Borik struct {
 	Config          *Config
 	Parser          *parsley.Parser
 	PipelineManager *PipelineManager
-	Storage         *PersistenceBackend
+	Storage         PersistenceBackend
 }
 
 // Instance is the current instance of Borik
@@ -80,6 +80,13 @@ func New() (*Borik, error) {
 	parser.RegisterHandler(session)
 	log.Debug().Msg("Parser created")
 
+	log.Debug().Msg("Creating pipeline manager")
+	manager, err := NewPipelineManager(backend)
+	if err != nil {
+		return nil, fmt.Errorf("error creating pipeline manager: %w", err)
+	}
+	log.Debug().Msg("Pipeline manager created")
+
 	log.Debug().Msg("Registering commands")
 	parser.NewCommand("", "Magikify an image", _MagikCommand)
 	parser.NewCommand("magik", "Magikify an image", _MagikCommand)
@@ -97,8 +104,8 @@ func New() (*Borik, error) {
 		session,
 		&config,
 		parser,
-		&PipelineManager{make(map[string]SavedPipeline), make(map[string][]PipelineEntry)},
-		&backend,
+		manager,
+		backend,
 	}
 	log.Debug().Msg("Borik instance created")
 

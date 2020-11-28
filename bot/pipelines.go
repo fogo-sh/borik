@@ -39,6 +39,27 @@ type SavedPipeline struct {
 	Pipeline []PipelineEntry
 }
 
+// NewPipelineManager creates a new pipeline manager, restoring saved state from the backend in the process.
+func NewPipelineManager(backend PersistenceBackend) (*PipelineManager, error) {
+	savedPipelines, err := backend.Get("saved_pipelines")
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving saved pipelines from backend: %w", err)
+	}
+
+	var savedPipelinesVal map[string]SavedPipeline
+	if savedPipelines == nil {
+		savedPipelinesVal = make(map[string]SavedPipeline)
+	} else {
+		var ok bool
+		savedPipelinesVal, ok = savedPipelines.(map[string]SavedPipeline)
+		if !ok {
+			return nil, fmt.Errorf("%w", errors.New("unable to parse saved pipelines"))
+		}
+	}
+
+	return &PipelineManager{savedPipelinesVal, make(map[string][]PipelineEntry)}, nil
+}
+
 // PipelineManager manages the saving, creation, and execution of command pipelines.
 type PipelineManager struct {
 	SavedPipelines   map[string]SavedPipeline
@@ -75,6 +96,7 @@ func (manager *PipelineManager) DeletePipeline(message *discordgo.MessageCreate,
 			return ErrPipelineDoesNotExist
 		}
 		delete(manager.PendingPipelines, message.Author.ID)
+		return nil
 	}
 	pipeline, found := manager.SavedPipelines[name]
 	if !found {
@@ -84,7 +106,7 @@ func (manager *PipelineManager) DeletePipeline(message *discordgo.MessageCreate,
 		return ErrPipelineCreatedByAnotherUser
 	}
 	delete(manager.SavedPipelines, name)
-	return nil
+	return manager.SyncData()
 }
 
 // GetPipeline returns a currently stored pipeline.
@@ -124,6 +146,15 @@ func (manager *PipelineManager) SavePipeline(message *discordgo.MessageCreate, n
 	}
 	delete(manager.PendingPipelines, message.Author.ID)
 
+	return manager.SyncData()
+}
+
+// SyncData writes saved data from this object to the persistence backend.
+func (manager *PipelineManager) SyncData() error {
+	err := Instance.Storage.Put("saved_pipelines", manager.SavedPipelines)
+	if err != nil {
+		return fmt.Errorf("error trying to save pipelines: %w", err)
+	}
 	return nil
 }
 
