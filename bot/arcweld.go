@@ -18,6 +18,7 @@ func _ArcweldCommand(message *discordgo.MessageCreate, args _ArcweldArgs) {
 		if err != nil {
 			Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror adding step to pipeline: %s\n```", err.Error()))
 		}
+		Instance.Session.ChannelMessageSend(message.ChannelID, "Step added to pipeline.")
 		return
 	}
 

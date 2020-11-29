@@ -19,6 +19,7 @@ func _MagikCommand(message *discordgo.MessageCreate, args _MagikArgs) {
 		if err != nil {
 			Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror adding step to pipeline: %s\n```", err.Error()))
 		}
+		Instance.Session.ChannelMessageSend(message.ChannelID, "Step added to pipeline.")
 		return
 	}
 

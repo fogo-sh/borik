@@ -174,13 +174,6 @@ func _DeletePipelineCommand(message *discordgo.MessageCreate, args _DeletePipeli
 	Instance.Session.ChannelMessageSend(message.ChannelID, "Pipeline deleted.")
 }
 
-func _DebugPipelineCommand(message *discordgo.MessageCreate, args struct{}) {
-	Instance.Session.ChannelMessageSend(
-		message.ChannelID,
-		fmt.Sprintf("```\n%#v\n```", Instance.PipelineManager),
-	)
-}
-
 type _RunPipelineArgs struct {
 	PipelineName string
 	ImageURL     string `default:""`
