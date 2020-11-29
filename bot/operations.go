@@ -4,13 +4,22 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
 // Magik runs content-aware scaling on an image.
 func Magik(src []byte, dest io.Writer, opArgs interface{}) error {
-	args := opArgs.(_MagikArgs)
+	var args _MagikArgs
+	var ok bool
+	args, ok = opArgs.(_MagikArgs)
+	if !ok {
+		err := mapstructure.Decode(opArgs, &args)
+		if err != nil {
+			return fmt.Errorf("error while decoding saved args: %w", err)
+		}
+	}
 	wand := imagick.NewMagickWand()
 	wand.ReadImageBlob(src)
 
@@ -108,7 +117,15 @@ func Arcweld(src []byte, dest io.Writer, opArgs interface{}) error {
 
 // Malt mixes an image via a combination of operations.
 func Malt(src []byte, dest io.Writer, opArgs interface{}) error {
-	args := opArgs.(_MaltArgs)
+	var args _MaltArgs
+	var ok bool
+	args, ok = opArgs.(_MaltArgs)
+	if !ok {
+		err := mapstructure.Decode(opArgs, &args)
+		if err != nil {
+			return fmt.Errorf("error while decoding saved args: %w", err)
+		}
+	}
 	wand := imagick.NewMagickWand()
 	wand.ReadImageBlob(src)
 

@@ -41,23 +41,17 @@ type SavedPipeline struct {
 
 // NewPipelineManager creates a new pipeline manager, restoring saved state from the backend in the process.
 func NewPipelineManager(backend PersistenceBackend) (*PipelineManager, error) {
-	savedPipelines, err := backend.Get("saved_pipelines")
+	var savedPipelines map[string]SavedPipeline
+	err := backend.Get("saved_pipelines", &savedPipelines)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving saved pipelines from backend: %w", err)
 	}
 
-	var savedPipelinesVal map[string]SavedPipeline
 	if savedPipelines == nil {
-		savedPipelinesVal = make(map[string]SavedPipeline)
-	} else {
-		var ok bool
-		savedPipelinesVal, ok = savedPipelines.(map[string]SavedPipeline)
-		if !ok {
-			return nil, fmt.Errorf("%w", errors.New("unable to parse saved pipelines"))
-		}
+		savedPipelines = make(map[string]SavedPipeline)
 	}
 
-	return &PipelineManager{savedPipelinesVal, make(map[string][]PipelineEntry)}, nil
+	return &PipelineManager{savedPipelines, make(map[string][]PipelineEntry)}, nil
 }
 
 // PipelineManager manages the saving, creation, and execution of command pipelines.

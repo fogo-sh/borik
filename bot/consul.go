@@ -13,24 +13,23 @@ type ConsulBackend struct {
 }
 
 // Get retrieves a value from the Consul backend.
-func (backend *ConsulBackend) Get(key string) (interface{}, error) {
+func (backend *ConsulBackend) Get(key string, valuePtr interface{}) error {
 	key = "borik/" + key
 	kvPair, _, err := backend.consulClient.KV().Get(key, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving value from consul backend: %w", err)
+		return fmt.Errorf("error retrieving value from consul backend: %w", err)
 	}
 
 	if kvPair == nil {
-		return nil, nil
+		return nil
 	}
 
-	retVal := new(interface{})
-	err = json.Unmarshal(kvPair.Value, retVal)
+	err = json.Unmarshal(kvPair.Value, valuePtr)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing returned json: %w", err)
+		return fmt.Errorf("error parsing returned json: %w", err)
 	}
 
-	return retVal, nil
+	return nil
 }
 
 // Put stores a value in the Consul backend.

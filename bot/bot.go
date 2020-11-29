@@ -17,7 +17,7 @@ import (
 
 // PersistenceBackend represents a generic backend capable of persisting data.
 type PersistenceBackend interface {
-	Get(string) (interface{}, error)
+	Get(string, interface{}) error
 	Put(string, interface{}) error
 }
 
