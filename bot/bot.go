@@ -27,6 +27,7 @@ type Config struct {
 	Token         string        `required:"true"`
 	LogLevel      zerolog.Level `default:"1" split_words:"true"`
 	StorageType   string        `default:"file" split_words:"true"`
+	FilePath      string        `default:"backend" split_words:"true"`
 	ConsulAddress string        `default:"" split_words:"true"`
 }
 
@@ -59,6 +60,11 @@ func New() (*Borik, error) {
 	switch config.StorageType {
 	case "consul":
 		backend, err = NewConsulBackend(config)
+		if err != nil {
+			return nil, fmt.Errorf("error creating persistence backend: %w", err)
+		}
+	case "file":
+		backend, err = NewFSBackend(config)
 		if err != nil {
 			return nil, fmt.Errorf("error creating persistence backend: %w", err)
 		}
