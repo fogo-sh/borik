@@ -58,7 +58,7 @@ func NewConsulBackend(config Config) (*ConsulBackend, error) {
 	}
 	_, err = client.Status().Leader()
 	if err != nil {
-		return &ConsulBackend{}, fmt.Errorf("error validation consul connection status: %w", err)
+		return &ConsulBackend{}, fmt.Errorf("error checking consul connection status: %w", err)
 	}
 	backend := ConsulBackend{client}
 	return &backend, nil
