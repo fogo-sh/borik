@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/bwmarrin/discordgo"
@@ -13,6 +14,15 @@ type _MaltArgs struct {
 }
 
 func _MaltCommand(message *discordgo.MessageCreate, args _MaltArgs) {
+	if args.ImageURL == "pipeline" {
+		err := Instance.PipelineManager.AddStep(message, "malt", args)
+		if err != nil {
+			Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror adding step to pipeline: %s\n```", err.Error()))
+		}
+		Instance.Session.ChannelMessageSend(message.ChannelID, "Step added to pipeline.")
+		return
+	}
+
 	defer TypingIndicator(message)()
 
 	if args.ImageURL == "" {
@@ -25,7 +35,7 @@ func _MaltCommand(message *discordgo.MessageCreate, args _MaltArgs) {
 	}
 
 	operationWrapper := func(srcBytes []byte, destBuffer io.Writer) error {
-		return Malt(srcBytes, destBuffer, args.Degree)
+		return Malt(srcBytes, destBuffer, args)
 	}
 	PrepareAndInvokeOperation(message, args.ImageURL, operationWrapper)
 }

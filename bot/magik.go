@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/bwmarrin/discordgo"
@@ -13,11 +14,16 @@ type _MagikArgs struct {
 }
 
 func _MagikCommand(message *discordgo.MessageCreate, args _MagikArgs) {
-	defer TypingIndicator(message)()
-
-	if args.Scale == 0 {
-		args.Scale = 1
+	if args.ImageURL == "pipeline" {
+		err := Instance.PipelineManager.AddStep(message, "magik", args)
+		if err != nil {
+			Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror adding step to pipeline: %s\n```", err.Error()))
+		}
+		Instance.Session.ChannelMessageSend(message.ChannelID, "Step added to pipeline.")
+		return
 	}
+
+	defer TypingIndicator(message)()
 
 	if args.ImageURL == "" {
 		var err error
@@ -29,7 +35,7 @@ func _MagikCommand(message *discordgo.MessageCreate, args _MagikArgs) {
 	}
 
 	operationWrapper := func(srcBytes []byte, destBuffer io.Writer) error {
-		return Magik(srcBytes, destBuffer, args.Scale)
+		return Magik(srcBytes, destBuffer, args)
 	}
 	PrepareAndInvokeOperation(message, args.ImageURL, operationWrapper)
 }

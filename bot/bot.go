@@ -2,6 +2,7 @@ package bot
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -14,18 +15,29 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// PersistenceBackend represents a generic backend capable of persisting data.
+type PersistenceBackend interface {
+	Get(string, interface{}) error
+	Put(string, interface{}) error
+}
+
 // Config represents the config that Borik will use to run
 type Config struct {
-	Prefix   string        `default:"borik!"`
-	Token    string        `required:"true"`
-	LogLevel zerolog.Level `default:"1" split_words:"true"`
+	Prefix        string        `default:"borik!"`
+	Token         string        `required:"true"`
+	LogLevel      zerolog.Level `default:"1" split_words:"true"`
+	StorageType   string        `default:"file" split_words:"true"`
+	FilePath      string        `default:"backend" split_words:"true"`
+	ConsulAddress string        `default:"" split_words:"true"`
 }
 
 // Borik represents an individual instance of Borik
 type Borik struct {
-	Session *discordgo.Session
-	Config  *Config
-	Parser  *parsley.Parser
+	Session         *discordgo.Session
+	Config          *Config
+	Parser          *parsley.Parser
+	PipelineManager *PipelineManager
+	Storage         PersistenceBackend
 }
 
 // Instance is the current instance of Borik
@@ -43,6 +55,24 @@ func New() (*Borik, error) {
 	zerolog.SetGlobalLevel(config.LogLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
+	log.Debug().Msg("Creating persistence backend")
+	var backend PersistenceBackend
+	switch config.StorageType {
+	case "consul":
+		backend, err = NewConsulBackend(config)
+		if err != nil {
+			return nil, fmt.Errorf("error creating persistence backend: %w", err)
+		}
+	case "file":
+		backend, err = NewFSBackend(config)
+		if err != nil {
+			return nil, fmt.Errorf("error creating persistence backend: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("error creating persistence backend: %w", errors.New("unknown backend type"))
+	}
+	log.Debug().Msg("Persistence backend created")
+
 	log.Debug().Msg("Creating Discord session")
 	session, err := discordgo.New("Bot " + config.Token)
 	if err != nil {
@@ -56,18 +86,31 @@ func New() (*Borik, error) {
 	parser.RegisterHandler(session)
 	log.Debug().Msg("Parser created")
 
+	log.Debug().Msg("Creating pipeline manager")
+	manager, err := NewPipelineManager(backend)
+	if err != nil {
+		return nil, fmt.Errorf("error creating pipeline manager: %w", err)
+	}
+	log.Debug().Msg("Pipeline manager created")
+
 	log.Debug().Msg("Registering commands")
 	parser.NewCommand("", "Magikify an image", _MagikCommand)
 	parser.NewCommand("magik", "Magikify an image", _MagikCommand)
 	parser.NewCommand("arcweld", "Arc-weld an image", _ArcweldCommand)
 	parser.NewCommand("malt", "Malt an image", _MaltCommand)
 	parser.NewCommand("help", "List available commands", _HelpCommand)
+	parser.NewCommand("createpipeline", "Begin creation of a new command pipeline", _CreatePipelineCommand)
+	parser.NewCommand("runpipeline", "Run a command pipeline", _RunPipelineCommand)
+	parser.NewCommand("deletepipeline", "Delete a command pipeline", _DeletePipelineCommand)
+	parser.NewCommand("savepipeline", "Save a pending pipeline", _SavePipelineCommand)
 	log.Debug().Msg("Commands registered")
 
 	Instance = &Borik{
 		session,
 		&config,
 		parser,
+		manager,
+		backend,
 	}
 	log.Debug().Msg("Borik instance created")
 

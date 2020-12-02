@@ -4,12 +4,22 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
 // Magik runs content-aware scaling on an image.
-func Magik(src []byte, dest io.Writer, scale float64) error {
+func Magik(src []byte, dest io.Writer, opArgs interface{}) error {
+	var args _MagikArgs
+	var ok bool
+	args, ok = opArgs.(_MagikArgs)
+	if !ok {
+		err := mapstructure.Decode(opArgs, &args)
+		if err != nil {
+			return fmt.Errorf("error while decoding saved args: %w", err)
+		}
+	}
 	wand := imagick.NewMagickWand()
 	wand.ReadImageBlob(src)
 
@@ -22,7 +32,7 @@ func Magik(src []byte, dest io.Writer, scale float64) error {
 		Uint("dest_width", width/2).
 		Uint("dest_height", height/2).
 		Msg("Liquid rescaling image")
-	err := wand.LiquidRescaleImage(uint(width/2), uint(height/2), scale, 0)
+	err := wand.LiquidRescaleImage(uint(width/2), uint(height/2), args.Scale, 0)
 	if err != nil {
 		return fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
@@ -47,7 +57,7 @@ func Magik(src []byte, dest io.Writer, scale float64) error {
 }
 
 // Arcweld destroys an image via a combination of operations.
-func Arcweld(src []byte, dest io.Writer) error {
+func Arcweld(src []byte, dest io.Writer, opArgs interface{}) error {
 	wand := imagick.NewMagickWand()
 	wand.ReadImageBlob(src)
 
@@ -106,14 +116,23 @@ func Arcweld(src []byte, dest io.Writer) error {
 }
 
 // Malt mixes an image via a combination of operations.
-func Malt(src []byte, dest io.Writer, degree float64) error {
+func Malt(src []byte, dest io.Writer, opArgs interface{}) error {
+	var args _MaltArgs
+	var ok bool
+	args, ok = opArgs.(_MaltArgs)
+	if !ok {
+		err := mapstructure.Decode(opArgs, &args)
+		if err != nil {
+			return fmt.Errorf("error while decoding saved args: %w", err)
+		}
+	}
 	wand := imagick.NewMagickWand()
 	wand.ReadImageBlob(src)
 
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 
-	err := wand.SwirlImage(degree)
+	err := wand.SwirlImage(args.Degree)
 	if err != nil {
 		return fmt.Errorf("error while attempting to swirl: %w", err)
 	}
@@ -123,7 +142,7 @@ func Malt(src []byte, dest io.Writer, degree float64) error {
 		return fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
 
-	err = wand.SwirlImage(degree * -1)
+	err = wand.SwirlImage(args.Degree * -1)
 	if err != nil {
 		return fmt.Errorf("error while attempting to swirl: %w", err)
 	}
@@ -139,4 +158,10 @@ func Malt(src []byte, dest io.Writer, degree float64) error {
 	}
 
 	return nil
+}
+
+var _OperationMap = map[string](func([]byte, io.Writer, interface{}) error){
+	"magik":   Magik,
+	"arcweld": Arcweld,
+	"malt":    Malt,
 }
