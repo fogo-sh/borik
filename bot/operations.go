@@ -160,8 +160,46 @@ func Malt(src []byte, dest io.Writer, opArgs interface{}) error {
 	return nil
 }
 
+// Deepfry destroys an image via a combination of operations.
+func Deepfry(src []byte, dest io.Writer, opArgs interface{}) error {
+	var args _DeepfryArgs
+	var ok bool
+	args, ok = opArgs.(_DeepfryArgs)
+	if !ok {
+		err := mapstructure.Decode(opArgs, &args)
+		if err != nil {
+			return fmt.Errorf("error while decoding saved args: %w", err)
+		}
+	}
+	wand := imagick.NewMagickWand()
+	wand.ReadImageBlob(src)
+
+	err := wand.ResizeImage(wand.GetImageWidth()/args.DownscaleFactor, wand.GetImageHeight()/args.DownscaleFactor, imagick.FILTER_CUBIC, 0.5)
+	if err != nil {
+		return fmt.Errorf("error resizing image: %w", err)
+	}
+
+	err = wand.ResizeImage(wand.GetImageWidth()*args.DownscaleFactor, wand.GetImageHeight()*args.DownscaleFactor, imagick.FILTER_CUBIC, 0.5)
+	if err != nil {
+		return fmt.Errorf("error resizing image: %w", err)
+	}
+
+	err = wand.EdgeImage(args.EdgeRadius)
+	if err != nil {
+		return fmt.Errorf("error edge enhancing image: %w", err)
+	}
+
+	_, err = dest.Write(wand.GetImageBlob())
+	if err != nil {
+		return fmt.Errorf("error writing image: %w", err)
+	}
+
+	return nil
+}
+
 var _OperationMap = map[string](func([]byte, io.Writer, interface{}) error){
 	"magik":   Magik,
 	"arcweld": Arcweld,
 	"malt":    Malt,
+	"deepfry": Deepfry,
 }

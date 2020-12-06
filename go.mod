@@ -9,7 +9,7 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/nint8835/parsley v0.0.0-20201114031351-3109c6dfabd7
+	github.com/nint8835/parsley v0.0.0-20201115170259-ef08e3e5f5d3
 	github.com/rs/zerolog v1.20.0
 	golang.org/x/crypto v0.0.0-20201112155050-0c6587e931a9 // indirect
 	golang.org/x/sys v0.0.0-20201113233024-12cec1faf1ba // indirect
