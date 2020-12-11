@@ -98,7 +98,7 @@ func New() (*Borik, error) {
 	parser.NewCommand("magik", "Magikify an image.", _MagikCommand)
 	parser.NewCommand("arcweld", "Arc-weld an image.", _ArcweldCommand)
 	parser.NewCommand("malt", "Malt an image.", _MaltCommand)
-	parser.NewCommand("help", "List available commands.", _HelpCommand)
+	parser.NewCommand("help", "Get help for available commands.", _HelpCommand)
 	parser.NewCommand("createpipeline", "Begin creation of a new command pipeline.", _CreatePipelineCommand)
 	parser.NewCommand("runpipeline", "Run a command pipeline.", _RunPipelineCommand)
 	parser.NewCommand("deletepipeline", "Delete a command pipeline.", _DeletePipelineCommand)
