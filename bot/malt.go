@@ -9,8 +9,8 @@ import (
 )
 
 type _MaltArgs struct {
-	ImageURL string  `default:""`
-	Degree   float64 `default:"45"`
+	ImageURL string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
+	Degree   float64 `default:"45" description:"Number of degrees to rotate the image by while processing."`
 }
 
 func _MaltCommand(message *discordgo.MessageCreate, args _MaltArgs) {

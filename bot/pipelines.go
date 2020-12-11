@@ -162,7 +162,7 @@ func _CreatePipelineCommand(message *discordgo.MessageCreate, args struct{}) {
 }
 
 type _DeletePipelineArgs struct {
-	PipelineName string
+	PipelineName string `description:"Name of the pipeline to delete."`
 }
 
 func _DeletePipelineCommand(message *discordgo.MessageCreate, args _DeletePipelineArgs) {
@@ -175,8 +175,8 @@ func _DeletePipelineCommand(message *discordgo.MessageCreate, args _DeletePipeli
 }
 
 type _RunPipelineArgs struct {
-	PipelineName string
-	ImageURL     string `default:""`
+	PipelineName string `description:"Name of the pipeline to run."`
+	ImageURL     string `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 }
 
 func _RunPipelineCommand(message *discordgo.MessageCreate, args _RunPipelineArgs) {
@@ -276,7 +276,7 @@ func _RunPipelineCommand(message *discordgo.MessageCreate, args _RunPipelineArgs
 }
 
 type _SavePipelineArgs struct {
-	Name string
+	Name string `description:"Name to save your currently pending pipeline as."`
 }
 
 func _SavePipelineCommand(message *discordgo.MessageCreate, args _SavePipelineArgs) {

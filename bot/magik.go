@@ -9,8 +9,8 @@ import (
 )
 
 type _MagikArgs struct {
-	ImageURL string  `default:""`
-	Scale    float64 `default:"1"`
+	ImageURL string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
+	Scale    float64 `default:"1" description:"Scale of the magikification. Larger numbers produce more destroyed images."`
 }
 
 func _MagikCommand(message *discordgo.MessageCreate, args _MagikArgs) {

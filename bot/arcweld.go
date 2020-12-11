@@ -9,7 +9,7 @@ import (
 )
 
 type _ArcweldArgs struct {
-	ImageURL string `default:""`
+	ImageURL string `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 }
 
 func _ArcweldCommand(message *discordgo.MessageCreate, args _ArcweldArgs) {
