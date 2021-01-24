@@ -1,4 +1,4 @@
-module github.com/saturn-sh/borik
+module github.com/fogo-sh/borik
 
 go 1.15
 

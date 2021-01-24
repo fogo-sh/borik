@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/fogo-sh/borik/bot"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
-	"github.com/saturn-sh/borik/bot"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 

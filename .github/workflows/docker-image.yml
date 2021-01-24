@@ -17,5 +17,5 @@ jobs:
         username: nint8835
         password: ${{ secrets.GHCR_TOKEN }}
         registry: ghcr.io
-        repository: saturn-sh/borik
+        repository: fogo-sh/borik
         tags: latest
