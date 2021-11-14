@@ -2,5 +2,6 @@ version: "3"
 
 services:
   borik:
-    build: .
-    env_file: .env
+    image: ghcr.io/fogo-sh/borik
+    env_file:
+      - .env
