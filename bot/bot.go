@@ -104,6 +104,7 @@ func New() (*Borik, error) {
 	parser.NewCommand("deletepipeline", "Delete a command pipeline.", _DeletePipelineCommand)
 	parser.NewCommand("savepipeline", "Save a pending pipeline.", _SavePipelineCommand)
 	parser.NewCommand("deepfry", "Deep-fry an image.", _DeepfryCommand)
+	parser.NewCommand("stevepoint", "Have Steve point at an image.", _StevePointCommand)
 	log.Debug().Msg("Commands registered")
 
 	Instance = &Borik{
