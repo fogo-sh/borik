@@ -7,16 +7,16 @@ import (
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-type _ArcweldArgs struct {
+type ArcweldArgs struct {
 	ImageURL string `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 }
 
-func (args _ArcweldArgs) GetImageURL() string {
+func (args ArcweldArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
 // Arcweld destroys an image via a combination of operations.
-func Arcweld(src []byte, dest io.Writer, args _ArcweldArgs) error {
+func Arcweld(src []byte, dest io.Writer, args ArcweldArgs) error {
 	wand := imagick.NewMagickWand()
 	err := wand.ReadImageBlob(src)
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 //go:embed divine.png
 var divineOverlayImage []byte
 
-type _DivineArgs struct {
+type DivineArgs struct {
 	ImageURL   string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 	EdgeRadius float64 `default:"5" description:"Edge radius for edge detection."`
 	BlurRadius float64 `default:"4" description:"Gaussian blur radius."`
@@ -21,11 +21,11 @@ type _DivineArgs struct {
 	Hue        float64 `default:"100" description:"Relative percentage for the hue of the final image."`
 }
 
-func (args _DivineArgs) GetImageURL() string {
+func (args DivineArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Divine(srcBytes []byte, destBuffer io.Writer, args _DivineArgs) error {
+func Divine(srcBytes []byte, destBuffer io.Writer, args DivineArgs) error {
 	overlay := imagick.NewMagickWand()
 	err := overlay.ReadImageBlob(divineOverlayImage)
 	if err != nil {

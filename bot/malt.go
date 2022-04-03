@@ -7,17 +7,17 @@ import (
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-type _MaltArgs struct {
+type MaltArgs struct {
 	ImageURL string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 	Degree   float64 `default:"45" description:"Number of degrees to rotate the image by while processing."`
 }
 
-func (args _MaltArgs) GetImageURL() string {
+func (args MaltArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
 // Malt mixes an image via a combination of operations.
-func Malt(src []byte, dest io.Writer, args _MaltArgs) error {
+func Malt(src []byte, dest io.Writer, args MaltArgs) error {
 	wand := imagick.NewMagickWand()
 	err := wand.ReadImageBlob(src)
 	if err != nil {

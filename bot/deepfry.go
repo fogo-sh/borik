@@ -7,18 +7,18 @@ import (
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-type _DeepfryArgs struct {
+type DeepfryArgs struct {
 	ImageURL        string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 	EdgeRadius      float64 `default:"100" description:"Radius of outline to draw around edges."`
 	DownscaleFactor uint    `default:"2" description:"Factor to downscale the image by while processing."`
 }
 
-func (args _DeepfryArgs) GetImageURL() string {
+func (args DeepfryArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
 // Deepfry destroys an image via a combination of operations.
-func Deepfry(src []byte, dest io.Writer, args _DeepfryArgs) error {
+func Deepfry(src []byte, dest io.Writer, args DeepfryArgs) error {
 	wand := imagick.NewMagickWand()
 	err := wand.ReadImageBlob(src)
 	if err != nil {

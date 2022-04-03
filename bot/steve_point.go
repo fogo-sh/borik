@@ -11,16 +11,16 @@ import (
 //go:embed steve_point.png
 var stevePointImage []byte
 
-type _StevePointArgs struct {
+type StevePointArgs struct {
 	ImageURL string `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 	Flip     bool   `default:"false" description:"Have Steve pointing from the left side of the image, rather than the right side."`
 }
 
-func (args _StevePointArgs) GetImageURL() string {
+func (args StevePointArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func StevePoint(srcBytes []byte, destBuffer io.Writer, args _StevePointArgs) error {
+func StevePoint(srcBytes []byte, destBuffer io.Writer, args StevePointArgs) error {
 	steve := imagick.NewMagickWand()
 	err := steve.ReadImageBlob(stevePointImage)
 	if err != nil {

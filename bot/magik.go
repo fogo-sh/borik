@@ -8,17 +8,17 @@ import (
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-type _MagikArgs struct {
+type MagikArgs struct {
 	ImageURL string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 	Scale    float64 `default:"1" description:"Scale of the magikification. Larger numbers produce more destroyed images."`
 }
 
-func (args _MagikArgs) GetImageURL() string {
+func (args MagikArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
 // Magik runs content-aware scaling on an image.
-func Magik(src []byte, dest io.Writer, args _MagikArgs) error {
+func Magik(src []byte, dest io.Writer, args MagikArgs) error {
 	wand := imagick.NewMagickWand()
 	err := wand.ReadImageBlob(src)
 	if err != nil {
