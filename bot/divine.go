@@ -5,15 +5,13 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/bwmarrin/discordgo"
-	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
 //go:embed divine.png
 var divineOverlayImage []byte
 
-type _DivineArgs struct {
+type DivineArgs struct {
 	ImageURL   string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 	EdgeRadius float64 `default:"5" description:"Edge radius for edge detection."`
 	BlurRadius float64 `default:"4" description:"Gaussian blur radius."`
@@ -23,7 +21,11 @@ type _DivineArgs struct {
 	Hue        float64 `default:"100" description:"Relative percentage for the hue of the final image."`
 }
 
-func Divine(srcBytes []byte, destBuffer io.Writer, args _DivineArgs) error {
+func (args DivineArgs) GetImageURL() string {
+	return args.ImageURL
+}
+
+func Divine(srcBytes []byte, destBuffer io.Writer, args DivineArgs) error {
 	overlay := imagick.NewMagickWand()
 	err := overlay.ReadImageBlob(divineOverlayImage)
 	if err != nil {
@@ -84,22 +86,4 @@ func Divine(srcBytes []byte, destBuffer io.Writer, args _DivineArgs) error {
 		return fmt.Errorf("error writing output image: %w", err)
 	}
 	return nil
-}
-
-func _DivineCommand(message *discordgo.MessageCreate, args _DivineArgs) {
-	defer TypingIndicator(message)()
-
-	if args.ImageURL == "" {
-		var err error
-		args.ImageURL, err = FindImageURL(message)
-		if err != nil {
-			log.Error().Err(err).Msg("Error while attempting to find image to process")
-			return
-		}
-	}
-
-	operationWrapper := func(srcBytes []byte, destBuffer io.Writer) error {
-		return Divine(srcBytes, destBuffer, args)
-	}
-	PrepareAndInvokeOperation(message, args.ImageURL, operationWrapper)
 }

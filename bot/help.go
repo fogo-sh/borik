@@ -7,11 +7,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type _HelpArgs struct {
+type HelpArgs struct {
 	Command string `default:"" description:"Command to get help for."`
 }
 
-func _GenerateCommandList() *discordgo.MessageEmbed {
+func generateCommandList() *discordgo.MessageEmbed {
 	embed := &discordgo.MessageEmbed{
 		Title:  "Borik Help",
 		Fields: []*discordgo.MessageEmbedField{},
@@ -35,7 +35,7 @@ func _GenerateCommandList() *discordgo.MessageEmbed {
 	return embed
 }
 
-func _GenerateCommandHelp(command string) (*discordgo.MessageEmbed, error) {
+func generateCommandHelp(command string) (*discordgo.MessageEmbed, error) {
 	commandDetails, err := Instance.Parser.GetCommand(command)
 	if err != nil {
 		return nil, fmt.Errorf("error getting command details: %w", err)
@@ -62,18 +62,21 @@ func _GenerateCommandHelp(command string) (*discordgo.MessageEmbed, error) {
 	return embed, nil
 }
 
-func _HelpCommand(message *discordgo.MessageCreate, args _HelpArgs) {
+func HelpCommand(message *discordgo.MessageCreate, args HelpArgs) {
 	var embed *discordgo.MessageEmbed
 	if args.Command != "" {
 		var err error
-		embed, err = _GenerateCommandHelp(args.Command)
+		embed, err = generateCommandHelp(args.Command)
 		if err != nil {
-			Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\n%s\n```", err.Error()))
+			_, err := Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\n%s\n```", err.Error()))
+			if err != nil {
+				log.Error().Err(err).Msg("Error sending error message")
+			}
 			return
 		}
 
 	} else {
-		embed = _GenerateCommandList()
+		embed = generateCommandList()
 	}
 
 	_, err := Instance.Session.ChannelMessageSendEmbed(message.ChannelID, embed)

@@ -1,31 +1,59 @@
 package bot
 
 import (
+	"fmt"
 	"io"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
+	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-type _MagikArgs struct {
+type MagikArgs struct {
 	ImageURL string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 	Scale    float64 `default:"1" description:"Scale of the magikification. Larger numbers produce more destroyed images."`
 }
 
-func _MagikCommand(message *discordgo.MessageCreate, args _MagikArgs) {
-	defer TypingIndicator(message)()
+func (args MagikArgs) GetImageURL() string {
+	return args.ImageURL
+}
 
-	if args.ImageURL == "" {
-		var err error
-		args.ImageURL, err = FindImageURL(message)
-		if err != nil {
-			log.Error().Err(err).Msg("Error while attempting to find image to process")
-			return
-		}
+// Magik runs content-aware scaling on an image.
+func Magik(src []byte, dest io.Writer, args MagikArgs) error {
+	wand := imagick.NewMagickWand()
+	err := wand.ReadImageBlob(src)
+	if err != nil {
+		return fmt.Errorf("error reading image: %w", err)
 	}
 
-	operationWrapper := func(srcBytes []byte, destBuffer io.Writer) error {
-		return Magik(srcBytes, destBuffer, args)
+	width := wand.GetImageWidth()
+	height := wand.GetImageHeight()
+
+	log.Debug().
+		Uint("src_width", width).
+		Uint("src_height", height).
+		Uint("dest_width", width/2).
+		Uint("dest_height", height/2).
+		Msg("Liquid rescaling image")
+	err = wand.LiquidRescaleImage(width/2, height/2, args.Scale, 0)
+	if err != nil {
+		return fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
-	PrepareAndInvokeOperation(message, args.ImageURL, operationWrapper)
+
+	log.Debug().
+		Uint("dest_width", width).
+		Uint("dest_height", height).
+		Uint("src_width", width/2).
+		Uint("src_height", height/2).
+		Msg("Returning image to original size")
+	err = wand.ResizeImage(width, height, imagick.FILTER_LANCZOS, 1)
+	if err != nil {
+		return fmt.Errorf("error while attempting to resize image: %w", err)
+	}
+
+	_, err = dest.Write(wand.GetImageBlob())
+	if err != nil {
+		return fmt.Errorf("error writing image: %w", err)
+	}
+
+	return nil
 }

@@ -1,31 +1,56 @@
 package bot
 
 import (
+	"fmt"
 	"io"
 
-	"github.com/bwmarrin/discordgo"
-	"github.com/rs/zerolog/log"
+	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-type _MaltArgs struct {
+type MaltArgs struct {
 	ImageURL string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 	Degree   float64 `default:"45" description:"Number of degrees to rotate the image by while processing."`
 }
 
-func _MaltCommand(message *discordgo.MessageCreate, args _MaltArgs) {
-	defer TypingIndicator(message)()
+func (args MaltArgs) GetImageURL() string {
+	return args.ImageURL
+}
 
-	if args.ImageURL == "" {
-		var err error
-		args.ImageURL, err = FindImageURL(message)
-		if err != nil {
-			log.Error().Err(err).Msg("Error while attempting to find image to process")
-			return
-		}
+// Malt mixes an image via a combination of operations.
+func Malt(src []byte, dest io.Writer, args MaltArgs) error {
+	wand := imagick.NewMagickWand()
+	err := wand.ReadImageBlob(src)
+	if err != nil {
+		return fmt.Errorf("error reading image: %w", err)
 	}
 
-	operationWrapper := func(srcBytes []byte, destBuffer io.Writer) error {
-		return Malt(srcBytes, destBuffer, args)
+	width := wand.GetImageWidth()
+	height := wand.GetImageHeight()
+
+	err = wand.SwirlImage(args.Degree)
+	if err != nil {
+		return fmt.Errorf("error while attempting to swirl: %w", err)
 	}
-	PrepareAndInvokeOperation(message, args.ImageURL, operationWrapper)
+
+	err = wand.LiquidRescaleImage(width/2, height/2, 1, 0)
+	if err != nil {
+		return fmt.Errorf("error while attempting to liquid rescale: %w", err)
+	}
+
+	err = wand.SwirlImage(args.Degree * -1)
+	if err != nil {
+		return fmt.Errorf("error while attempting to swirl: %w", err)
+	}
+
+	err = wand.LiquidRescaleImage(width, height, 1, 0)
+	if err != nil {
+		return fmt.Errorf("error while attempting to liquid rescale: %w", err)
+	}
+
+	_, err = dest.Write(wand.GetImageBlob())
+	if err != nil {
+		return fmt.Errorf("error writing image: %w", err)
+	}
+
+	return nil
 }

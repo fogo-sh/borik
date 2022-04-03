@@ -1,32 +1,49 @@
 package bot
 
 import (
+	"fmt"
 	"io"
 
-	"github.com/bwmarrin/discordgo"
-	"github.com/rs/zerolog/log"
+	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-type _DeepfryArgs struct {
+type DeepfryArgs struct {
 	ImageURL        string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 	EdgeRadius      float64 `default:"100" description:"Radius of outline to draw around edges."`
 	DownscaleFactor uint    `default:"2" description:"Factor to downscale the image by while processing."`
 }
 
-func _DeepfryCommand(message *discordgo.MessageCreate, args _DeepfryArgs) {
-	defer TypingIndicator(message)()
+func (args DeepfryArgs) GetImageURL() string {
+	return args.ImageURL
+}
 
-	if args.ImageURL == "" {
-		var err error
-		args.ImageURL, err = FindImageURL(message)
-		if err != nil {
-			log.Error().Err(err).Msg("Error while attempting to find image to process")
-			return
-		}
+// Deepfry destroys an image via a combination of operations.
+func Deepfry(src []byte, dest io.Writer, args DeepfryArgs) error {
+	wand := imagick.NewMagickWand()
+	err := wand.ReadImageBlob(src)
+	if err != nil {
+		return fmt.Errorf("error reading image: %w", err)
 	}
 
-	operationWrapper := func(srcBytes []byte, destBuffer io.Writer) error {
-		return Deepfry(srcBytes, destBuffer, args)
+	err = wand.ResizeImage(wand.GetImageWidth()/args.DownscaleFactor, wand.GetImageHeight()/args.DownscaleFactor, imagick.FILTER_CUBIC, 0.5)
+	if err != nil {
+		return fmt.Errorf("error resizing image: %w", err)
 	}
-	PrepareAndInvokeOperation(message, args.ImageURL, operationWrapper)
+
+	err = wand.ResizeImage(wand.GetImageWidth()*args.DownscaleFactor, wand.GetImageHeight()*args.DownscaleFactor, imagick.FILTER_CUBIC, 0.5)
+	if err != nil {
+		return fmt.Errorf("error resizing image: %w", err)
+	}
+
+	err = wand.EdgeImage(args.EdgeRadius)
+	if err != nil {
+		return fmt.Errorf("error edge enhancing image: %w", err)
+	}
+
+	_, err = dest.Write(wand.GetImageBlob())
+	if err != nil {
+		return fmt.Errorf("error writing image: %w", err)
+	}
+
+	return nil
 }
