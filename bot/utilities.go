@@ -110,6 +110,8 @@ func Schedule(what func(), delay time.Duration) chan bool {
 
 // PrepareAndInvokeOperation downloads the image pulled from the message, invokes the given operation with said image, and posts the image in the channel of the message that invoked it
 func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageCreate, args K, operation func([]byte, io.Writer, K) error) {
+	defer TypingIndicator(message)()
+
 	imageUrl := args.GetImageURL()
 	if imageUrl == "" {
 		var err error

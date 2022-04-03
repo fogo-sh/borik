@@ -90,7 +90,5 @@ func Divine(srcBytes []byte, destBuffer io.Writer, args _DivineArgs) error {
 }
 
 func _DivineCommand(message *discordgo.MessageCreate, args _DivineArgs) {
-	defer TypingIndicator(message)()
-
 	PrepareAndInvokeOperation(message, args, Divine)
 }

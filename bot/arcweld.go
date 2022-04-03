@@ -13,7 +13,5 @@ func (args _ArcweldArgs) GetImageURL() string {
 }
 
 func _ArcweldCommand(message *discordgo.MessageCreate, args _ArcweldArgs) {
-	defer TypingIndicator(message)()
-
 	PrepareAndInvokeOperation(message, args, Arcweld)
 }

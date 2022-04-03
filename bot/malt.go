@@ -14,7 +14,5 @@ func (args _MaltArgs) GetImageURL() string {
 }
 
 func _MaltCommand(message *discordgo.MessageCreate, args _MaltArgs) {
-	defer TypingIndicator(message)()
-
 	PrepareAndInvokeOperation(message, args, Malt)
 }

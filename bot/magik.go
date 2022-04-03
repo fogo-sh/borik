@@ -14,7 +14,5 @@ func (args _MagikArgs) GetImageURL() string {
 }
 
 func _MagikCommand(message *discordgo.MessageCreate, args _MagikArgs) {
-	defer TypingIndicator(message)()
-
 	PrepareAndInvokeOperation(message, args, Magik)
 }

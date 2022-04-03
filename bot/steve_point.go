@@ -68,7 +68,5 @@ func StevePoint(srcBytes []byte, destBuffer io.Writer, args _StevePointArgs) err
 }
 
 func _StevePointCommand(message *discordgo.MessageCreate, args _StevePointArgs) {
-	defer TypingIndicator(message)()
-
 	PrepareAndInvokeOperation(message, args, StevePoint)
 }

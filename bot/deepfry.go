@@ -15,7 +15,5 @@ func (args _DeepfryArgs) GetImageURL() string {
 }
 
 func _DeepfryCommand(message *discordgo.MessageCreate, args _DeepfryArgs) {
-	defer TypingIndicator(message)()
-
 	PrepareAndInvokeOperation(message, args, Deepfry)
 }
