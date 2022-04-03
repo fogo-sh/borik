@@ -3,10 +3,11 @@ package bot
 import (
 	_ "embed"
 	"fmt"
+	"io"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v2/imagick"
-	"io"
 )
 
 //go:embed steve_point.png
@@ -75,8 +76,5 @@ func _StevePointCommand(message *discordgo.MessageCreate, args _StevePointArgs) 
 		}
 	}
 
-	operationWrapper := func(srcBytes []byte, destBuffer io.Writer) error {
-		return StevePoint(srcBytes, destBuffer, args)
-	}
-	PrepareAndInvokeOperation(message, args.ImageURL, operationWrapper)
+	PrepareAndInvokeOperation(message, args.ImageURL, args, StevePoint)
 }

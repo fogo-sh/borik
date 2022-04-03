@@ -4,22 +4,12 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
 // Magik runs content-aware scaling on an image.
-func Magik(src []byte, dest io.Writer, opArgs interface{}) error {
-	var args _MagikArgs
-	var ok bool
-	args, ok = opArgs.(_MagikArgs)
-	if !ok {
-		err := mapstructure.Decode(opArgs, &args)
-		if err != nil {
-			return fmt.Errorf("error while decoding saved args: %w", err)
-		}
-	}
+func Magik(src []byte, dest io.Writer, args _MagikArgs) error {
 	wand := imagick.NewMagickWand()
 	wand.ReadImageBlob(src)
 
@@ -57,7 +47,7 @@ func Magik(src []byte, dest io.Writer, opArgs interface{}) error {
 }
 
 // Arcweld destroys an image via a combination of operations.
-func Arcweld(src []byte, dest io.Writer, opArgs interface{}) error {
+func Arcweld(src []byte, dest io.Writer, args _ArcweldArgs) error {
 	wand := imagick.NewMagickWand()
 	wand.ReadImageBlob(src)
 
@@ -116,16 +106,7 @@ func Arcweld(src []byte, dest io.Writer, opArgs interface{}) error {
 }
 
 // Malt mixes an image via a combination of operations.
-func Malt(src []byte, dest io.Writer, opArgs interface{}) error {
-	var args _MaltArgs
-	var ok bool
-	args, ok = opArgs.(_MaltArgs)
-	if !ok {
-		err := mapstructure.Decode(opArgs, &args)
-		if err != nil {
-			return fmt.Errorf("error while decoding saved args: %w", err)
-		}
-	}
+func Malt(src []byte, dest io.Writer, args _MaltArgs) error {
 	wand := imagick.NewMagickWand()
 	wand.ReadImageBlob(src)
 
@@ -161,16 +142,7 @@ func Malt(src []byte, dest io.Writer, opArgs interface{}) error {
 }
 
 // Deepfry destroys an image via a combination of operations.
-func Deepfry(src []byte, dest io.Writer, opArgs interface{}) error {
-	var args _DeepfryArgs
-	var ok bool
-	args, ok = opArgs.(_DeepfryArgs)
-	if !ok {
-		err := mapstructure.Decode(opArgs, &args)
-		if err != nil {
-			return fmt.Errorf("error while decoding saved args: %w", err)
-		}
-	}
+func Deepfry(src []byte, dest io.Writer, args _DeepfryArgs) error {
 	wand := imagick.NewMagickWand()
 	wand.ReadImageBlob(src)
 

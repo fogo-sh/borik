@@ -1,8 +1,6 @@
 package bot
 
 import (
-	"io"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
 )
@@ -24,8 +22,5 @@ func _MaltCommand(message *discordgo.MessageCreate, args _MaltArgs) {
 		}
 	}
 
-	operationWrapper := func(srcBytes []byte, destBuffer io.Writer) error {
-		return Malt(srcBytes, destBuffer, args)
-	}
-	PrepareAndInvokeOperation(message, args.ImageURL, operationWrapper)
+	PrepareAndInvokeOperation(message, args.ImageURL, args, Malt)
 }

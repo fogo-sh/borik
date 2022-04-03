@@ -1,8 +1,6 @@
 package bot
 
 import (
-	"io"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
 )
@@ -25,8 +23,5 @@ func _DeepfryCommand(message *discordgo.MessageCreate, args _DeepfryArgs) {
 		}
 	}
 
-	operationWrapper := func(srcBytes []byte, destBuffer io.Writer) error {
-		return Deepfry(srcBytes, destBuffer, args)
-	}
-	PrepareAndInvokeOperation(message, args.ImageURL, operationWrapper)
+	PrepareAndInvokeOperation(message, args.ImageURL, args, Deepfry)
 }

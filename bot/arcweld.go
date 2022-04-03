@@ -1,8 +1,6 @@
 package bot
 
 import (
-	"io"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
 )
@@ -23,8 +21,5 @@ func _ArcweldCommand(message *discordgo.MessageCreate, args _ArcweldArgs) {
 		}
 	}
 
-	operationWrapper := func(srcBytes []byte, destBuffer io.Writer) error {
-		return Arcweld(srcBytes, destBuffer, args)
-	}
-	PrepareAndInvokeOperation(message, args.ImageURL, operationWrapper)
+	PrepareAndInvokeOperation(message, args.ImageURL, args, Arcweld)
 }

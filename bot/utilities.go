@@ -12,6 +12,24 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// TypingIndicator invokes a typing indicator in the channel of a message
+func TypingIndicator(message *discordgo.MessageCreate) func() {
+	stopTyping := Schedule(
+		func() {
+			log.Debug().Str("channel", message.ChannelID).Msg("Invoking typing indicator in channel")
+			err := Instance.Session.ChannelTyping(message.ChannelID)
+			if err != nil {
+				log.Error().Err(err).Msg("Error while attempting invoke typing indicator in channel")
+				return
+			}
+		},
+		5*time.Second,
+	)
+	return func() {
+		stopTyping <- true
+	}
+}
+
 // ImageURLFromMessage attempts to retrieve an image URL from a given message.
 func ImageURLFromMessage(m *discordgo.Message) (string, bool) {
 	if len(m.Embeds) == 1 {
@@ -84,4 +102,31 @@ func Schedule(what func(), delay time.Duration) chan bool {
 	}()
 
 	return stop
+}
+
+// PrepareAndInvokeOperation downloads the image pulled from the message, invokes the given operation with said image, and posts the image in the channel of the message that invoked it
+func PrepareAndInvokeOperation[K any](message *discordgo.MessageCreate, imageURL string, args K, operation func([]byte, io.Writer, K) error) {
+	srcBytes, err := DownloadImage(imageURL)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to download image to process")
+		return
+	}
+	destBuffer := new(bytes.Buffer)
+
+	log.Debug().Msg("Beginning processing image")
+	err = operation(srcBytes, destBuffer, args)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to process image")
+		return
+	}
+
+	log.Debug().Msg("Image processed, uploading result")
+	_, err = Instance.Session.ChannelFileSend(message.ChannelID, "test.jpeg", destBuffer)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to send image")
+		_, err = Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send error message")
+		}
+	}
 }
