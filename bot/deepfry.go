@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/bwmarrin/discordgo"
@@ -15,15 +14,6 @@ type _DeepfryArgs struct {
 }
 
 func _DeepfryCommand(message *discordgo.MessageCreate, args _DeepfryArgs) {
-	if args.ImageURL == "pipeline" {
-		err := Instance.PipelineManager.AddStep(message, "deepfry", args)
-		if err != nil {
-			Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\nerror adding step to pipeline: %s\n```", err.Error()))
-		}
-		Instance.Session.ChannelMessageSend(message.ChannelID, "Step added to pipeline.")
-		return
-	}
-
 	defer TypingIndicator(message)()
 
 	if args.ImageURL == "" {
