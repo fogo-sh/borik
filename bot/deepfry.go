@@ -1,7 +1,10 @@
 package bot
 
 import (
-	"github.com/bwmarrin/discordgo"
+	"fmt"
+	"io"
+
+	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
 type _DeepfryArgs struct {
@@ -14,6 +17,33 @@ func (args _DeepfryArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func _DeepfryCommand(message *discordgo.MessageCreate, args _DeepfryArgs) {
-	PrepareAndInvokeOperation(message, args, Deepfry)
+// Deepfry destroys an image via a combination of operations.
+func Deepfry(src []byte, dest io.Writer, args _DeepfryArgs) error {
+	wand := imagick.NewMagickWand()
+	err := wand.ReadImageBlob(src)
+	if err != nil {
+		return fmt.Errorf("error reading image: %w", err)
+	}
+
+	err = wand.ResizeImage(wand.GetImageWidth()/args.DownscaleFactor, wand.GetImageHeight()/args.DownscaleFactor, imagick.FILTER_CUBIC, 0.5)
+	if err != nil {
+		return fmt.Errorf("error resizing image: %w", err)
+	}
+
+	err = wand.ResizeImage(wand.GetImageWidth()*args.DownscaleFactor, wand.GetImageHeight()*args.DownscaleFactor, imagick.FILTER_CUBIC, 0.5)
+	if err != nil {
+		return fmt.Errorf("error resizing image: %w", err)
+	}
+
+	err = wand.EdgeImage(args.EdgeRadius)
+	if err != nil {
+		return fmt.Errorf("error edge enhancing image: %w", err)
+	}
+
+	_, err = dest.Write(wand.GetImageBlob())
+	if err != nil {
+		return fmt.Errorf("error writing image: %w", err)
+	}
+
+	return nil
 }

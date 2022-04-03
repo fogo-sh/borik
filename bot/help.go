@@ -68,7 +68,10 @@ func _HelpCommand(message *discordgo.MessageCreate, args _HelpArgs) {
 		var err error
 		embed, err = _GenerateCommandHelp(args.Command)
 		if err != nil {
-			Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\n%s\n```", err.Error()))
+			_, err := Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\n%s\n```", err.Error()))
+			if err != nil {
+				log.Error().Err(err).Msg("Error sending error message")
+			}
 			return
 		}
 

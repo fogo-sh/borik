@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/bwmarrin/discordgo"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
@@ -87,8 +86,4 @@ func Divine(srcBytes []byte, destBuffer io.Writer, args _DivineArgs) error {
 		return fmt.Errorf("error writing output image: %w", err)
 	}
 	return nil
-}
-
-func _DivineCommand(message *discordgo.MessageCreate, args _DivineArgs) {
-	PrepareAndInvokeOperation(message, args, Divine)
 }

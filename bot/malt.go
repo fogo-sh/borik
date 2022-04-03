@@ -1,7 +1,10 @@
 package bot
 
 import (
-	"github.com/bwmarrin/discordgo"
+	"fmt"
+	"io"
+
+	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
 type _MaltArgs struct {
@@ -13,6 +16,41 @@ func (args _MaltArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func _MaltCommand(message *discordgo.MessageCreate, args _MaltArgs) {
-	PrepareAndInvokeOperation(message, args, Malt)
+// Malt mixes an image via a combination of operations.
+func Malt(src []byte, dest io.Writer, args _MaltArgs) error {
+	wand := imagick.NewMagickWand()
+	err := wand.ReadImageBlob(src)
+	if err != nil {
+		return fmt.Errorf("error reading image: %w", err)
+	}
+
+	width := wand.GetImageWidth()
+	height := wand.GetImageHeight()
+
+	err = wand.SwirlImage(args.Degree)
+	if err != nil {
+		return fmt.Errorf("error while attempting to swirl: %w", err)
+	}
+
+	err = wand.LiquidRescaleImage(width/2, height/2, 1, 0)
+	if err != nil {
+		return fmt.Errorf("error while attempting to liquid rescale: %w", err)
+	}
+
+	err = wand.SwirlImage(args.Degree * -1)
+	if err != nil {
+		return fmt.Errorf("error while attempting to swirl: %w", err)
+	}
+
+	err = wand.LiquidRescaleImage(width, height, 1, 0)
+	if err != nil {
+		return fmt.Errorf("error while attempting to liquid rescale: %w", err)
+	}
+
+	_, err = dest.Write(wand.GetImageBlob())
+	if err != nil {
+		return fmt.Errorf("error writing image: %w", err)
+	}
+
+	return nil
 }

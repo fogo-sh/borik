@@ -63,14 +63,14 @@ func New() (*Borik, error) {
 	log.Debug().Msg("Parser created")
 
 	log.Debug().Msg("Registering commands")
-	parser.NewCommand("", "Magikify an image.", _MagikCommand)
-	parser.NewCommand("magik", "Magikify an image.", _MagikCommand)
-	parser.NewCommand("arcweld", "Arc-weld an image.", _ArcweldCommand)
-	parser.NewCommand("malt", "Malt an image.", _MaltCommand)
-	parser.NewCommand("help", "Get help for available commands.", _HelpCommand)
-	parser.NewCommand("deepfry", "Deep-fry an image.", _DeepfryCommand)
-	parser.NewCommand("stevepoint", "Have Steve point at an image.", _StevePointCommand)
-	parser.NewCommand("divine", "Sever the divine light.", _DivineCommand)
+	_ = parser.NewCommand("", "Magikify an image.", MakeImageOpCommand(Magik))
+	_ = parser.NewCommand("magik", "Magikify an image.", MakeImageOpCommand(Magik))
+	_ = parser.NewCommand("arcweld", "Arc-weld an image.", MakeImageOpCommand(Arcweld))
+	_ = parser.NewCommand("malt", "Malt an image.", MakeImageOpCommand(Malt))
+	_ = parser.NewCommand("help", "Get help for available commands.", _HelpCommand)
+	_ = parser.NewCommand("deepfry", "Deep-fry an image.", MakeImageOpCommand(Deepfry))
+	_ = parser.NewCommand("stevepoint", "Have Steve point at an image.", MakeImageOpCommand(StevePoint))
+	_ = parser.NewCommand("divine", "Sever the divine light.", MakeImageOpCommand(Divine))
 	log.Debug().Msg("Commands registered")
 
 	Instance = &Borik{

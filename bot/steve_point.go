@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/bwmarrin/discordgo"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
@@ -65,8 +64,4 @@ func StevePoint(srcBytes []byte, destBuffer io.Writer, args _StevePointArgs) err
 		return fmt.Errorf("error writing output image: %w", err)
 	}
 	return nil
-}
-
-func _StevePointCommand(message *discordgo.MessageCreate, args _StevePointArgs) {
-	PrepareAndInvokeOperation(message, args, StevePoint)
 }
