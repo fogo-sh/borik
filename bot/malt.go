@@ -2,7 +2,6 @@ package bot
 
 import (
 	"fmt"
-	"io"
 
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
@@ -17,40 +16,29 @@ func (args MaltArgs) GetImageURL() string {
 }
 
 // Malt mixes an image via a combination of operations.
-func Malt(src []byte, dest io.Writer, args MaltArgs) error {
-	wand := imagick.NewMagickWand()
-	err := wand.ReadImageBlob(src)
-	if err != nil {
-		return fmt.Errorf("error reading image: %w", err)
-	}
-
+func Malt(wand *imagick.MagickWand, args MaltArgs) ([]*imagick.MagickWand, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 
-	err = wand.SwirlImage(args.Degree)
+	err := wand.SwirlImage(args.Degree)
 	if err != nil {
-		return fmt.Errorf("error while attempting to swirl: %w", err)
+		return nil, fmt.Errorf("error while attempting to swirl: %w", err)
 	}
 
 	err = wand.LiquidRescaleImage(width/2, height/2, 1, 0)
 	if err != nil {
-		return fmt.Errorf("error while attempting to liquid rescale: %w", err)
+		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
 
 	err = wand.SwirlImage(args.Degree * -1)
 	if err != nil {
-		return fmt.Errorf("error while attempting to swirl: %w", err)
+		return nil, fmt.Errorf("error while attempting to swirl: %w", err)
 	}
 
 	err = wand.LiquidRescaleImage(width, height, 1, 0)
 	if err != nil {
-		return fmt.Errorf("error while attempting to liquid rescale: %w", err)
+		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
 
-	_, err = dest.Write(wand.GetImageBlob())
-	if err != nil {
-		return fmt.Errorf("error writing image: %w", err)
-	}
-
-	return nil
+	return []*imagick.MagickWand{wand}, nil
 }

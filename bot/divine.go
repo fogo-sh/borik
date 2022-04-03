@@ -3,7 +3,6 @@ package bot
 import (
 	_ "embed"
 	"fmt"
-	"io"
 
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
@@ -25,42 +24,36 @@ func (args DivineArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Divine(srcBytes []byte, destBuffer io.Writer, args DivineArgs) error {
+func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, error) {
 	overlay := imagick.NewMagickWand()
 	err := overlay.ReadImageBlob(divineOverlayImage)
 	if err != nil {
-		return fmt.Errorf("error reading divine overlay image: %w", err)
-	}
-
-	wand := imagick.NewMagickWand()
-	err = wand.ReadImageBlob(srcBytes)
-	if err != nil {
-		return fmt.Errorf("error reading input image: %w", err)
+		return nil, fmt.Errorf("error reading divine overlay image: %w", err)
 	}
 
 	err = wand.EvaluateImageChannel(imagick.CHANNEL_BLUE, imagick.EVAL_OP_SET, 0)
 	if err != nil {
-		return fmt.Errorf("error removing blue channel: %w", err)
+		return nil, fmt.Errorf("error removing blue channel: %w", err)
 	}
 
 	err = wand.EvaluateImageChannel(imagick.CHANNEL_GREEN, imagick.EVAL_OP_SET, 0)
 	if err != nil {
-		return fmt.Errorf("error removing green channel: %w", err)
+		return nil, fmt.Errorf("error removing green channel: %w", err)
 	}
 
 	err = wand.EdgeImage(args.EdgeRadius)
 	if err != nil {
-		return fmt.Errorf("error edge detecting: %w", err)
+		return nil, fmt.Errorf("error edge detecting: %w", err)
 	}
 
 	err = wand.ModulateImage(args.Brightness, args.Saturation, args.Hue)
 	if err != nil {
-		return fmt.Errorf("error decreasing saturation: %w", err)
+		return nil, fmt.Errorf("error decreasing saturation: %w", err)
 	}
 
 	err = wand.GaussianBlurImage(args.BlurRadius, args.BlurSigma)
 	if err != nil {
-		return fmt.Errorf("error blurring image: %w", err)
+		return nil, fmt.Errorf("error blurring image: %w", err)
 	}
 
 	inputHeight := wand.GetImageHeight()
@@ -78,12 +71,8 @@ func Divine(srcBytes []byte, destBuffer io.Writer, args DivineArgs) error {
 		int((inputHeight/2)-(overlayHeight/2)),
 	)
 	if err != nil {
-		return fmt.Errorf("error compositing image: %w", err)
+		return nil, fmt.Errorf("error compositing image: %w", err)
 	}
 
-	_, err = destBuffer.Write(wand.GetImageBlob())
-	if err != nil {
-		return fmt.Errorf("error writing output image: %w", err)
-	}
-	return nil
+	return []*imagick.MagickWand{wand}, nil
 }

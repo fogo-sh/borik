@@ -6,17 +6,19 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
+	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
 type ImageOperationArgs interface {
 	GetImageURL() string
 }
 
-type ImageOperation[K ImageOperationArgs] func([]byte, io.Writer, K) error
+type ImageOperation[K ImageOperationArgs] func(*imagick.MagickWand, K) ([]*imagick.MagickWand, error)
 
 // TypingIndicator invokes a typing indicator in the channel of a message
 func TypingIndicator(message *discordgo.MessageCreate) func() {
@@ -136,17 +138,76 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		log.Error().Err(err).Msg("Failed to download image to process")
 		return
 	}
+
+	input := imagick.NewMagickWand()
+	err = input.ReadImageBlob(srcBytes)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to read image")
+		return
+	}
+	input = input.CoalesceImages()
+
+	var resultFrames []*imagick.MagickWand
+
+	for i := 0; i < int(input.GetNumberImages()); i++ {
+		input.SetIteratorIndex(i)
+		inputFrame := input.GetImage().Clone()
+		log.Debug().Int("frame", i).Msg("Beginning processing frame")
+		output, err := operation(inputFrame, args)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to process image")
+			return
+		}
+		resultFrames = append(resultFrames, output...)
+	}
+
+	resultImage := imagick.NewMagickWand()
+
+	for _, frame := range resultFrames {
+		err := resultImage.AddImage(frame)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to add frame")
+			return
+		}
+	}
+
+	input.ResetIterator()
+	resultImage.ResetIterator()
+
+	if len(resultFrames) > 1 {
+		err := resultImage.SetImageFormat("GIF")
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to set result format")
+			return
+		}
+		err = resultImage.SetImageDelay(input.GetImageDelay())
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to set framerate")
+			return
+		}
+	} else {
+		err := resultImage.SetImageFormat("PNG")
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to set result format")
+			return
+		}
+	}
+
+	resultImage = resultImage.DeconstructImages()
 	destBuffer := new(bytes.Buffer)
 
-	log.Debug().Msg("Beginning processing image")
-	err = operation(srcBytes, destBuffer, args)
+	_, err = destBuffer.Write(resultImage.GetImagesBlob())
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to process image")
+		log.Error().Err(err).Msg("Failed to write image")
 		return
 	}
 
 	log.Debug().Msg("Image processed, uploading result")
-	_, err = Instance.Session.ChannelFileSend(message.ChannelID, "test.jpeg", destBuffer)
+	_, err = Instance.Session.ChannelFileSend(
+		message.ChannelID,
+		fmt.Sprintf("output.%s", strings.ToLower(resultImage.GetImageFormat())),
+		destBuffer,
+	)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to send image")
 		_, err = Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
