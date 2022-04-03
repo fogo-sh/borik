@@ -73,6 +73,7 @@ func New() (*Borik, error) {
 	parser.NewCommand("help", "Get help for available commands.", _HelpCommand)
 	parser.NewCommand("deepfry", "Deep-fry an image.", _DeepfryCommand)
 	parser.NewCommand("stevepoint", "Have Steve point at an image.", _StevePointCommand)
+	parser.NewCommand("divine", "Sever the divine light.", _DivineCommand)
 	log.Debug().Msg("Commands registered")
 
 	Instance = &Borik{
