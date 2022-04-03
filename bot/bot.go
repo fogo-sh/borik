@@ -2,7 +2,6 @@ package bot
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -33,11 +32,9 @@ type Config struct {
 
 // Borik represents an individual instance of Borik
 type Borik struct {
-	Session         *discordgo.Session
-	Config          *Config
-	Parser          *parsley.Parser
-	PipelineManager *PipelineManager
-	Storage         PersistenceBackend
+	Session *discordgo.Session
+	Config  *Config
+	Parser  *parsley.Parser
 }
 
 // Instance is the current instance of Borik
@@ -55,24 +52,6 @@ func New() (*Borik, error) {
 	zerolog.SetGlobalLevel(config.LogLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
-	log.Debug().Msg("Creating persistence backend")
-	var backend PersistenceBackend
-	switch config.StorageType {
-	case "consul":
-		backend, err = NewConsulBackend(config)
-		if err != nil {
-			return nil, fmt.Errorf("error creating persistence backend: %w", err)
-		}
-	case "file":
-		backend, err = NewFSBackend(config)
-		if err != nil {
-			return nil, fmt.Errorf("error creating persistence backend: %w", err)
-		}
-	default:
-		return nil, fmt.Errorf("error creating persistence backend: %w", errors.New("unknown backend type"))
-	}
-	log.Debug().Msg("Persistence backend created")
-
 	log.Debug().Msg("Creating Discord session")
 	session, err := discordgo.New("Bot " + config.Token)
 	if err != nil {
@@ -86,23 +65,12 @@ func New() (*Borik, error) {
 	parser.RegisterHandler(session)
 	log.Debug().Msg("Parser created")
 
-	log.Debug().Msg("Creating pipeline manager")
-	manager, err := NewPipelineManager(backend)
-	if err != nil {
-		return nil, fmt.Errorf("error creating pipeline manager: %w", err)
-	}
-	log.Debug().Msg("Pipeline manager created")
-
 	log.Debug().Msg("Registering commands")
 	parser.NewCommand("", "Magikify an image.", _MagikCommand)
 	parser.NewCommand("magik", "Magikify an image.", _MagikCommand)
 	parser.NewCommand("arcweld", "Arc-weld an image.", _ArcweldCommand)
 	parser.NewCommand("malt", "Malt an image.", _MaltCommand)
 	parser.NewCommand("help", "Get help for available commands.", _HelpCommand)
-	parser.NewCommand("createpipeline", "Begin creation of a new command pipeline.", _CreatePipelineCommand)
-	parser.NewCommand("runpipeline", "Run a command pipeline.", _RunPipelineCommand)
-	parser.NewCommand("deletepipeline", "Delete a command pipeline.", _DeletePipelineCommand)
-	parser.NewCommand("savepipeline", "Save a pending pipeline.", _SavePipelineCommand)
 	parser.NewCommand("deepfry", "Deep-fry an image.", _DeepfryCommand)
 	parser.NewCommand("stevepoint", "Have Steve point at an image.", _StevePointCommand)
 	log.Debug().Msg("Commands registered")
@@ -111,8 +79,6 @@ func New() (*Borik, error) {
 		session,
 		&config,
 		parser,
-		manager,
-		backend,
 	}
 	log.Debug().Msg("Borik instance created")
 

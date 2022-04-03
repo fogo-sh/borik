@@ -196,10 +196,3 @@ func Deepfry(src []byte, dest io.Writer, opArgs interface{}) error {
 
 	return nil
 }
-
-var _OperationMap = map[string](func([]byte, io.Writer, interface{}) error){
-	"magik":   Magik,
-	"arcweld": Arcweld,
-	"malt":    Malt,
-	"deepfry": Deepfry,
-}
