@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
@@ -16,6 +15,10 @@ var stevePointImage []byte
 type _StevePointArgs struct {
 	ImageURL string `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 	Flip     bool   `default:"false" description:"Have Steve pointing from the left side of the image, rather than the right side."`
+}
+
+func (args _StevePointArgs) GetImageURL() string {
+	return args.ImageURL
 }
 
 func StevePoint(srcBytes []byte, destBuffer io.Writer, args _StevePointArgs) error {
@@ -67,14 +70,5 @@ func StevePoint(srcBytes []byte, destBuffer io.Writer, args _StevePointArgs) err
 func _StevePointCommand(message *discordgo.MessageCreate, args _StevePointArgs) {
 	defer TypingIndicator(message)()
 
-	if args.ImageURL == "" {
-		var err error
-		args.ImageURL, err = FindImageURL(message)
-		if err != nil {
-			log.Error().Err(err).Msg("Error while attempting to find image to process")
-			return
-		}
-	}
-
-	PrepareAndInvokeOperation(message, args.ImageURL, args, StevePoint)
+	PrepareAndInvokeOperation(message, args, StevePoint)
 }

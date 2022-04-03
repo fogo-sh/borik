@@ -2,7 +2,6 @@ package bot
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/rs/zerolog/log"
 )
 
 type _MaltArgs struct {
@@ -10,17 +9,12 @@ type _MaltArgs struct {
 	Degree   float64 `default:"45" description:"Number of degrees to rotate the image by while processing."`
 }
 
+func (args _MaltArgs) GetImageURL() string {
+	return args.ImageURL
+}
+
 func _MaltCommand(message *discordgo.MessageCreate, args _MaltArgs) {
 	defer TypingIndicator(message)()
 
-	if args.ImageURL == "" {
-		var err error
-		args.ImageURL, err = FindImageURL(message)
-		if err != nil {
-			log.Error().Err(err).Msg("Error while attempting to find image to process")
-			return
-		}
-	}
-
-	PrepareAndInvokeOperation(message, args.ImageURL, args, Malt)
+	PrepareAndInvokeOperation(message, args, Malt)
 }

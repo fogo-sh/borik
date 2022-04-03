@@ -12,6 +12,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type ImageOperationArgs interface {
+	GetImageURL() string
+}
+
 // TypingIndicator invokes a typing indicator in the channel of a message
 func TypingIndicator(message *discordgo.MessageCreate) func() {
 	stopTyping := Schedule(
@@ -105,8 +109,18 @@ func Schedule(what func(), delay time.Duration) chan bool {
 }
 
 // PrepareAndInvokeOperation downloads the image pulled from the message, invokes the given operation with said image, and posts the image in the channel of the message that invoked it
-func PrepareAndInvokeOperation[K any](message *discordgo.MessageCreate, imageURL string, args K, operation func([]byte, io.Writer, K) error) {
-	srcBytes, err := DownloadImage(imageURL)
+func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageCreate, args K, operation func([]byte, io.Writer, K) error) {
+	imageUrl := args.GetImageURL()
+	if imageUrl == "" {
+		var err error
+		imageUrl, err = FindImageURL(message)
+		if err != nil {
+			log.Error().Err(err).Msg("Error while attempting to find image to process")
+			return
+		}
+	}
+
+	srcBytes, err := DownloadImage(imageUrl)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to download image to process")
 		return

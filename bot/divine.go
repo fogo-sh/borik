@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
@@ -21,6 +20,10 @@ type _DivineArgs struct {
 	Brightness float64 `default:"100" description:"Relative percentage for the brightness of the final image."`
 	Saturation float64 `default:"50" description:"Relative percentage for the saturation of the final image."`
 	Hue        float64 `default:"100" description:"Relative percentage for the hue of the final image."`
+}
+
+func (args _DivineArgs) GetImageURL() string {
+	return args.ImageURL
 }
 
 func Divine(srcBytes []byte, destBuffer io.Writer, args _DivineArgs) error {
@@ -89,14 +92,5 @@ func Divine(srcBytes []byte, destBuffer io.Writer, args _DivineArgs) error {
 func _DivineCommand(message *discordgo.MessageCreate, args _DivineArgs) {
 	defer TypingIndicator(message)()
 
-	if args.ImageURL == "" {
-		var err error
-		args.ImageURL, err = FindImageURL(message)
-		if err != nil {
-			log.Error().Err(err).Msg("Error while attempting to find image to process")
-			return
-		}
-	}
-
-	PrepareAndInvokeOperation(message, args.ImageURL, args, Divine)
+	PrepareAndInvokeOperation(message, args, Divine)
 }

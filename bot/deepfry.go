@@ -2,7 +2,6 @@ package bot
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/rs/zerolog/log"
 )
 
 type _DeepfryArgs struct {
@@ -11,17 +10,12 @@ type _DeepfryArgs struct {
 	DownscaleFactor uint    `default:"2" description:"Factor to downscale the image by while processing."`
 }
 
+func (args _DeepfryArgs) GetImageURL() string {
+	return args.ImageURL
+}
+
 func _DeepfryCommand(message *discordgo.MessageCreate, args _DeepfryArgs) {
 	defer TypingIndicator(message)()
 
-	if args.ImageURL == "" {
-		var err error
-		args.ImageURL, err = FindImageURL(message)
-		if err != nil {
-			log.Error().Err(err).Msg("Error while attempting to find image to process")
-			return
-		}
-	}
-
-	PrepareAndInvokeOperation(message, args.ImageURL, args, Deepfry)
+	PrepareAndInvokeOperation(message, args, Deepfry)
 }
