@@ -9,7 +9,7 @@ import (
 type GmagikArgs struct {
 	ImageURL   string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
 	Scale      float64 `default:"1" description:"Scale of the magikification. Larger numbers produce more destroyed images."`
-	Iterations uint    `default:"10" description:"Number of iterations of magikification to run."`
+	Iterations uint    `default:"5" description:"Number of iterations of magikification to run."`
 }
 
 func (args GmagikArgs) GetImageURL() string {
