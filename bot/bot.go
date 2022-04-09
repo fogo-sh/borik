@@ -76,6 +76,7 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("haah", "Mirror the left half of an image.", MakeImageOpCommand(Haah))
 	_ = parser.NewCommand("woow", "Mirror the top half of an image.", MakeImageOpCommand(Woow))
 	_ = parser.NewCommand("hooh", "Mirror the bottom half of an image.", MakeImageOpCommand(Hooh))
+	_ = parser.NewCommand("transform", "Apply transformations to an image.", MakeImageOpCommand(Transform))
 	log.Debug().Msg("Commands registered")
 
 	Instance = &Borik{

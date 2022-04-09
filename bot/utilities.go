@@ -163,7 +163,8 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 
 	resultImage := imagick.NewMagickWand()
 
-	for _, frame := range resultFrames {
+	for index, frame := range resultFrames {
+		log.Debug().Int("frame", index).Msg("Adding frame to result image")
 		err := resultImage.AddImage(frame)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to add frame")
@@ -174,6 +175,7 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 	input.ResetIterator()
 	resultImage.ResetIterator()
 
+	log.Debug().Msg("Setting image format")
 	if len(resultFrames) > 1 {
 		err := resultImage.SetImageFormat("GIF")
 		if err != nil {
@@ -193,9 +195,17 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		}
 	}
 
+	log.Debug().Msg("Repaging image")
+	err = resultImage.ResetImagePage("0x0+0+0")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to repage image")
+	}
+
+	log.Debug().Msg("Deconstructing image")
 	resultImage = resultImage.DeconstructImages()
 	destBuffer := new(bytes.Buffer)
 
+	log.Debug().Msg("Writing output image")
 	_, err = destBuffer.Write(resultImage.GetImagesBlob())
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to write image")
