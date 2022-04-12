@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/rs/zerolog/log"
@@ -17,7 +18,7 @@ func (args MagikArgs) GetImageURL() string {
 }
 
 // Magik runs content-aware scaling on an image.
-func Magik(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
+func Magik(ctx context.Context, wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 

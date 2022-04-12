@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v2/imagick"
@@ -17,7 +18,7 @@ func (args DeepfryArgs) GetImageURL() string {
 }
 
 // Deepfry destroys an image via a combination of operations.
-func Deepfry(wand *imagick.MagickWand, args DeepfryArgs) ([]*imagick.MagickWand, error) {
+func Deepfry(ctx context.Context, wand *imagick.MagickWand, args DeepfryArgs) ([]*imagick.MagickWand, error) {
 	err := wand.ResizeImage(wand.GetImageWidth()/args.DownscaleFactor, wand.GetImageHeight()/args.DownscaleFactor, imagick.FILTER_CUBIC, 0.5)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)

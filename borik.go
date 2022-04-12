@@ -1,15 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/fogo-sh/borik/bot"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v2/imagick"
+
+	"github.com/fogo-sh/borik/bot"
 )
 
 func main() {
@@ -26,6 +28,13 @@ func main() {
 		fmt.Printf("Error creating Borik instance: %s\n", err.Error())
 		return
 	}
+
+	defer func() {
+		err := borik.Trace.Shutdown(context.Background())
+		if err != nil {
+			log.Error().Err(err).Msg("Error shutting down trace provider")
+		}
+	}()
 
 	log.Debug().Msg("Opening Discord connection")
 	err = borik.Session.Open()

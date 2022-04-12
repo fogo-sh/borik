@@ -1,6 +1,8 @@
 package bot
 
 import (
+	"context"
+
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
@@ -14,7 +16,7 @@ func (args TransformArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Transform(wand *imagick.MagickWand, args TransformArgs) ([]*imagick.MagickWand, error) {
+func Transform(ctx context.Context, wand *imagick.MagickWand, args TransformArgs) ([]*imagick.MagickWand, error) {
 	transformedImage := wand.TransformImage(args.Crop, args.Size)
 
 	return []*imagick.MagickWand{transformedImage}, nil

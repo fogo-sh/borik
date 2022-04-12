@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v2/imagick"
@@ -15,7 +16,7 @@ func (args ArcweldArgs) GetImageURL() string {
 }
 
 // Arcweld destroys an image via a combination of operations.
-func Arcweld(wand *imagick.MagickWand, args ArcweldArgs) ([]*imagick.MagickWand, error) {
+func Arcweld(ctx context.Context, wand *imagick.MagickWand, args ArcweldArgs) ([]*imagick.MagickWand, error) {
 	err := wand.EvaluateImageChannel(imagick.CHANNEL_RED, imagick.EVAL_OP_LEFT_SHIFT, 1)
 	if err != nil {
 		return nil, fmt.Errorf("error left-shifting red channel: %w", err)
