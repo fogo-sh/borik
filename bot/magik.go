@@ -3,7 +3,6 @@ package bot
 import (
 	"fmt"
 
-	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
@@ -16,27 +15,15 @@ func (args MagikArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func liquidRescaleHelper(wand *imagick.MagickWand, args MagikArgs, wMultiplier float64, hMultiplier float64) ([]*imagick.MagickWand, error) {
+func magikHelper(wand *imagick.MagickWand, args MagikArgs, wMultiplier float64, hMultiplier float64) ([]*imagick.MagickWand, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 
-	log.Debug().
-		Uint("src_width", width).
-		Uint("src_height", height).
-		Uint("dest_width", width/2).
-		Uint("dest_height", height/2).
-		Msg("Liquid rescaling image")
 	err := wand.LiquidRescaleImage(uint(float64(width)*wMultiplier), uint(float64(height)*hMultiplier), args.Scale, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
 
-	log.Debug().
-		Uint("dest_width", width).
-		Uint("dest_height", height).
-		Uint("src_width", width/2).
-		Uint("src_height", height/2).
-		Msg("Returning image to original size")
 	err = wand.ResizeImage(width, height, imagick.FILTER_LANCZOS, 1)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to resize image: %w", err)
@@ -47,10 +34,10 @@ func liquidRescaleHelper(wand *imagick.MagickWand, args MagikArgs, wMultiplier f
 
 // Magik runs content-aware scaling on an image.
 func Magik(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
-	return liquidRescaleHelper(wand, args, 0.5, 0.5)
+	return magikHelper(wand, args, 0.5, 0.5)
 }
 
 // Lagik runs content-aware scaling on an image.
 func Lagik(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
-	return liquidRescaleHelper(wand, args, 1.5, 1.5)
+	return magikHelper(wand, args, 1.5, 1.5)
 }
