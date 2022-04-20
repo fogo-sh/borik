@@ -16,8 +16,7 @@ func (args MagikArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-// Magik runs content-aware scaling on an image.
-func Magik(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
+func liquidRescaleHelper(wand *imagick.MagickWand, args MagikArgs, wMultiplier float64, hMultiplier float64) ([]*imagick.MagickWand, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 
@@ -27,7 +26,7 @@ func Magik(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, err
 		Uint("dest_width", width/2).
 		Uint("dest_height", height/2).
 		Msg("Liquid rescaling image")
-	err := wand.LiquidRescaleImage(width/2, height/2, args.Scale, 0)
+	err := wand.LiquidRescaleImage(uint(float64(width)*wMultiplier), uint(float64(height)*hMultiplier), args.Scale, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
@@ -44,4 +43,14 @@ func Magik(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, err
 	}
 
 	return []*imagick.MagickWand{wand}, nil
+}
+
+// Magik runs content-aware scaling on an image.
+func Magik(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
+	return liquidRescaleHelper(wand, args, 0.5, 0.5)
+}
+
+// Lagik runs content-aware scaling on an image.
+func Lagik(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
+	return liquidRescaleHelper(wand, args, 1.5, 1.5)
 }
