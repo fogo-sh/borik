@@ -7,8 +7,8 @@ import (
 )
 
 type OtsuArgs struct {
-	ImageURL string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
-	Invert   bool `default:"false" description:"Invert the colors."`
+	ImageURL string `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
+	Invert   bool   `default:"false" description:"Invert the colors."`
 }
 
 func (args OtsuArgs) GetImageURL() string {
@@ -17,8 +17,8 @@ func (args OtsuArgs) GetImageURL() string {
 
 // Otsu turns the image black and white by applying an adaptive threshold using Otsu's method
 func Otsu(wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error) {
-	var numOfPixels int
-	histogram := make(map[int]int)
+	numOfPixels := 0
+	histogram := map[int]int{}
 
 	pixelIterator := wand.NewPixelIterator()
 	for y := 0; y < int(wand.GetImageHeight()); y++ {
@@ -28,20 +28,20 @@ func Otsu(wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error
 		}
 
 		for _, pixel := range pixels {
-			var gray int
+			gray := 0
 			alpha := pixel.GetAlpha()
-			if (alpha != 1) {
-				if (alpha == 0) {
-					pixel.SetColor("#FFFFFF");
+			if alpha != 1 {
+				if alpha == 0 {
+					pixel.SetColor("#FFFFFF")
 					gray = 255
 				}
-				pixel.SetAlpha(1);
+				pixel.SetAlpha(1)
 			}
-			if (gray != 255) {
-				red   := pixel.GetRed() * 255
+			if gray != 255 {
+				red := pixel.GetRed() * 255
 				green := pixel.GetGreen() * 255
-				blue  := pixel.GetBlue() * 255
-				gray = int(0.2126 * red + 0.7152 * green + 0.0722 * blue)
+				blue := pixel.GetBlue() * 255
+				gray = int(0.2126*red + 0.7152*green + 0.0722*blue)
 				hex := fmt.Sprintf("#%02x%02x%02x", gray, gray, gray)
 				pixel.SetColor(hex)
 			}
@@ -54,35 +54,35 @@ func Otsu(wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error
 			return nil, fmt.Errorf("error writing colours back to image when converting to grayscale: %w", err)
 		}
 	}
-	var sum int
+	
+	sum := 0
 	for i := 0; i < 256; i++ {
 		sum += i * histogram[i]
 	}
 
-	var sumB, wB, wF, threshold, varMax int
+	sumBackground, weightBackground, weightForeground, threshold, maxVariance := 0, 0, 0, 0, 0
 
 	for i := 0; i < 256; i++ {
-		wB += histogram[i]
-		if wB == 0 {
+		weightBackground += histogram[i]
+		if weightBackground == 0 {
 			continue
 		}
 
-		wF = numOfPixels - wB
-		if wF == 0 {
+		weightForeground = numOfPixels - weightBackground
+		if weightForeground == 0 {
 			continue
 		}
 
-		sumB += i * histogram[i]
+		sumBackground += i * histogram[i]
 
-		mB := sumB / wB
-		mF := (sum - sumB) / wF
-		varBetween := wB * wF * (mB - mF) * (mB - mF);
-		if varBetween > varMax {
-			varMax = varBetween
+		meanBackground := sumBackground / weightBackground
+		meanForeground := (sum - sumBackground) / weightForeground
+		betweenVariance := weightBackground * weightForeground * (meanBackground - meanForeground) * (meanBackground - meanForeground)
+		if betweenVariance > maxVariance {
+			maxVariance = betweenVariance
 			threshold = i
 		}
 	}
-
 
 	pixelIterator = wand.NewPixelIterator()
 	for y := 0; y < int(wand.GetImageHeight()); y++ {
