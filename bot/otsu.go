@@ -54,7 +54,7 @@ func Otsu(wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error
 			return nil, fmt.Errorf("error writing colours back to image when converting to grayscale: %w", err)
 		}
 	}
-	
+
 	sum := 0
 	for i := 0; i < 256; i++ {
 		sum += i * histogram[i]
