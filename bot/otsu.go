@@ -54,29 +54,35 @@ func Otsu(wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error
 			return nil, fmt.Errorf("error writing colours back to image when converting to grayscale: %w", err)
 		}
 	}
-
 	var sum int
 	for i := 0; i < 256; i++ {
 		sum += i * histogram[i]
 	}
 
-	var sumB, wB, wF, threshold int
-	var varMax float64
+	var sumB, wB, wF, threshold, varMax int
 
-	for i := 1; i < 256; i++ {
-		wF = numOfPixels - wB
-		if wB > 0 && wF > 0 {
-			mB := sumB / wB
-			mF := (sum - sumB) / wF
-			varBetween := float64(wB * wF * (mB - mF) * (mB - mF));
-			if varBetween > varMax {
-				varMax = varBetween
-				threshold = i
-			}
-		}
+	for i := 0; i < 256; i++ {
 		wB += histogram[i]
-		sumB += (i - 1) * histogram[i]
+		if wB == 0 {
+			continue
+		}
+
+		wF = numOfPixels - wB
+		if wF == 0 {
+			continue
+		}
+
+		sumB += i * histogram[i]
+
+		mB := sumB / wB
+		mF := (sum - sumB) / wF
+		varBetween := wB * wF * (mB - mF) * (mB - mF);
+		if varBetween > varMax {
+			varMax = varBetween
+			threshold = i
+		}
 	}
+
 
 	pixelIterator = wand.NewPixelIterator()
 	for y := 0; y < int(wand.GetImageHeight()); y++ {
