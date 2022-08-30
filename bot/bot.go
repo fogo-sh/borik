@@ -63,6 +63,7 @@ func New() (*Borik, error) {
 	log.Debug().Msg("Parser created")
 
 	log.Debug().Msg("Registering commands")
+	_ = parser.NewCommand("sorik_test", "Test sorik functionality", SorikTest)
 	_ = parser.NewCommand("", "Magikify an image.", MakeImageOpCommand(Magik))
 	_ = parser.NewCommand("magik", "Magikify an image.", MakeImageOpCommand(Magik))
 	_ = parser.NewCommand("lagik", "Lagikify an image.", MakeImageOpCommand(Lagik))

@@ -6,12 +6,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v2/imagick"
+
+	"github.com/fogo-sh/sorik/interpreter"
 )
 
 type ImageOperationArgs interface {
@@ -216,6 +221,64 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 	_, err = Instance.Session.ChannelFileSend(
 		message.ChannelID,
 		fmt.Sprintf("output.%s", strings.ToLower(resultImage.GetImageFormat())),
+		destBuffer,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to send image")
+		_, err = Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send error message")
+		}
+	}
+}
+
+// ExecuteSorikScript uses sorik to process an image.
+func ExecuteSorikScript(command string, source []byte, message *discordgo.MessageCreate, args ImageOperationArgs) {
+	defer TypingIndicator(message)()
+
+	imageUrl := args.GetImageURL()
+	if imageUrl == "" {
+		var err error
+		imageUrl, err = FindImageURL(message)
+		if err != nil {
+			log.Error().Err(err).Msg("Error while attempting to find image to process")
+			return
+		}
+	}
+
+	var argsMap map[string]string
+	err := mapstructure.Decode(args, &argsMap)
+	if err != nil {
+		log.Error().Err(err).Msg("Error encoding args to struct")
+		return
+	}
+	argsMap["image_url"] = imageUrl
+
+	outImg, err := interpreter.Run(
+		fmt.Sprintf("%s.star", command),
+		source,
+		argsMap,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("Error executing sorik script")
+		return
+	}
+
+	destBuffer := new(bytes.Buffer)
+	destBuffer.Write(outImg)
+
+	u, err := url.Parse(imageUrl)
+	if err != nil {
+		log.Error().Err(err).Msg("Error parsing image URL")
+		return
+	}
+
+	fileName := path.Base(u.Path)
+
+	log.Debug().Msg("Image processed, uploading result")
+	_, err = Instance.Session.ChannelFileSend(
+		message.ChannelID,
+		fileName,
 		destBuffer,
 	)
 	if err != nil {
