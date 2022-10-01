@@ -17,11 +17,11 @@ func (args MagikArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func magikHelper(wand *imagick.MagickWand, args MagikArgs, wMultiplier float64, hMultiplier float64) ([]*imagick.MagickWand, error) {
+func magikHelper(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 
-	err := wand.LiquidRescaleImage(uint(float64(width)*wMultiplier), uint(float64(height)*hMultiplier), args.Scale, 0)
+	err := wand.LiquidRescaleImage(uint(float64(width)*args.WidthMultiplier), uint(float64(height)*args.HeightMultiplier), args.Scale, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
@@ -36,5 +36,27 @@ func magikHelper(wand *imagick.MagickWand, args MagikArgs, wMultiplier float64, 
 
 // Magik runs content-aware scaling on an image.
 func Magik(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
-	return magikHelper(wand, args, args.WidthMultiplier, args.HeightMultiplier)
+	return magikHelper(wand, args)
+}
+
+type LagikArgs struct {
+	ImageURL string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
+	Scale    float64 `default:"1" description:"Scale of the magikification. Larger numbers produce more destroyed images."`
+}
+
+func (args LagikArgs) GetImageURL() string {
+	return args.ImageURL
+}
+
+// Lagik runs content-aware scaling on an image.
+func Lagik(wand *imagick.MagickWand, args LagikArgs) ([]*imagick.MagickWand, error) {
+	return magikHelper(
+		wand,
+		MagikArgs{
+			ImageURL:         args.ImageURL,
+			Scale:            args.Scale,
+			WidthMultiplier:  1.5,
+			HeightMultiplier: 1.5,
+		},
+	)
 }
