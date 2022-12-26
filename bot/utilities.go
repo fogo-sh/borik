@@ -61,6 +61,8 @@ func ImageURLFromMessage(m *discordgo.Message) string {
 	for _, embed := range m.Embeds {
 		if embed.Type == "Image" {
 			return embed.URL
+		} else if embed.Image != nil {
+			return embed.Image.URL
 		}
 	}
 
