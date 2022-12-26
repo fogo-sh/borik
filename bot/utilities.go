@@ -57,27 +57,26 @@ func Schedule(what func(), delay time.Duration) chan bool {
 }
 
 // ImageURLFromMessage attempts to retrieve an image URL from a given message.
-func ImageURLFromMessage(m *discordgo.Message) (string, bool) {
-	if len(m.Embeds) == 1 {
-		embed := m.Embeds[0]
-
+func ImageURLFromMessage(m *discordgo.Message) string {
+	for _, embed := range m.Embeds {
 		if embed.Type == "Image" {
-			return embed.URL, true
+			return embed.URL
 		}
 	}
 
-	if len(m.Attachments) == 1 {
-		attachment := m.Attachments[0]
-		return attachment.URL, true
+	for _, attachment := range m.Attachments {
+		if strings.HasPrefix(attachment.ContentType, "image/") {
+			return attachment.URL
+		}
 	}
 
-	return "", false
+	return ""
 }
 
 // FindImageURL attempts to find an image in a given message, falling back to scanning message history if one cannot be found.
 func FindImageURL(m *discordgo.MessageCreate) (string, error) {
-	if embedURL, found := ImageURLFromMessage(m.Message); found {
-		return embedURL, nil
+	if imageUrl := ImageURLFromMessage(m.Message); imageUrl != "" {
+		return imageUrl, nil
 	}
 
 	messages, err := Instance.Session.ChannelMessages(m.ChannelID, 20, m.ID, "", "")
@@ -86,8 +85,8 @@ func FindImageURL(m *discordgo.MessageCreate) (string, error) {
 	}
 
 	for _, message := range messages {
-		if embedURL, found := ImageURLFromMessage(message); found {
-			return embedURL, nil
+		if imageUrl := ImageURLFromMessage(message); imageUrl != "" {
+			return imageUrl, nil
 		}
 	}
 	return "", errors.New("unable to locate an image")
