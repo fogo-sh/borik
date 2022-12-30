@@ -81,6 +81,12 @@ func FindImageURL(m *discordgo.MessageCreate) (string, error) {
 		return imageUrl, nil
 	}
 
+	if m.ReferencedMessage != nil {
+		if imageUrl := ImageURLFromMessage(m.ReferencedMessage); imageUrl != "" {
+			return imageUrl, nil
+		}
+	}
+
 	messages, err := Instance.Session.ChannelMessages(m.ChannelID, 20, m.ID, "", "")
 	if err != nil {
 		return "", fmt.Errorf("error retrieving message history: %w", err)
