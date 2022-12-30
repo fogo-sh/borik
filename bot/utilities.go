@@ -220,10 +220,15 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 	}
 
 	log.Debug().Msg("Image processed, uploading result")
-	_, err = Instance.Session.ChannelFileSend(
+	_, err = Instance.Session.ChannelMessageSendComplex(
 		message.ChannelID,
-		fmt.Sprintf("output.%s", strings.ToLower(resultImage.GetImageFormat())),
-		destBuffer,
+		&discordgo.MessageSend{
+			Reference: message.Reference(),
+			File: &discordgo.File{
+				Name:   fmt.Sprintf("output.%s", strings.ToLower(resultImage.GetImageFormat())),
+				Reader: destBuffer,
+			},
+		},
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to send image")
