@@ -84,6 +84,7 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("rotate", "Rotate an image.", MakeImageOpCommand(Rotate))
 	_ = parser.NewCommand("avatar", "Fetch the avatar for a user.", Avatar)
 	_ = parser.NewCommand("sticker", "Fetch a sticker as an image.", Sticker)
+	_ = parser.NewCommand("emoji", "Fetch an emoji as an image.", Emoji)
 	registerGraphicsFormatCommands(parser)
 	log.Debug().Msg("Commands registered")
 

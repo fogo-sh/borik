@@ -203,3 +203,67 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 		},
 	)
 }
+
+func getEmojiUrl(emoji *discordgo.Emoji) string {
+	if emoji.Animated {
+		return fmt.Sprintf("https://cdn.discordapp.com/emojis/%s.gif?size=1024&quality=lossless", emoji.ID)
+	} else {
+		return fmt.Sprintf("https://cdn.discordapp.com/emojis/%s.webp?size=1024&quality=lossless", emoji.ID)
+	}
+}
+
+type EmojiArgs struct {
+	Emoji string `description:"Emoji to fetch as an image. Leave blank to attempt to auto-locate an emoji." default:""`
+}
+
+func Emoji(message *discordgo.MessageCreate, args EmojiArgs) {
+	var targetEmoji *discordgo.Emoji
+	if len(message.GetCustomEmojis()) >= 1 {
+		targetEmoji = message.GetCustomEmojis()[0]
+	} else if message.ReferencedMessage != nil && len(message.ReferencedMessage.GetCustomEmojis()) >= 1 {
+		targetEmoji = message.ReferencedMessage.GetCustomEmojis()[0]
+	} else {
+		messages, err := Instance.Session.ChannelMessages(message.ChannelID, 20, message.ID, "", "")
+		if err != nil {
+			log.Error().Err(err).Msg("Error fetching message history")
+			return
+		}
+
+		for _, message := range messages {
+			if len(message.GetCustomEmojis()) >= 1 {
+				targetEmoji = message.GetCustomEmojis()[0]
+				break
+			}
+		}
+	}
+
+	if targetEmoji == nil {
+		Instance.Session.ChannelMessageSendReply(
+			message.ChannelID,
+			"No emoji found! Please post the emoji you are looking for and try again, or retry this command as a reply on the target message.",
+			message.Reference(),
+		)
+		return
+	}
+
+	emojiUrl := getEmojiUrl(targetEmoji)
+
+	resp, err := http.Get(emojiUrl)
+	if err != nil {
+		log.Error().Err(err).Msg("Error downloading emoji")
+		return
+	}
+	defer resp.Body.Close()
+
+	Instance.Session.ChannelMessageSendComplex(
+		message.ChannelID,
+		&discordgo.MessageSend{
+			Reference: message.Reference(),
+			File: &discordgo.File{
+				Name:        path.Base(resp.Request.URL.Path),
+				ContentType: resp.Header.Get("Content-Type"),
+				Reader:      resp.Body,
+			},
+		},
+	)
+}
