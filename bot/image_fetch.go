@@ -1,13 +1,16 @@
 package bot
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"path"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
+	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
 type AvatarArgs struct {
@@ -60,23 +63,66 @@ func Avatar(message *discordgo.MessageCreate, args AvatarArgs) {
 	)
 }
 
-func getStickerUrl(sticker *discordgo.Sticker) (string, error) {
+func getStickerUrl(sticker *discordgo.Sticker) (string, string, error) {
 	switch sticker.FormatType {
 	case discordgo.StickerFormatTypePNG:
 		return fmt.Sprintf(
 			"https://media.discordapp.net/stickers/%s.webp?size=1024",
 			sticker.ID,
-		), nil
+		), "image/webp", nil
 	case discordgo.StickerFormatTypeAPNG:
 		return fmt.Sprintf(
 			"https://media.discordapp.net/stickers/%s.png?size=1024",
 			sticker.ID,
-		), nil
+		), "image/gif", nil
 	case discordgo.StickerFormatTypeLottie:
-		return "", errors.New("this command does not currently support Lottie (built-in) stickers")
+		return "", "", errors.New("this command does not currently support Lottie / built-in stickers")
 	default:
-		return "", errors.New("unknown sticker format")
+		return "", "", errors.New("unknown sticker format")
 	}
+}
+
+func apngToGif(apngInput io.Reader) (io.Reader, error) {
+	input, err := io.ReadAll(apngInput)
+	if err != nil {
+		return nil, fmt.Errorf("error copying input: %w", err)
+	}
+
+	wand := imagick.NewMagickWand()
+
+	err = wand.SetFilename("APNG:profile.png")
+	if err != nil {
+		return nil, fmt.Errorf("error setting format: %w", err)
+	}
+
+	err = wand.ReadImageBlob(input)
+	if err != nil {
+		return nil, fmt.Errorf("error reading input image: %w", err)
+	}
+
+	for i := uint(0); i < wand.GetNumberImages(); i++ {
+		wand.SetIteratorIndex(int(i))
+		err = wand.SetImageDispose(imagick.DISPOSE_BACKGROUND)
+		if err != nil {
+			return nil, fmt.Errorf("error configuring disposal: %w", err)
+		}
+	}
+
+	wand.ResetIterator()
+	wand.CoalesceImages()
+
+	err = wand.SetFilename("profile.gif")
+	if err != nil {
+		return nil, fmt.Errorf("error setting format: %w", err)
+	}
+
+	outBuffer := new(bytes.Buffer)
+	_, err = outBuffer.Write(wand.GetImagesBlob())
+	if err != nil {
+		return nil, fmt.Errorf("error outputting image: %w", err)
+	}
+
+	return outBuffer, nil
 }
 
 func Sticker(message *discordgo.MessageCreate, args struct{}) {
@@ -109,7 +155,7 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 		return
 	}
 
-	stickerUrl, err := getStickerUrl(targetSticker)
+	stickerUrl, contentType, err := getStickerUrl(targetSticker)
 	if err != nil {
 		Instance.Session.ChannelMessageSendReply(
 			message.ChannelID,
@@ -126,14 +172,33 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 	}
 	defer resp.Body.Close()
 
+	var file io.Reader
+	var filename string
+	if targetSticker.FormatType == discordgo.StickerFormatTypeAPNG {
+		file, err = apngToGif(resp.Body)
+		if err != nil {
+			Instance.Session.ChannelMessageSendReply(
+				message.ChannelID,
+				fmt.Sprintf("Error converting APNG sticker to GIF:\n```%s```", err),
+				message.Reference(),
+			)
+			log.Error().Err(err).Msg("Error converting APNG sticker to GIF")
+			return
+		}
+		filename = path.Base(resp.Request.URL.Path) + ".gif"
+	} else {
+		file = resp.Body
+		filename = path.Base(resp.Request.URL.Path)
+	}
+
 	Instance.Session.ChannelMessageSendComplex(
 		message.ChannelID,
 		&discordgo.MessageSend{
 			Reference: message.Reference(),
 			File: &discordgo.File{
-				Name:        path.Base(resp.Request.URL.Path),
-				ContentType: resp.Header.Get("Content-Type"),
-				Reader:      resp.Body,
+				Name:        filename,
+				ContentType: contentType,
+				Reader:      file,
 			},
 		},
 	)
