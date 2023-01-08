@@ -28,6 +28,8 @@ func Deepfry(wand *imagick7.MagickWand, args DeepfryArgs) ([]*imagick7.MagickWan
 		return nil, fmt.Errorf("error resizing image: %w", err)
 	}
 
+	wand.SetImageChannelMask(imagick7.CHANNEL_RED | imagick7.CHANNEL_GREEN | imagick7.CHANNEL_BLUE)
+
 	err = wand.EdgeImage(args.EdgeRadius)
 	if err != nil {
 		return nil, fmt.Errorf("error edge enhancing image: %w", err)

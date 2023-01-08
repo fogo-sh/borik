@@ -31,25 +31,19 @@ func Divine(wand *imagick7.MagickWand, args DivineArgs) ([]*imagick7.MagickWand,
 		return nil, fmt.Errorf("error reading divine overlay image: %w", err)
 	}
 
-	wand.SetImageChannelMask(imagick7.CHANNEL_BLUE)
+	wand.SetImageChannelMask(imagick7.CHANNEL_BLUE | imagick7.CHANNEL_GREEN)
 	err = wand.EvaluateImage(imagick7.EVAL_OP_SET, 0)
 	if err != nil {
-		return nil, fmt.Errorf("error removing blue channel: %w", err)
+		return nil, fmt.Errorf("error removing blue & green channels: %w", err)
 	}
 
-	wand.SetImageChannelMask(imagick7.CHANNEL_GREEN)
-	err = wand.EvaluateImage(imagick7.EVAL_OP_SET, 0)
+	wand.SetImageChannelMask(imagick7.CHANNEL_RED | imagick7.CHANNEL_GREEN | imagick7.CHANNEL_BLUE)
+
+	// TODO: Figure out why this is making everything white
+	err = wand.EdgeImage(args.EdgeRadius)
 	if err != nil {
-		return nil, fmt.Errorf("error removing green channel: %w", err)
+		return nil, fmt.Errorf("error edge detecting: %w", err)
 	}
-
-	wand.SetImageChannelMask(imagick7.CHANNELS_DEFAULT)
-
-	// TODO: Figure out why EdgeImage returns a black image unless ImageMagick 6 has been initialized
-	//err = wand.EdgeImage(args.EdgeRadius)
-	//if err != nil {
-	//	return nil, fmt.Errorf("error edge detecting: %w", err)
-	//}
 
 	err = wand.ModulateImage(args.Brightness, args.Saturation, args.Hue)
 	if err != nil {
