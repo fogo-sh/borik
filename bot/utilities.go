@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -359,4 +360,20 @@ func PrepareAndInvokeOperationV7[K ImageOperationArgs](message *discordgo.Messag
 			log.Error().Err(err).Msg("Failed to send error message")
 		}
 	}
+}
+
+// ResizeMaintainAspectRatio resizes an input wand to fit within a box of given width and height, maintaining aspect ratio
+func ResizeMaintainAspectRatio(wand *imagick7.MagickWand, width uint, height uint) error {
+	inputHeight := float64(wand.GetImageHeight())
+	inputWidth := float64(wand.GetImageWidth())
+
+	widthMagFactor := float64(width) / inputWidth
+	heightMagFactor := float64(height) / inputHeight
+
+	minFactor := math.Min(widthMagFactor, heightMagFactor)
+
+	targetWidth := inputWidth * minFactor
+	targetHeight := inputHeight * minFactor
+
+	return wand.ScaleImage(uint(targetWidth), uint(targetHeight))
 }
