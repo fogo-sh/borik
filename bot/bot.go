@@ -68,7 +68,7 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("lagik", "Lagikify an image.", MakeImageOpCommandV7(Lagik))
 	_ = parser.NewCommand("gmagik", "Repeatedly magikify an image.", MakeImageOpCommandV7(Gmagik))
 	_ = parser.NewCommand("arcweld", "Arc-weld an image.", MakeImageOpCommandV6(Arcweld))
-	_ = parser.NewCommand("malt", "Malt an image.", MakeImageOpCommandV6(Malt))
+	_ = parser.NewCommand("malt", "Malt an image.", MakeImageOpCommandV7(Malt))
 	_ = parser.NewCommand("help", "Get help for available commands.", HelpCommand)
 	_ = parser.NewCommand("deepfry", "Deep-fry an image.", MakeImageOpCommandV7(Deepfry))
 	_ = parser.NewCommand("stevepoint", "Have Steve point at an image.", MakeImageOpCommandV7(StevePoint))
