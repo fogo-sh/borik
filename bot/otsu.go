@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
+	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type OtsuArgs struct {
@@ -16,7 +16,7 @@ func (args OtsuArgs) GetImageURL() string {
 }
 
 // Otsu turns the image black and white by applying an adaptive threshold using Otsu's method
-func Otsu(wand *imagick6.MagickWand, args OtsuArgs) ([]*imagick6.MagickWand, error) {
+func Otsu(wand *imagick7.MagickWand, args OtsuArgs) ([]*imagick7.MagickWand, error) {
 	numOfPixels := 0
 	histogram := map[int]int{}
 
@@ -105,5 +105,5 @@ func Otsu(wand *imagick6.MagickWand, args OtsuArgs) ([]*imagick6.MagickWand, err
 		}
 	}
 
-	return []*imagick6.MagickWand{wand}, nil
+	return []*imagick7.MagickWand{wand}, nil
 }
