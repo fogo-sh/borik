@@ -10,7 +10,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
-	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
+	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type AvatarArgs struct {
@@ -88,7 +88,7 @@ func apngToGif(apngInput io.Reader) (io.Reader, error) {
 		return nil, fmt.Errorf("error copying input: %w", err)
 	}
 
-	wand := imagick6.NewMagickWand()
+	wand := imagick7.NewMagickWand()
 
 	err = wand.SetFilename("APNG:profile.png")
 	if err != nil {
@@ -102,7 +102,7 @@ func apngToGif(apngInput io.Reader) (io.Reader, error) {
 
 	for i := uint(0); i < wand.GetNumberImages(); i++ {
 		wand.SetIteratorIndex(int(i))
-		err = wand.SetImageDispose(imagick6.DISPOSE_BACKGROUND)
+		err = wand.SetImageDispose(imagick7.DISPOSE_BACKGROUND)
 		if err != nil {
 			return nil, fmt.Errorf("error configuring disposal: %w", err)
 		}
@@ -120,6 +120,10 @@ func apngToGif(apngInput io.Reader) (io.Reader, error) {
 	_, err = outBuffer.Write(wand.GetImagesBlob())
 	if err != nil {
 		return nil, fmt.Errorf("error outputting image: %w", err)
+	}
+
+	if outBuffer.Len() == 0 {
+		return nil, fmt.Errorf("got an empty output image - your provided sticker may be one of the currently broken ones")
 	}
 
 	return outBuffer, nil
