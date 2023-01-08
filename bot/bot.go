@@ -70,7 +70,7 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("arcweld", "Arc-weld an image.", MakeImageOpCommandV6(Arcweld))
 	_ = parser.NewCommand("malt", "Malt an image.", MakeImageOpCommandV6(Malt))
 	_ = parser.NewCommand("help", "Get help for available commands.", HelpCommand)
-	_ = parser.NewCommand("deepfry", "Deep-fry an image.", MakeImageOpCommandV6(Deepfry))
+	_ = parser.NewCommand("deepfry", "Deep-fry an image.", MakeImageOpCommandV7(Deepfry))
 	_ = parser.NewCommand("stevepoint", "Have Steve point at an image.", MakeImageOpCommandV6(StevePoint))
 	_ = parser.NewCommand("mitchpoint", "Have Mitch point at an image.", MakeImageOpCommandV6(MitchPoint))
 	_ = parser.NewCommand("divine", "Sever the divine light.", MakeImageOpCommandV6(Divine))
@@ -86,8 +86,6 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("sticker", "Fetch a sticker as an image.", Sticker)
 	_ = parser.NewCommand("emoji", "Fetch an emoji as an image.", Emoji)
 	registerGraphicsFormatCommands(parser)
-
-	_ = parser.NewCommand("v7test", "Test V7", MakeImageOpCommandV7(V7Test))
 
 	log.Debug().Msg("Commands registered")
 

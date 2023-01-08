@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
+	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type DeepfryArgs struct {
@@ -17,13 +17,13 @@ func (args DeepfryArgs) GetImageURL() string {
 }
 
 // Deepfry destroys an image via a combination of operations.
-func Deepfry(wand *imagick6.MagickWand, args DeepfryArgs) ([]*imagick6.MagickWand, error) {
-	err := wand.ResizeImage(wand.GetImageWidth()/args.DownscaleFactor, wand.GetImageHeight()/args.DownscaleFactor, imagick6.FILTER_CUBIC, 0.5)
+func Deepfry(wand *imagick7.MagickWand, args DeepfryArgs) ([]*imagick7.MagickWand, error) {
+	err := wand.ResizeImage(wand.GetImageWidth()/args.DownscaleFactor, wand.GetImageHeight()/args.DownscaleFactor, imagick7.FILTER_POINT)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
 	}
 
-	err = wand.ResizeImage(wand.GetImageWidth()*args.DownscaleFactor, wand.GetImageHeight()*args.DownscaleFactor, imagick6.FILTER_CUBIC, 0.5)
+	err = wand.ResizeImage(wand.GetImageWidth()*args.DownscaleFactor, wand.GetImageHeight()*args.DownscaleFactor, imagick7.FILTER_POINT)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
 	}
@@ -33,5 +33,5 @@ func Deepfry(wand *imagick6.MagickWand, args DeepfryArgs) ([]*imagick6.MagickWan
 		return nil, fmt.Errorf("error edge enhancing image: %w", err)
 	}
 
-	return []*imagick6.MagickWand{wand}, nil
+	return []*imagick7.MagickWand{wand}, nil
 }
