@@ -79,7 +79,7 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("woow", "Mirror the top half of an image.", MakeImageOpCommandV7(Woow))
 	_ = parser.NewCommand("hooh", "Mirror the bottom half of an image.", MakeImageOpCommandV7(Hooh))
 	_ = parser.NewCommand("transform", "Apply transformations to an image.", MakeImageOpCommandV6(Transform))
-	_ = parser.NewCommand("invert", "Invert the colours of an image.", MakeImageOpCommandV6(Invert))
+	_ = parser.NewCommand("invert", "Invert the colours of an image.", MakeImageOpCommandV7(Invert))
 	_ = parser.NewCommand("otsu", "Apply a threshold to an image using Otsu's method.", MakeImageOpCommandV6(Otsu))
 	_ = parser.NewCommand("rotate", "Rotate an image.", MakeImageOpCommandV7(Rotate))
 	_ = parser.NewCommand("avatar", "Fetch the avatar for a user.", Avatar)
