@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 
-	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
+	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
 )
 
 //go:embed divine.png
@@ -24,27 +24,32 @@ func (args DivineArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Divine(wand *imagick6.MagickWand, args DivineArgs) ([]*imagick6.MagickWand, error) {
-	overlay := imagick6.NewMagickWand()
+func Divine(wand *imagick7.MagickWand, args DivineArgs) ([]*imagick7.MagickWand, error) {
+	overlay := imagick7.NewMagickWand()
 	err := overlay.ReadImageBlob(divineOverlayImage)
 	if err != nil {
 		return nil, fmt.Errorf("error reading divine overlay image: %w", err)
 	}
 
-	err = wand.EvaluateImageChannel(imagick6.CHANNEL_BLUE, imagick6.EVAL_OP_SET, 0)
+	wand.SetImageChannelMask(imagick7.CHANNEL_BLUE)
+	err = wand.EvaluateImage(imagick7.EVAL_OP_SET, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error removing blue channel: %w", err)
 	}
 
-	err = wand.EvaluateImageChannel(imagick6.CHANNEL_GREEN, imagick6.EVAL_OP_SET, 0)
+	wand.SetImageChannelMask(imagick7.CHANNEL_GREEN)
+	err = wand.EvaluateImage(imagick7.EVAL_OP_SET, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error removing green channel: %w", err)
 	}
 
-	err = wand.EdgeImage(args.EdgeRadius)
-	if err != nil {
-		return nil, fmt.Errorf("error edge detecting: %w", err)
-	}
+	wand.SetImageChannelMask(imagick7.CHANNELS_DEFAULT)
+
+	// TODO: Figure out why EdgeImage returns a black image unless ImageMagick 6 has been initialized
+	//err = wand.EdgeImage(args.EdgeRadius)
+	//if err != nil {
+	//	return nil, fmt.Errorf("error edge detecting: %w", err)
+	//}
 
 	err = wand.ModulateImage(args.Brightness, args.Saturation, args.Hue)
 	if err != nil {
@@ -59,14 +64,18 @@ func Divine(wand *imagick6.MagickWand, args DivineArgs) ([]*imagick6.MagickWand,
 	inputHeight := wand.GetImageHeight()
 	inputWidth := wand.GetImageWidth()
 
-	overlay = overlay.TransformImage("", fmt.Sprintf("%dx%d", inputWidth, inputHeight))
+	err = ResizeMaintainAspectRatio(overlay, inputWidth, inputHeight)
+	if err != nil {
+		return nil, fmt.Errorf("error resizing overlay: %w", err)
+	}
 
 	overlayWidth := overlay.GetImageWidth()
 	overlayHeight := overlay.GetImageHeight()
 
 	err = wand.CompositeImage(
 		overlay,
-		imagick6.COMPOSITE_OP_ATOP,
+		imagick7.COMPOSITE_OP_ATOP,
+		false,
 		int((inputWidth/2)-(overlayWidth/2)),
 		int((inputHeight/2)-(overlayHeight/2)),
 	)
@@ -74,5 +83,5 @@ func Divine(wand *imagick6.MagickWand, args DivineArgs) ([]*imagick6.MagickWand,
 		return nil, fmt.Errorf("error compositing image: %w", err)
 	}
 
-	return []*imagick6.MagickWand{wand}, nil
+	return []*imagick7.MagickWand{wand}, nil
 }

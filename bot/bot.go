@@ -73,7 +73,7 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("deepfry", "Deep-fry an image.", MakeImageOpCommandV7(Deepfry))
 	_ = parser.NewCommand("stevepoint", "Have Steve point at an image.", MakeImageOpCommandV7(StevePoint))
 	_ = parser.NewCommand("mitchpoint", "Have Mitch point at an image.", MakeImageOpCommandV7(MitchPoint))
-	_ = parser.NewCommand("divine", "Sever the divine light.", MakeImageOpCommandV6(Divine))
+	_ = parser.NewCommand("divine", "Sever the divine light.", MakeImageOpCommandV7(Divine))
 	_ = parser.NewCommand("waaw", "Mirror the right half of an image.", MakeImageOpCommandV7(Waaw))
 	_ = parser.NewCommand("haah", "Mirror the left half of an image.", MakeImageOpCommandV7(Haah))
 	_ = parser.NewCommand("woow", "Mirror the top half of an image.", MakeImageOpCommandV7(Woow))
