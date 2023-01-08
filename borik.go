@@ -8,7 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
-	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 
 	"github.com/fogo-sh/borik/bot"
 )
@@ -19,8 +19,8 @@ func main() {
 		fmt.Printf("Failed to load .env file: %s\n", err.Error())
 	}
 
-	imagick7.Initialize()
-	defer imagick7.Terminate()
+	imagick.Initialize()
+	defer imagick.Terminate()
 
 	borik, err := bot.New()
 	if err != nil {
