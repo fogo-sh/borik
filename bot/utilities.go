@@ -12,14 +12,14 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
-	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type ImageOperationArgs interface {
 	GetImageURL() string
 }
 
-type ImageOperation[K ImageOperationArgs] func(*imagick7.MagickWand, K) ([]*imagick7.MagickWand, error)
+type ImageOperation[K ImageOperationArgs] func(*imagick.MagickWand, K) ([]*imagick.MagickWand, error)
 
 // TypingIndicator invokes a typing indicator in the channel of a message
 func TypingIndicator(message *discordgo.MessageCreate) func() {
@@ -147,7 +147,7 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		return
 	}
 
-	input := imagick7.NewMagickWand()
+	input := imagick.NewMagickWand()
 	err = input.ReadImageBlob(srcBytes)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to read image")
@@ -155,7 +155,7 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 	}
 	input = input.CoalesceImages()
 
-	var resultFrames []*imagick7.MagickWand
+	var resultFrames []*imagick.MagickWand
 
 	for i := 0; i < int(input.GetNumberImages()); i++ {
 		input.SetIteratorIndex(i)
@@ -169,7 +169,7 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		resultFrames = append(resultFrames, output...)
 	}
 
-	resultImage := imagick7.NewMagickWand()
+	resultImage := imagick.NewMagickWand()
 
 	for index, frame := range resultFrames {
 		log.Debug().Int("frame", index).Msg("Adding frame to result image")
@@ -241,7 +241,7 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 }
 
 // ResizeMaintainAspectRatio resizes an input wand to fit within a box of given width and height, maintaining aspect ratio
-func ResizeMaintainAspectRatio(wand *imagick7.MagickWand, width uint, height uint) error {
+func ResizeMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint) error {
 	inputHeight := float64(wand.GetImageHeight())
 	inputWidth := float64(wand.GetImageWidth())
 

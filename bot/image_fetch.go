@@ -10,7 +10,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
-	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type AvatarArgs struct {
@@ -88,7 +88,7 @@ func apngToGif(apngInput io.Reader) (io.Reader, error) {
 		return nil, fmt.Errorf("error copying input: %w", err)
 	}
 
-	wand := imagick7.NewMagickWand()
+	wand := imagick.NewMagickWand()
 
 	err = wand.SetFilename("APNG:profile.png")
 	if err != nil {
@@ -102,7 +102,7 @@ func apngToGif(apngInput io.Reader) (io.Reader, error) {
 
 	for i := uint(0); i < wand.GetNumberImages(); i++ {
 		wand.SetIteratorIndex(int(i))
-		err = wand.SetImageDispose(imagick7.DISPOSE_BACKGROUND)
+		err = wand.SetImageDispose(imagick.DISPOSE_BACKGROUND)
 		if err != nil {
 			return nil, fmt.Errorf("error configuring disposal: %w", err)
 		}

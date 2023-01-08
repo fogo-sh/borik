@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type GmagikArgs struct {
@@ -19,8 +19,8 @@ func (args GmagikArgs) GetImageURL() string {
 }
 
 // Gmagik runs content-aware scaling on an image.
-func Gmagik(wand *imagick7.MagickWand, args GmagikArgs) ([]*imagick7.MagickWand, error) {
-	var results []*imagick7.MagickWand
+func Gmagik(wand *imagick.MagickWand, args GmagikArgs) ([]*imagick.MagickWand, error) {
+	var results []*imagick.MagickWand
 
 	lastFrame := wand
 

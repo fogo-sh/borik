@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 
-	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 //go:embed steve_point.png
@@ -19,8 +19,8 @@ func (args StevePointArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func StevePoint(wand *imagick7.MagickWand, args StevePointArgs) ([]*imagick7.MagickWand, error) {
-	steve := imagick7.NewMagickWand()
+func StevePoint(wand *imagick.MagickWand, args StevePointArgs) ([]*imagick.MagickWand, error) {
+	steve := imagick.NewMagickWand()
 	err := steve.ReadImageBlob(stevePointImage)
 	if err != nil {
 		return nil, fmt.Errorf("error reading steve: %w", err)
@@ -49,10 +49,10 @@ func StevePoint(wand *imagick7.MagickWand, args StevePointArgs) ([]*imagick7.Mag
 		xOffset = int(inputWidth - steveWidth)
 	}
 
-	err = wand.CompositeImage(steve, imagick7.COMPOSITE_OP_ATOP, true, xOffset, 0)
+	err = wand.CompositeImage(steve, imagick.COMPOSITE_OP_ATOP, true, xOffset, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error compositing image: %w", err)
 	}
 
-	return []*imagick7.MagickWand{wand}, nil
+	return []*imagick.MagickWand{wand}, nil
 }

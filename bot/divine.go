@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 
-	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 //go:embed divine.png
@@ -24,20 +24,20 @@ func (args DivineArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Divine(wand *imagick7.MagickWand, args DivineArgs) ([]*imagick7.MagickWand, error) {
-	overlay := imagick7.NewMagickWand()
+func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, error) {
+	overlay := imagick.NewMagickWand()
 	err := overlay.ReadImageBlob(divineOverlayImage)
 	if err != nil {
 		return nil, fmt.Errorf("error reading divine overlay image: %w", err)
 	}
 
-	wand.SetImageChannelMask(imagick7.CHANNEL_BLUE | imagick7.CHANNEL_GREEN)
-	err = wand.EvaluateImage(imagick7.EVAL_OP_SET, 0)
+	wand.SetImageChannelMask(imagick.CHANNEL_BLUE | imagick.CHANNEL_GREEN)
+	err = wand.EvaluateImage(imagick.EVAL_OP_SET, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error removing blue & green channels: %w", err)
 	}
 
-	wand.SetImageChannelMask(imagick7.CHANNEL_RED | imagick7.CHANNEL_GREEN | imagick7.CHANNEL_BLUE)
+	wand.SetImageChannelMask(imagick.CHANNEL_RED | imagick.CHANNEL_GREEN | imagick.CHANNEL_BLUE)
 
 	// TODO: Figure out why this is making everything white
 	err = wand.EdgeImage(args.EdgeRadius)
@@ -68,7 +68,7 @@ func Divine(wand *imagick7.MagickWand, args DivineArgs) ([]*imagick7.MagickWand,
 
 	err = wand.CompositeImage(
 		overlay,
-		imagick7.COMPOSITE_OP_ATOP,
+		imagick.COMPOSITE_OP_ATOP,
 		false,
 		int((inputWidth/2)-(overlayWidth/2)),
 		int((inputHeight/2)-(overlayHeight/2)),
@@ -77,5 +77,5 @@ func Divine(wand *imagick7.MagickWand, args DivineArgs) ([]*imagick7.MagickWand,
 		return nil, fmt.Errorf("error compositing image: %w", err)
 	}
 
-	return []*imagick7.MagickWand{wand}, nil
+	return []*imagick.MagickWand{wand}, nil
 }

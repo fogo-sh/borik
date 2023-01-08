@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type MaltArgs struct {
@@ -16,11 +16,11 @@ func (args MaltArgs) GetImageURL() string {
 }
 
 // Malt mixes an image via a combination of operations.
-func Malt(wand *imagick7.MagickWand, args MaltArgs) ([]*imagick7.MagickWand, error) {
+func Malt(wand *imagick.MagickWand, args MaltArgs) ([]*imagick.MagickWand, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 
-	err := wand.SwirlImage(args.Degree, imagick7.INTERPOLATE_PIXEL_BILINEAR)
+	err := wand.SwirlImage(args.Degree, imagick.INTERPOLATE_PIXEL_BILINEAR)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to swirl: %w", err)
 	}
@@ -30,7 +30,7 @@ func Malt(wand *imagick7.MagickWand, args MaltArgs) ([]*imagick7.MagickWand, err
 		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
 
-	err = wand.SwirlImage(args.Degree*-1, imagick7.INTERPOLATE_PIXEL_BILINEAR)
+	err = wand.SwirlImage(args.Degree*-1, imagick.INTERPOLATE_PIXEL_BILINEAR)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to swirl: %w", err)
 	}
@@ -40,5 +40,5 @@ func Malt(wand *imagick7.MagickWand, args MaltArgs) ([]*imagick7.MagickWand, err
 		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
 
-	return []*imagick7.MagickWand{wand}, nil
+	return []*imagick.MagickWand{wand}, nil
 }

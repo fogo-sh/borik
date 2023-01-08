@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type MagikArgs struct {
@@ -17,7 +17,7 @@ func (args MagikArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func magikHelper(wand *imagick7.MagickWand, args MagikArgs) ([]*imagick7.MagickWand, error) {
+func magikHelper(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 
@@ -26,16 +26,16 @@ func magikHelper(wand *imagick7.MagickWand, args MagikArgs) ([]*imagick7.MagickW
 		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
 
-	err = wand.ResizeImage(width, height, imagick7.FILTER_LANCZOS)
+	err = wand.ResizeImage(width, height, imagick.FILTER_LANCZOS)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to resize image: %w", err)
 	}
 
-	return []*imagick7.MagickWand{wand}, nil
+	return []*imagick.MagickWand{wand}, nil
 }
 
 // Magik runs content-aware scaling on an image.
-func Magik(wand *imagick7.MagickWand, args MagikArgs) ([]*imagick7.MagickWand, error) {
+func Magik(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
 	return magikHelper(wand, args)
 }
 
@@ -49,7 +49,7 @@ func (args LagikArgs) GetImageURL() string {
 }
 
 // Lagik runs content-aware scaling on an image.
-func Lagik(wand *imagick7.MagickWand, args LagikArgs) ([]*imagick7.MagickWand, error) {
+func Lagik(wand *imagick.MagickWand, args LagikArgs) ([]*imagick.MagickWand, error) {
 	return magikHelper(
 		wand,
 		MagikArgs{

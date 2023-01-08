@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type RotateArgs struct {
@@ -16,8 +16,8 @@ func (args RotateArgs) GetImageURL() string {
 }
 
 // Rotate rotates an image.
-func Rotate(wand *imagick7.MagickWand, args RotateArgs) ([]*imagick7.MagickWand, error) {
-	bgWand := imagick7.NewPixelWand()
+func Rotate(wand *imagick.MagickWand, args RotateArgs) ([]*imagick.MagickWand, error) {
+	bgWand := imagick.NewPixelWand()
 	bgWand.SetAlpha(0)
 
 	err := wand.RotateImage(bgWand, args.Degrees)
@@ -25,5 +25,5 @@ func Rotate(wand *imagick7.MagickWand, args RotateArgs) ([]*imagick7.MagickWand,
 		return nil, fmt.Errorf("error rotating image: %w", err)
 	}
 
-	return []*imagick7.MagickWand{wand}, nil
+	return []*imagick.MagickWand{wand}, nil
 }

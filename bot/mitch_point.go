@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 
-	imagick7 "gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 //go:embed mitch_point.png
@@ -19,8 +19,8 @@ func (args MitchPointArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func MitchPoint(wand *imagick7.MagickWand, args MitchPointArgs) ([]*imagick7.MagickWand, error) {
-	mitch := imagick7.NewMagickWand()
+func MitchPoint(wand *imagick.MagickWand, args MitchPointArgs) ([]*imagick.MagickWand, error) {
+	mitch := imagick.NewMagickWand()
 	err := mitch.ReadImageBlob(mitchPointImage)
 	if err != nil {
 		return nil, fmt.Errorf("error reading mitch: %w", err)
@@ -53,10 +53,10 @@ func MitchPoint(wand *imagick7.MagickWand, args MitchPointArgs) ([]*imagick7.Mag
 
 	yOffset := int(inputHeight - mitchHeight)
 
-	err = wand.CompositeImage(mitch, imagick7.COMPOSITE_OP_ATOP, true, xOffset, yOffset)
+	err = wand.CompositeImage(mitch, imagick.COMPOSITE_OP_ATOP, true, xOffset, yOffset)
 	if err != nil {
 		return nil, fmt.Errorf("error compositing image: %w", err)
 	}
 
-	return []*imagick7.MagickWand{wand}, nil
+	return []*imagick.MagickWand{wand}, nil
 }
