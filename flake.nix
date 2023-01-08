@@ -11,7 +11,7 @@
       version = builtins.substring 0 8 self.lastModifiedDate;
     in
       flake-utils.lib.eachDefaultSystem (system:
-        let 
+        let
           pkgs = import nixpkgs { inherit system; };
         in
         {
@@ -19,7 +19,7 @@
             buildInputs = [
               pkgs.go
               pkgs.gotools
-              pkgs.imagemagick6
+              pkgs.imagemagick
               pkgs.pkg-config
             ];
             shellHook = ''
@@ -33,7 +33,7 @@
             src = ./.;
 
             nativeBuildInputs = [ pkgs.pkg-config ];
-            buildInputs = [ pkgs.imagemagick6 ];
+            buildInputs = [ pkgs.imagemagick ];
 
             vendorSha256 = "sha256-TL+1hALB3iQRkitrBVXz1QuLdYadvwkcKHChrYSPD0I=";
 

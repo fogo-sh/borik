@@ -9,6 +9,7 @@ require (
 	github.com/nint8835/parsley v1.0.3
 	github.com/rs/zerolog v1.26.1
 	gopkg.in/gographics/imagick.v2 v2.6.0
+	gopkg.in/gographics/imagick.v3 v3.4.2
 )
 
 require (
