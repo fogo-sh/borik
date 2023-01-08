@@ -6,7 +6,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/nint8835/parsley"
-	"gopkg.in/gographics/imagick.v2/imagick"
+	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
 )
 
 type graphicsFormat struct {
@@ -52,8 +52,8 @@ var graphicsFormats = []graphicsFormat{
 	},
 }
 
-func getPaletteImage(palette []string) (*imagick.MagickWand, error) {
-	paletteWand := imagick.NewMagickWand()
+func getPaletteImage(palette []string) (*imagick6.MagickWand, error) {
+	paletteWand := imagick6.NewMagickWand()
 	err := paletteWand.SetSize(uint(len(palette)), 1)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing palette image: %w", err)
@@ -78,7 +78,7 @@ func getPaletteImage(palette []string) (*imagick.MagickWand, error) {
 	return paletteWand, nil
 }
 
-func convertGraphicsFormat(wand *imagick.MagickWand, format graphicsFormat, dither bool) ([]*imagick.MagickWand, error) {
+func convertGraphicsFormat(wand *imagick6.MagickWand, format graphicsFormat, dither bool) ([]*imagick6.MagickWand, error) {
 	paletteWand, err := getPaletteImage(format.Palette)
 	if err != nil {
 		return nil, fmt.Errorf("error getting format palette: %w", err)
@@ -86,9 +86,9 @@ func convertGraphicsFormat(wand *imagick.MagickWand, format graphicsFormat, dith
 
 	wand = wand.TransformImage("", fmt.Sprintf("%d!x%d!", format.Resolution[0], format.Resolution[1]))
 
-	ditherMethod := imagick.DITHER_METHOD_NO
+	ditherMethod := imagick6.DITHER_METHOD_NO
 	if dither {
-		ditherMethod = imagick.DITHER_METHOD_FLOYD_STEINBERG
+		ditherMethod = imagick6.DITHER_METHOD_FLOYD_STEINBERG
 	}
 
 	err = wand.RemapImage(paletteWand, ditherMethod)
@@ -96,7 +96,7 @@ func convertGraphicsFormat(wand *imagick.MagickWand, format graphicsFormat, dith
 		return nil, fmt.Errorf("error remapping image palette: %w", err)
 	}
 
-	return []*imagick.MagickWand{wand}, nil
+	return []*imagick6.MagickWand{wand}, nil
 }
 
 type graphicsFormatArgs struct {
@@ -109,7 +109,7 @@ func (args graphicsFormatArgs) GetImageURL() string {
 }
 
 func MakeGraphicsFormatOpCommand(format graphicsFormat) func(*discordgo.MessageCreate, graphicsFormatArgs) {
-	return MakeImageOpCommand(func(wand *imagick.MagickWand, args graphicsFormatArgs) ([]*imagick.MagickWand, error) {
+	return MakeImageOpCommand(func(wand *imagick6.MagickWand, args graphicsFormatArgs) ([]*imagick6.MagickWand, error) {
 		return convertGraphicsFormat(wand, format, args.Dither)
 	})
 }

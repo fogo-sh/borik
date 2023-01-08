@@ -6,10 +6,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/fogo-sh/borik/bot"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/gographics/imagick.v2/imagick"
+	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
+
+	"github.com/fogo-sh/borik/bot"
 )
 
 func main() {
@@ -18,8 +19,8 @@ func main() {
 		fmt.Printf("Failed to load .env file: %s\n", err.Error())
 	}
 
-	imagick.Initialize()
-	defer imagick.Terminate()
+	imagick6.Initialize()
+	defer imagick6.Terminate()
 
 	borik, err := bot.New()
 	if err != nil {

@@ -11,14 +11,14 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/gographics/imagick.v2/imagick"
+	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
 )
 
 type ImageOperationArgs interface {
 	GetImageURL() string
 }
 
-type ImageOperation[K ImageOperationArgs] func(*imagick.MagickWand, K) ([]*imagick.MagickWand, error)
+type ImageOperation[K ImageOperationArgs] func(*imagick6.MagickWand, K) ([]*imagick6.MagickWand, error)
 
 // TypingIndicator invokes a typing indicator in the channel of a message
 func TypingIndicator(message *discordgo.MessageCreate) func() {
@@ -146,7 +146,7 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		return
 	}
 
-	input := imagick.NewMagickWand()
+	input := imagick6.NewMagickWand()
 	err = input.ReadImageBlob(srcBytes)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to read image")
@@ -154,7 +154,7 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 	}
 	input = input.CoalesceImages()
 
-	var resultFrames []*imagick.MagickWand
+	var resultFrames []*imagick6.MagickWand
 
 	for i := 0; i < int(input.GetNumberImages()); i++ {
 		input.SetIteratorIndex(i)
@@ -168,7 +168,7 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		resultFrames = append(resultFrames, output...)
 	}
 
-	resultImage := imagick.NewMagickWand()
+	resultImage := imagick6.NewMagickWand()
 
 	for index, frame := range resultFrames {
 		log.Debug().Int("frame", index).Msg("Adding frame to result image")

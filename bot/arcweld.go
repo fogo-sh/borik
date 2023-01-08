@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
 )
 
 type ArcweldArgs struct {
@@ -15,8 +15,8 @@ func (args ArcweldArgs) GetImageURL() string {
 }
 
 // Arcweld destroys an image via a combination of operations.
-func Arcweld(wand *imagick.MagickWand, args ArcweldArgs) ([]*imagick.MagickWand, error) {
-	err := wand.EvaluateImageChannel(imagick.CHANNEL_RED, imagick.EVAL_OP_LEFT_SHIFT, 1)
+func Arcweld(wand *imagick6.MagickWand, args ArcweldArgs) ([]*imagick6.MagickWand, error) {
+	err := wand.EvaluateImageChannel(imagick6.CHANNEL_RED, imagick6.EVAL_OP_LEFT_SHIFT, 1)
 	if err != nil {
 		return nil, fmt.Errorf("error left-shifting red channel: %w", err)
 	}
@@ -26,7 +26,7 @@ func Arcweld(wand *imagick.MagickWand, args ArcweldArgs) ([]*imagick.MagickWand,
 		return nil, fmt.Errorf("error contrast stretching image: %w", err)
 	}
 
-	err = wand.EvaluateImageChannel(imagick.CHANNEL_RED, imagick.EVAL_OP_THRESHOLD_BLACK, 0.9)
+	err = wand.EvaluateImageChannel(imagick6.CHANNEL_RED, imagick6.EVAL_OP_THRESHOLD_BLACK, 0.9)
 	if err != nil {
 		return nil, fmt.Errorf("error running threshold black: %w", err)
 	}
@@ -57,10 +57,10 @@ func Arcweld(wand *imagick.MagickWand, args ArcweldArgs) ([]*imagick.MagickWand,
 		return nil, fmt.Errorf("error imploding image: %w", err)
 	}
 
-	err = wand.QuantizeImage(8, imagick.COLORSPACE_RGB, 0, true, false)
+	err = wand.QuantizeImage(8, imagick6.COLORSPACE_RGB, 0, true, false)
 	if err != nil {
 		return nil, fmt.Errorf("error quantizing image: %w", err)
 	}
 
-	return []*imagick.MagickWand{wand}, nil
+	return []*imagick6.MagickWand{wand}, nil
 }

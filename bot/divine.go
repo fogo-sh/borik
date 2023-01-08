@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
 )
 
 //go:embed divine.png
@@ -24,19 +24,19 @@ func (args DivineArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, error) {
-	overlay := imagick.NewMagickWand()
+func Divine(wand *imagick6.MagickWand, args DivineArgs) ([]*imagick6.MagickWand, error) {
+	overlay := imagick6.NewMagickWand()
 	err := overlay.ReadImageBlob(divineOverlayImage)
 	if err != nil {
 		return nil, fmt.Errorf("error reading divine overlay image: %w", err)
 	}
 
-	err = wand.EvaluateImageChannel(imagick.CHANNEL_BLUE, imagick.EVAL_OP_SET, 0)
+	err = wand.EvaluateImageChannel(imagick6.CHANNEL_BLUE, imagick6.EVAL_OP_SET, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error removing blue channel: %w", err)
 	}
 
-	err = wand.EvaluateImageChannel(imagick.CHANNEL_GREEN, imagick.EVAL_OP_SET, 0)
+	err = wand.EvaluateImageChannel(imagick6.CHANNEL_GREEN, imagick6.EVAL_OP_SET, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error removing green channel: %w", err)
 	}
@@ -66,7 +66,7 @@ func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, e
 
 	err = wand.CompositeImage(
 		overlay,
-		imagick.COMPOSITE_OP_ATOP,
+		imagick6.COMPOSITE_OP_ATOP,
 		int((inputWidth/2)-(overlayWidth/2)),
 		int((inputHeight/2)-(overlayHeight/2)),
 	)
@@ -74,5 +74,5 @@ func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, e
 		return nil, fmt.Errorf("error compositing image: %w", err)
 	}
 
-	return []*imagick.MagickWand{wand}, nil
+	return []*imagick6.MagickWand{wand}, nil
 }

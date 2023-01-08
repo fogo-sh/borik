@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
 )
 
 type InvertArgs struct {
@@ -15,10 +15,10 @@ func (args InvertArgs) GetImageURL() string {
 }
 
 // Invert inverts an image's colours.
-func Invert(wand *imagick.MagickWand, _ InvertArgs) ([]*imagick.MagickWand, error) {
+func Invert(wand *imagick6.MagickWand, _ InvertArgs) ([]*imagick6.MagickWand, error) {
 	err := wand.NegateImage(false)
 	if err != nil {
 		return nil, fmt.Errorf("error inverting image: %w", err)
 	}
-	return []*imagick.MagickWand{wand}, nil
+	return []*imagick6.MagickWand{wand}, nil
 }

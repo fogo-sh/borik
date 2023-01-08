@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
 )
 
 type MaltArgs struct {
@@ -16,7 +16,7 @@ func (args MaltArgs) GetImageURL() string {
 }
 
 // Malt mixes an image via a combination of operations.
-func Malt(wand *imagick.MagickWand, args MaltArgs) ([]*imagick.MagickWand, error) {
+func Malt(wand *imagick6.MagickWand, args MaltArgs) ([]*imagick6.MagickWand, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 
@@ -40,5 +40,5 @@ func Malt(wand *imagick.MagickWand, args MaltArgs) ([]*imagick.MagickWand, error
 		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
 
-	return []*imagick.MagickWand{wand}, nil
+	return []*imagick6.MagickWand{wand}, nil
 }

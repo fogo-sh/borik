@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
 )
 
 type mirrorDirection string
@@ -13,19 +13,19 @@ const (
 	mirrorDirectionHorizontal mirrorDirection = "horizontal"
 )
 
-func mirrorImage(wand *imagick.MagickWand, direction mirrorDirection, flipped bool) ([]*imagick.MagickWand, error) {
-	var desiredGravity imagick.GravityType
+func mirrorImage(wand *imagick6.MagickWand, direction mirrorDirection, flipped bool) ([]*imagick6.MagickWand, error) {
+	var desiredGravity imagick6.GravityType
 	if direction == mirrorDirectionHorizontal {
 		if flipped {
-			desiredGravity = imagick.GRAVITY_EAST
+			desiredGravity = imagick6.GRAVITY_EAST
 		} else {
-			desiredGravity = imagick.GRAVITY_WEST
+			desiredGravity = imagick6.GRAVITY_WEST
 		}
 	} else {
 		if flipped {
-			desiredGravity = imagick.GRAVITY_SOUTH
+			desiredGravity = imagick6.GRAVITY_SOUTH
 		} else {
-			desiredGravity = imagick.GRAVITY_NORTH
+			desiredGravity = imagick6.GRAVITY_NORTH
 		}
 	}
 
@@ -34,7 +34,7 @@ func mirrorImage(wand *imagick.MagickWand, direction mirrorDirection, flipped bo
 		return nil, fmt.Errorf("error setting gravity: %w", err)
 	}
 
-	var half *imagick.MagickWand
+	var half *imagick6.MagickWand
 	var xOffset, yOffset int
 
 	if direction == mirrorDirectionHorizontal {
@@ -67,12 +67,12 @@ func mirrorImage(wand *imagick.MagickWand, direction mirrorDirection, flipped bo
 		}
 	}
 
-	err = wand.CompositeImage(half, imagick.COMPOSITE_OP_ATOP, xOffset, yOffset)
+	err = wand.CompositeImage(half, imagick6.COMPOSITE_OP_ATOP, xOffset, yOffset)
 	if err != nil {
 		return nil, fmt.Errorf("error compositing image: %w", err)
 	}
 
-	return []*imagick.MagickWand{wand}, nil
+	return []*imagick6.MagickWand{wand}, nil
 
 }
 
@@ -84,7 +84,7 @@ func (args WaawArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Waaw(wand *imagick.MagickWand, args WaawArgs) ([]*imagick.MagickWand, error) {
+func Waaw(wand *imagick6.MagickWand, args WaawArgs) ([]*imagick6.MagickWand, error) {
 	return mirrorImage(wand, mirrorDirectionHorizontal, true)
 }
 
@@ -96,7 +96,7 @@ func (args HaahArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Haah(wand *imagick.MagickWand, args HaahArgs) ([]*imagick.MagickWand, error) {
+func Haah(wand *imagick6.MagickWand, args HaahArgs) ([]*imagick6.MagickWand, error) {
 	return mirrorImage(wand, mirrorDirectionHorizontal, false)
 }
 
@@ -108,7 +108,7 @@ func (args WoowArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Woow(wand *imagick.MagickWand, args WoowArgs) ([]*imagick.MagickWand, error) {
+func Woow(wand *imagick6.MagickWand, args WoowArgs) ([]*imagick6.MagickWand, error) {
 	return mirrorImage(wand, mirrorDirectionVertical, false)
 }
 
@@ -120,6 +120,6 @@ func (args HoohArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Hooh(wand *imagick.MagickWand, args HoohArgs) ([]*imagick.MagickWand, error) {
+func Hooh(wand *imagick6.MagickWand, args HoohArgs) ([]*imagick6.MagickWand, error) {
 	return mirrorImage(wand, mirrorDirectionVertical, true)
 }

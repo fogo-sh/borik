@@ -1,7 +1,7 @@
 package bot
 
 import (
-	"gopkg.in/gographics/imagick.v2/imagick"
+	imagick6 "gopkg.in/gographics/imagick.v2/imagick"
 )
 
 type TransformArgs struct {
@@ -14,8 +14,8 @@ func (args TransformArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Transform(wand *imagick.MagickWand, args TransformArgs) ([]*imagick.MagickWand, error) {
+func Transform(wand *imagick6.MagickWand, args TransformArgs) ([]*imagick6.MagickWand, error) {
 	transformedImage := wand.TransformImage(args.Crop, args.Size)
 
-	return []*imagick.MagickWand{transformedImage}, nil
+	return []*imagick6.MagickWand{transformedImage}, nil
 }
