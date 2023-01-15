@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -112,7 +113,7 @@ func (args graphicsFormatArgs) GetImageURL() string {
 }
 
 func MakeGraphicsFormatOpCommand(format graphicsFormat) func(*discordgo.MessageCreate, graphicsFormatArgs) {
-	return MakeImageOpCommand(func(wand *imagick.MagickWand, args graphicsFormatArgs) ([]*imagick.MagickWand, error) {
+	return MakeImageOpCommand(func(ctx context.Context, wand *imagick.MagickWand, args graphicsFormatArgs) ([]*imagick.MagickWand, error) {
 		return convertGraphicsFormat(wand, format, args.Dither)
 	})
 }
