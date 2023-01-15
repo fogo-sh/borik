@@ -7,6 +7,8 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -147,7 +149,14 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		return
 	}
 
+	parsedUrl, _ := url.Parse(imageUrl)
+	filename := path.Base(parsedUrl.Path)
+
 	input := imagick.NewMagickWand()
+	err = input.SetFilename(filename)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to set image filename - loading may not behave as expected.")
+	}
 	err = input.ReadImageBlob(srcBytes)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to read image")
