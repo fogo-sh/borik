@@ -4,45 +4,61 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rs/zerolog/log"
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type MagikArgs struct {
-	ImageURL string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
-	Scale    float64 `default:"1" description:"Scale of the magikification. Larger numbers produce more destroyed images."`
+	ImageURL         string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
+	Scale            float64 `default:"1" description:"Scale of the magikification. Larger numbers produce more destroyed images."`
+	WidthMultiplier  float64 `default:"0.5" description:"Multiplier to apply to the width of the input image to produce the intermediary image."`
+	HeightMultiplier float64 `default:"0.5" description:"Multiplier to apply to the height of the input image to produce the intermediary image."`
 }
 
 func (args MagikArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-// Magik runs content-aware scaling on an image.
-func Magik(ctx context.Context, wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
+func magikHelper(ctx context.Context, wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 
-	log.Debug().
-		Uint("src_width", width).
-		Uint("src_height", height).
-		Uint("dest_width", width/2).
-		Uint("dest_height", height/2).
-		Msg("Liquid rescaling image")
-	err := wand.LiquidRescaleImage(width/2, height/2, args.Scale, 0)
+	err := wand.LiquidRescaleImage(uint(float64(width)*args.WidthMultiplier), uint(float64(height)*args.HeightMultiplier), args.Scale, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
 
-	log.Debug().
-		Uint("dest_width", width).
-		Uint("dest_height", height).
-		Uint("src_width", width/2).
-		Uint("src_height", height/2).
-		Msg("Returning image to original size")
-	err = wand.ResizeImage(width, height, imagick.FILTER_LANCZOS, 1)
+	err = wand.ResizeImage(width, height, imagick.FILTER_LANCZOS)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to resize image: %w", err)
 	}
 
 	return []*imagick.MagickWand{wand}, nil
+}
+
+// Magik runs content-aware scaling on an image.
+func Magik(ctx context.Context, wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
+	return magikHelper(ctx, wand, args)
+}
+
+type LagikArgs struct {
+	ImageURL string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
+	Scale    float64 `default:"1" description:"Scale of the magikification. Larger numbers produce more destroyed images."`
+}
+
+func (args LagikArgs) GetImageURL() string {
+	return args.ImageURL
+}
+
+// Lagik runs content-aware scaling on an image.
+func Lagik(ctx context.Context, wand *imagick.MagickWand, args LagikArgs) ([]*imagick.MagickWand, error) {
+	return magikHelper(
+		ctx,
+		wand,
+		MagikArgs{
+			ImageURL:         args.ImageURL,
+			Scale:            args.Scale,
+			WidthMultiplier:  1.5,
+			HeightMultiplier: 1.5,
+		},
+	)
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type mirrorDirection string
@@ -39,7 +39,12 @@ func mirrorImage(wand *imagick.MagickWand, direction mirrorDirection, flipped bo
 	var xOffset, yOffset int
 
 	if direction == mirrorDirectionHorizontal {
-		half = wand.TransformImage("50%x100%", "")
+		half = wand.Clone()
+		err = half.CropImageToTiles("50%x100%")
+		if err != nil {
+			return nil, fmt.Errorf("error cropping image half: %w", err)
+		}
+
 		err = half.FlopImage()
 		if err != nil {
 			return nil, fmt.Errorf("error flipping image: %w", err)
@@ -53,7 +58,12 @@ func mirrorImage(wand *imagick.MagickWand, direction mirrorDirection, flipped bo
 			yOffset = 0
 		}
 	} else {
-		half = wand.TransformImage("100%x50%", "")
+		half = wand.Clone()
+		err = half.CropImageToTiles("100%x50%")
+		if err != nil {
+			return nil, fmt.Errorf("error cropping image half: %w", err)
+		}
+
 		err = half.FlipImage()
 		if err != nil {
 			return nil, fmt.Errorf("error flipping image: %w", err)
@@ -68,7 +78,7 @@ func mirrorImage(wand *imagick.MagickWand, direction mirrorDirection, flipped bo
 		}
 	}
 
-	err = wand.CompositeImage(half, imagick.COMPOSITE_OP_ATOP, xOffset, yOffset)
+	err = wand.CompositeImage(half, imagick.COMPOSITE_OP_ATOP, true, xOffset, yOffset)
 	if err != nil {
 		return nil, fmt.Errorf("error compositing image: %w", err)
 	}

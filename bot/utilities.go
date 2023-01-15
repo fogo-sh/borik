@@ -6,14 +6,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type ImageOperationArgs interface {
@@ -59,27 +62,34 @@ func Schedule(what func(), delay time.Duration) chan bool {
 }
 
 // ImageURLFromMessage attempts to retrieve an image URL from a given message.
-func ImageURLFromMessage(m *discordgo.Message) (string, bool) {
-	if len(m.Embeds) == 1 {
-		embed := m.Embeds[0]
-
+func ImageURLFromMessage(m *discordgo.Message) string {
+	for _, embed := range m.Embeds {
 		if embed.Type == "Image" {
-			return embed.URL, true
+			return embed.URL
+		} else if embed.Image != nil {
+			return embed.Image.URL
 		}
 	}
 
-	if len(m.Attachments) == 1 {
-		attachment := m.Attachments[0]
-		return attachment.URL, true
+	for _, attachment := range m.Attachments {
+		if strings.HasPrefix(attachment.ContentType, "image/") {
+			return attachment.URL
+		}
 	}
 
-	return "", false
+	return ""
 }
 
 // FindImageURL attempts to find an image in a given message, falling back to scanning message history if one cannot be found.
 func FindImageURL(m *discordgo.MessageCreate) (string, error) {
-	if embedURL, found := ImageURLFromMessage(m.Message); found {
-		return embedURL, nil
+	if imageUrl := ImageURLFromMessage(m.Message); imageUrl != "" {
+		return imageUrl, nil
+	}
+
+	if m.ReferencedMessage != nil {
+		if imageUrl := ImageURLFromMessage(m.ReferencedMessage); imageUrl != "" {
+			return imageUrl, nil
+		}
 	}
 
 	messages, err := Instance.Session.ChannelMessages(m.ChannelID, 20, m.ID, "", "")
@@ -88,8 +98,8 @@ func FindImageURL(m *discordgo.MessageCreate) (string, error) {
 	}
 
 	for _, message := range messages {
-		if embedURL, found := ImageURLFromMessage(message); found {
-			return embedURL, nil
+		if imageUrl := ImageURLFromMessage(message); imageUrl != "" {
+			return imageUrl, nil
 		}
 	}
 	return "", errors.New("unable to locate an image")
@@ -115,13 +125,13 @@ func DownloadImage(url string) ([]byte, error) {
 }
 
 // MakeImageOpCommand automatically creates a Parsley command handler for a given ImageOperation
-func MakeImageOpCommand[K ImageOperationArgs](operation ImageOperation[K], operationName string) func(*discordgo.MessageCreate, K) {
+func MakeImageOpCommand[K ImageOperationArgs](operation ImageOperation[K]) func(*discordgo.MessageCreate, K) {
 	return func(message *discordgo.MessageCreate, args K) {
-		PrepareAndInvokeOperation(message, args, operation, operationName)
+		PrepareAndInvokeOperation(message, args, operation, "")
 	}
 }
 
-// PrepareAndInvokeOperation automatically handles invoking a given ImageOperation for a Discord message and returning the finished results.
+// PrepareAndInvokeOperation automatically handles invoking a given ImageOperation for a Discord message and returning the finished results
 func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageCreate, args K, operation ImageOperation[K], operationName string) {
 	ctx, span := otel.Tracer("").Start(context.Background(), "invoke_operation")
 	defer span.End()
@@ -144,7 +154,14 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		return
 	}
 
+	parsedUrl, _ := url.Parse(imageUrl)
+	filename := path.Base(parsedUrl.Path)
+
 	input := imagick.NewMagickWand()
+	err = input.SetFilename(filename)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to set image filename - loading may not behave as expected.")
+	}
 	err = input.ReadImageBlob(srcBytes)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to read image")
@@ -222,10 +239,15 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 	}
 
 	log.Debug().Msg("Image processed, uploading result")
-	_, err = Instance.Session.ChannelFileSend(
+	_, err = Instance.Session.ChannelMessageSendComplex(
 		message.ChannelID,
-		fmt.Sprintf("output.%s", strings.ToLower(resultImage.GetImageFormat())),
-		destBuffer,
+		&discordgo.MessageSend{
+			Reference: message.Reference(),
+			File: &discordgo.File{
+				Name:   fmt.Sprintf("output.%s", strings.ToLower(resultImage.GetImageFormat())),
+				Reader: destBuffer,
+			},
+		},
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to send image")
@@ -235,4 +257,20 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		}
 	}
 	saveSpan.End()
+}
+
+// ResizeMaintainAspectRatio resizes an input wand to fit within a box of given width and height, maintaining aspect ratio
+func ResizeMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint) error {
+	inputHeight := float64(wand.GetImageHeight())
+	inputWidth := float64(wand.GetImageWidth())
+
+	widthMagFactor := float64(width) / inputWidth
+	heightMagFactor := float64(height) / inputHeight
+
+	minFactor := math.Min(widthMagFactor, heightMagFactor)
+
+	targetWidth := inputWidth * minFactor
+	targetHeight := inputHeight * minFactor
+
+	return wand.ScaleImage(uint(targetWidth), uint(targetHeight))
 }

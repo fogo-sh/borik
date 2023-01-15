@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type DeepfryArgs struct {
@@ -19,15 +19,17 @@ func (args DeepfryArgs) GetImageURL() string {
 
 // Deepfry destroys an image via a combination of operations.
 func Deepfry(ctx context.Context, wand *imagick.MagickWand, args DeepfryArgs) ([]*imagick.MagickWand, error) {
-	err := wand.ResizeImage(wand.GetImageWidth()/args.DownscaleFactor, wand.GetImageHeight()/args.DownscaleFactor, imagick.FILTER_CUBIC, 0.5)
+	err := wand.ResizeImage(wand.GetImageWidth()/args.DownscaleFactor, wand.GetImageHeight()/args.DownscaleFactor, imagick.FILTER_POINT)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
 	}
 
-	err = wand.ResizeImage(wand.GetImageWidth()*args.DownscaleFactor, wand.GetImageHeight()*args.DownscaleFactor, imagick.FILTER_CUBIC, 0.5)
+	err = wand.ResizeImage(wand.GetImageWidth()*args.DownscaleFactor, wand.GetImageHeight()*args.DownscaleFactor, imagick.FILTER_POINT)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
 	}
+
+	wand.SetImageChannelMask(imagick.CHANNEL_RED | imagick.CHANNEL_GREEN | imagick.CHANNEL_BLUE)
 
 	err = wand.EdgeImage(args.EdgeRadius)
 	if err != nil {
