@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 //go:embed steve_point.png
@@ -33,10 +33,12 @@ func StevePoint(wand *imagick.MagickWand, args StevePointArgs) ([]*imagick.Magic
 		}
 	}
 
-	inputHeight := wand.GetImageHeight()
 	inputWidth := wand.GetImageWidth()
 
-	steve = steve.TransformImage("", fmt.Sprintf("%dx%d", inputWidth, inputHeight))
+	err = ResizeMaintainAspectRatio(steve, inputWidth, wand.GetImageHeight())
+	if err != nil {
+		return nil, fmt.Errorf("error resizing steve: %w", err)
+	}
 
 	steveWidth := steve.GetImageWidth()
 
@@ -47,7 +49,7 @@ func StevePoint(wand *imagick.MagickWand, args StevePointArgs) ([]*imagick.Magic
 		xOffset = int(inputWidth - steveWidth)
 	}
 
-	err = wand.CompositeImage(steve, imagick.COMPOSITE_OP_ATOP, xOffset, 0)
+	err = wand.CompositeImage(steve, imagick.COMPOSITE_OP_ATOP, true, xOffset, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error compositing image: %w", err)
 	}

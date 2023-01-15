@@ -6,7 +6,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/nint8835/parsley"
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type graphicsFormat struct {
@@ -84,7 +84,10 @@ func convertGraphicsFormat(wand *imagick.MagickWand, format graphicsFormat, dith
 		return nil, fmt.Errorf("error getting format palette: %w", err)
 	}
 
-	wand = wand.TransformImage("", fmt.Sprintf("%d!x%d!", format.Resolution[0], format.Resolution[1]))
+	err = wand.ResizeImage(format.Resolution[0], format.Resolution[1], imagick.FILTER_LANCZOS)
+	if err != nil {
+		return nil, fmt.Errorf("error resizing image: %w", err)
+	}
 
 	ditherMethod := imagick.DITHER_METHOD_NO
 	if dither {

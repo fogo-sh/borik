@@ -6,10 +6,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/fogo-sh/borik/bot"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
+
+	"github.com/fogo-sh/borik/bot"
 )
 
 func main() {

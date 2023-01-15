@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type ArcweldArgs struct {
@@ -16,20 +16,24 @@ func (args ArcweldArgs) GetImageURL() string {
 
 // Arcweld destroys an image via a combination of operations.
 func Arcweld(wand *imagick.MagickWand, args ArcweldArgs) ([]*imagick.MagickWand, error) {
-	err := wand.EvaluateImageChannel(imagick.CHANNEL_RED, imagick.EVAL_OP_LEFT_SHIFT, 1)
+	origMask := wand.SetImageChannelMask(imagick.CHANNEL_RED)
+	err := wand.EvaluateImage(imagick.EVAL_OP_LEFT_SHIFT, 1)
 	if err != nil {
 		return nil, fmt.Errorf("error left-shifting red channel: %w", err)
 	}
+	wand.SetImageChannelMask(origMask)
 
 	err = wand.ContrastStretchImage(0.3, 0.3)
 	if err != nil {
 		return nil, fmt.Errorf("error contrast stretching image: %w", err)
 	}
 
-	err = wand.EvaluateImageChannel(imagick.CHANNEL_RED, imagick.EVAL_OP_THRESHOLD_BLACK, 0.9)
+	wand.SetImageChannelMask(imagick.CHANNEL_RED)
+	err = wand.EvaluateImage(imagick.EVAL_OP_THRESHOLD_BLACK, 0.9)
 	if err != nil {
 		return nil, fmt.Errorf("error running threshold black: %w", err)
 	}
+	wand.SetImageChannelMask(origMask)
 
 	err = wand.SharpenImage(0, 0)
 	if err != nil {
@@ -52,12 +56,12 @@ func Arcweld(wand *imagick.MagickWand, args ArcweldArgs) ([]*imagick.MagickWand,
 		return nil, fmt.Errorf("error liquid rescaling: %w", err)
 	}
 
-	err = wand.ImplodeImage(0.2)
+	err = wand.ImplodeImage(0.2, imagick.INTERPOLATE_PIXEL_NEAREST_INTERPOLATE)
 	if err != nil {
 		return nil, fmt.Errorf("error imploding image: %w", err)
 	}
 
-	err = wand.QuantizeImage(8, imagick.COLORSPACE_RGB, 0, true, false)
+	err = wand.QuantizeImage(8, imagick.COLORSPACE_RGB, 0, imagick.DITHER_METHOD_FLOYD_STEINBERG, false)
 	if err != nil {
 		return nil, fmt.Errorf("error quantizing image: %w", err)
 	}

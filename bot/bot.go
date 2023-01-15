@@ -78,14 +78,15 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("haah", "Mirror the left half of an image.", MakeImageOpCommand(Haah))
 	_ = parser.NewCommand("woow", "Mirror the top half of an image.", MakeImageOpCommand(Woow))
 	_ = parser.NewCommand("hooh", "Mirror the bottom half of an image.", MakeImageOpCommand(Hooh))
-	_ = parser.NewCommand("transform", "Apply transformations to an image.", MakeImageOpCommand(Transform))
 	_ = parser.NewCommand("invert", "Invert the colours of an image.", MakeImageOpCommand(Invert))
 	_ = parser.NewCommand("otsu", "Apply a threshold to an image using Otsu's method.", MakeImageOpCommand(Otsu))
 	_ = parser.NewCommand("rotate", "Rotate an image.", MakeImageOpCommand(Rotate))
 	_ = parser.NewCommand("avatar", "Fetch the avatar for a user.", Avatar)
 	_ = parser.NewCommand("sticker", "Fetch a sticker as an image.", Sticker)
 	_ = parser.NewCommand("emoji", "Fetch an emoji as an image.", Emoji)
+	_ = parser.NewCommand("resize", "Resize an image.", MakeImageOpCommand(Resize))
 	registerGraphicsFormatCommands(parser)
+
 	log.Debug().Msg("Commands registered")
 
 	Instance = &Borik{

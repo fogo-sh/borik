@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type MagikArgs struct {
@@ -26,7 +26,7 @@ func magikHelper(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWan
 		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
 
-	err = wand.ResizeImage(width, height, imagick.FILTER_LANCZOS, 1)
+	err = wand.ResizeImage(width, height, imagick.FILTER_LANCZOS)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to resize image: %w", err)
 	}

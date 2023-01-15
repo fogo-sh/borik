@@ -10,7 +10,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type AvatarArgs struct {
@@ -120,6 +120,10 @@ func apngToGif(apngInput io.Reader) (io.Reader, error) {
 	_, err = outBuffer.Write(wand.GetImagesBlob())
 	if err != nil {
 		return nil, fmt.Errorf("error outputting image: %w", err)
+	}
+
+	if outBuffer.Len() == 0 {
+		return nil, fmt.Errorf("got an empty output image - your provided sticker may be one of the currently broken ones")
 	}
 
 	return outBuffer, nil

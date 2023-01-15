@@ -5,13 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type ImageOperationArgs interface {
@@ -126,7 +129,7 @@ func MakeImageOpCommand[K ImageOperationArgs](operation ImageOperation[K]) func(
 	}
 }
 
-// PrepareAndInvokeOperation automatically handles invoking a given ImageOperation for a Discord message and returning the finished results.
+// PrepareAndInvokeOperation automatically handles invoking a given ImageOperation for a Discord message and returning the finished results
 func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageCreate, args K, operation ImageOperation[K]) {
 	defer TypingIndicator(message)()
 
@@ -146,7 +149,14 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		return
 	}
 
+	parsedUrl, _ := url.Parse(imageUrl)
+	filename := path.Base(parsedUrl.Path)
+
 	input := imagick.NewMagickWand()
+	err = input.SetFilename(filename)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to set image filename - loading may not behave as expected.")
+	}
 	err = input.ReadImageBlob(srcBytes)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to read image")
@@ -237,4 +247,20 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 			log.Error().Err(err).Msg("Failed to send error message")
 		}
 	}
+}
+
+// ResizeMaintainAspectRatio resizes an input wand to fit within a box of given width and height, maintaining aspect ratio
+func ResizeMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint) error {
+	inputHeight := float64(wand.GetImageHeight())
+	inputWidth := float64(wand.GetImageWidth())
+
+	widthMagFactor := float64(width) / inputWidth
+	heightMagFactor := float64(height) / inputHeight
+
+	minFactor := math.Min(widthMagFactor, heightMagFactor)
+
+	targetWidth := inputWidth * minFactor
+	targetHeight := inputHeight * minFactor
+
+	return wand.ScaleImage(uint(targetWidth), uint(targetHeight))
 }
