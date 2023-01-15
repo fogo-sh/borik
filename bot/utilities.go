@@ -122,14 +122,14 @@ func DownloadImage(url string) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-// MakeImageOpCommand automatically creates a Parsley command handler for a given ImageOperation, using ImageMagick V7
+// MakeImageOpCommand automatically creates a Parsley command handler for a given ImageOperation
 func MakeImageOpCommand[K ImageOperationArgs](operation ImageOperation[K]) func(*discordgo.MessageCreate, K) {
 	return func(message *discordgo.MessageCreate, args K) {
 		PrepareAndInvokeOperation(message, args, operation)
 	}
 }
 
-// PrepareAndInvokeOperation automatically handles invoking a given ImageOperation for a Discord message and returning the finished results, using ImageMagick V7.
+// PrepareAndInvokeOperation automatically handles invoking a given ImageOperation for a Discord message and returning the finished results
 func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageCreate, args K, operation ImageOperation[K]) {
 	defer TypingIndicator(message)()
 
