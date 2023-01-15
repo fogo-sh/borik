@@ -31,6 +31,11 @@ func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, e
 		return nil, fmt.Errorf("error reading divine overlay image: %w", err)
 	}
 
+	err = wand.SetImageAlphaChannel(imagick.ALPHA_CHANNEL_OPAQUE)
+	if err != nil {
+		return nil, fmt.Errorf("error removing alpha: %w", err)
+	}
+
 	wand.SetImageChannelMask(imagick.CHANNEL_BLUE | imagick.CHANNEL_GREEN)
 	err = wand.EvaluateImage(imagick.EVAL_OP_SET, 0)
 	if err != nil {
@@ -38,11 +43,16 @@ func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, e
 	}
 
 	wand.SetImageChannelMask(imagick.CHANNEL_RED | imagick.CHANNEL_GREEN | imagick.CHANNEL_BLUE)
-
-	// TODO: Figure out why this is making everything white
 	err = wand.EdgeImage(args.EdgeRadius)
 	if err != nil {
 		return nil, fmt.Errorf("error edge detecting: %w", err)
+	}
+
+	wand.SetImageChannelMask(imagick.CHANNELS_DEFAULT)
+
+	err = wand.ClampImage()
+	if err != nil {
+		return nil, fmt.Errorf("error clamping image: %w", err)
 	}
 
 	err = wand.ModulateImage(args.Brightness, args.Saturation, args.Hue)
@@ -69,7 +79,7 @@ func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, e
 	err = wand.CompositeImage(
 		overlay,
 		imagick.COMPOSITE_OP_ATOP,
-		false,
+		true,
 		int((inputWidth/2)-(overlayWidth/2)),
 		int((inputHeight/2)-(overlayHeight/2)),
 	)
