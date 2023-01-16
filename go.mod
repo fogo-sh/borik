@@ -11,7 +11,6 @@ require (
 	go.opentelemetry.io/otel v1.6.3
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.6.3
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.6.3
-	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.6.3
 	go.opentelemetry.io/otel/sdk v1.6.3
 	google.golang.org/grpc v1.45.0
 	gopkg.in/gographics/imagick.v3 v3.4.2

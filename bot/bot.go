@@ -13,7 +13,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -100,7 +99,12 @@ func New() (*Borik, error) {
 
 	log.Debug().Msg("Commands registered")
 
-	var exporter trace.SpanExporter
+	traceResource := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String("borik"),
+	)
+
+	var traceProvider *trace.TracerProvider
 
 	if config.HoneycombToken != "" {
 		log.Debug().Msg("Configuring Honeycomb exporter")
@@ -114,34 +118,20 @@ func New() (*Borik, error) {
 		}
 
 		client := otlptracegrpc.NewClient(opts...)
-		exporter, err = otlptrace.New(context.Background(), client)
+		exporter, err := otlptrace.New(context.Background(), client)
 		if err != nil {
 			return nil, fmt.Errorf("error creating opentelemetry exporter: %w", err)
 		}
+		traceProvider = sdktrace.NewTracerProvider(
+			sdktrace.WithBatcher(exporter),
+			sdktrace.WithResource(traceResource),
+		)
+
 		log.Debug().Msg("Honeycomb configured")
 	} else {
-		log.Debug().Msg("Configuring stdout exporter")
-		exporter, err = stdouttrace.New(
-			stdouttrace.WithWriter(os.Stdout),
-			// Use human-readable output.
-			stdouttrace.WithPrettyPrint(),
-			// Do not print timestamps for the demo.
-			stdouttrace.WithoutTimestamps(),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("error creating opentelemetry exporter: %w", err)
-		}
-		log.Debug().Msg("Stdout exporter configured")
+		traceProvider = sdktrace.NewTracerProvider()
 	}
 
-	traceResource := resource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceNameKey.String("borik"),
-	)
-	traceProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(exporter),
-		sdktrace.WithResource(traceResource),
-	)
 	otel.SetTracerProvider(traceProvider)
 
 	Instance = &Borik{
