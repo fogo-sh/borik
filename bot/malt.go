@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
@@ -16,7 +17,7 @@ func (args MaltArgs) GetImageURL() string {
 }
 
 // Malt mixes an image via a combination of operations.
-func Malt(wand *imagick.MagickWand, args MaltArgs) ([]*imagick.MagickWand, error) {
+func Malt(ctx context.Context, wand *imagick.MagickWand, args MaltArgs) ([]*imagick.MagickWand, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 

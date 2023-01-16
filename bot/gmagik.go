@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
@@ -19,13 +20,14 @@ func (args GmagikArgs) GetImageURL() string {
 }
 
 // Gmagik runs content-aware scaling on an image.
-func Gmagik(wand *imagick.MagickWand, args GmagikArgs) ([]*imagick.MagickWand, error) {
+func Gmagik(ctx context.Context, wand *imagick.MagickWand, args GmagikArgs) ([]*imagick.MagickWand, error) {
 	var results []*imagick.MagickWand
 
 	lastFrame := wand
 
 	for i := uint(0); i < args.Iterations; i++ {
 		newFrame, err := Magik(
+			ctx,
 			lastFrame.Clone(),
 			MagikArgs{
 				Scale:            args.Scale,

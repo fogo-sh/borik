@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
@@ -18,7 +19,7 @@ func (args ResizeArgs) GetImageURL() string {
 }
 
 // Resize resizes an image.
-func Resize(wand *imagick.MagickWand, args ResizeArgs) ([]*imagick.MagickWand, error) {
+func Resize(ctx context.Context, wand *imagick.MagickWand, args ResizeArgs) ([]*imagick.MagickWand, error) {
 	var targetHeight, targetWidth uint
 	switch args.Mode {
 	case "absolute":

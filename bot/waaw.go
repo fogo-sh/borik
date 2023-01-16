@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
@@ -94,7 +95,7 @@ func (args WaawArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Waaw(wand *imagick.MagickWand, args WaawArgs) ([]*imagick.MagickWand, error) {
+func Waaw(ctx context.Context, wand *imagick.MagickWand, args WaawArgs) ([]*imagick.MagickWand, error) {
 	return mirrorImage(wand, mirrorDirectionHorizontal, true)
 }
 
@@ -106,7 +107,7 @@ func (args HaahArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Haah(wand *imagick.MagickWand, args HaahArgs) ([]*imagick.MagickWand, error) {
+func Haah(ctx context.Context, wand *imagick.MagickWand, args HaahArgs) ([]*imagick.MagickWand, error) {
 	return mirrorImage(wand, mirrorDirectionHorizontal, false)
 }
 
@@ -118,7 +119,7 @@ func (args WoowArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Woow(wand *imagick.MagickWand, args WoowArgs) ([]*imagick.MagickWand, error) {
+func Woow(ctx context.Context, wand *imagick.MagickWand, args WoowArgs) ([]*imagick.MagickWand, error) {
 	return mirrorImage(wand, mirrorDirectionVertical, false)
 }
 
@@ -130,6 +131,6 @@ func (args HoohArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Hooh(wand *imagick.MagickWand, args HoohArgs) ([]*imagick.MagickWand, error) {
+func Hooh(ctx context.Context, wand *imagick.MagickWand, args HoohArgs) ([]*imagick.MagickWand, error) {
 	return mirrorImage(wand, mirrorDirectionVertical, true)
 }
