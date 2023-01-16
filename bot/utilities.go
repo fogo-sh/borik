@@ -125,9 +125,9 @@ func DownloadImage(url string) ([]byte, error) {
 }
 
 // MakeImageOpCommand automatically creates a Parsley command handler for a given ImageOperation
-func MakeImageOpCommand[K ImageOperationArgs](operation ImageOperation[K]) func(*discordgo.MessageCreate, K) {
+func MakeImageOpCommand[K ImageOperationArgs](operation ImageOperation[K], name string) func(*discordgo.MessageCreate, K) {
 	return func(message *discordgo.MessageCreate, args K) {
-		PrepareAndInvokeOperation(message, args, operation, "")
+		PrepareAndInvokeOperation(message, args, operation, name)
 	}
 }
 
