@@ -1,9 +1,10 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type OtsuArgs struct {
@@ -16,7 +17,7 @@ func (args OtsuArgs) GetImageURL() string {
 }
 
 // Otsu turns the image black and white by applying an adaptive threshold using Otsu's method
-func Otsu(wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error) {
+func Otsu(ctx context.Context, wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error) {
 	numOfPixels := 0
 	histogram := map[int]int{}
 

@@ -1,10 +1,11 @@
 package bot
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 //go:embed mitch_point.png
@@ -19,7 +20,7 @@ func (args MitchPointArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func MitchPoint(wand *imagick.MagickWand, args MitchPointArgs) ([]*imagick.MagickWand, error) {
+func MitchPoint(ctx context.Context, wand *imagick.MagickWand, args MitchPointArgs) ([]*imagick.MagickWand, error) {
 	mitch := imagick.NewMagickWand()
 	err := mitch.ReadImageBlob(mitchPointImage)
 	if err != nil {
@@ -36,7 +37,10 @@ func MitchPoint(wand *imagick.MagickWand, args MitchPointArgs) ([]*imagick.Magic
 	inputHeight := wand.GetImageHeight()
 	inputWidth := wand.GetImageWidth()
 
-	mitch = mitch.TransformImage("", fmt.Sprintf("%dx%d", inputWidth, inputHeight))
+	err = ResizeMaintainAspectRatio(mitch, inputWidth, wand.GetImageHeight())
+	if err != nil {
+		return nil, fmt.Errorf("error resizing mitch: %w", err)
+	}
 
 	mitchWidth := mitch.GetImageWidth()
 	mitchHeight := mitch.GetImageHeight()
@@ -50,7 +54,7 @@ func MitchPoint(wand *imagick.MagickWand, args MitchPointArgs) ([]*imagick.Magic
 
 	yOffset := int(inputHeight - mitchHeight)
 
-	err = wand.CompositeImage(mitch, imagick.COMPOSITE_OP_ATOP, xOffset, yOffset)
+	err = wand.CompositeImage(mitch, imagick.COMPOSITE_OP_ATOP, true, xOffset, yOffset)
 	if err != nil {
 		return nil, fmt.Errorf("error compositing image: %w", err)
 	}

@@ -1,9 +1,10 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type RotateArgs struct {
@@ -16,7 +17,7 @@ func (args RotateArgs) GetImageURL() string {
 }
 
 // Rotate rotates an image.
-func Rotate(wand *imagick.MagickWand, args RotateArgs) ([]*imagick.MagickWand, error) {
+func Rotate(ctx context.Context, wand *imagick.MagickWand, args RotateArgs) ([]*imagick.MagickWand, error) {
 	bgWand := imagick.NewPixelWand()
 	bgWand.SetAlpha(0)
 

@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -9,6 +10,14 @@ import (
 	"github.com/nint8835/parsley"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/trace"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
+	"google.golang.org/grpc/credentials"
 )
 
 // PersistenceBackend represents a generic backend capable of persisting data.
@@ -19,12 +28,12 @@ type PersistenceBackend interface {
 
 // Config represents the config that Borik will use to run
 type Config struct {
-	Prefix        string        `default:"borik!"`
-	Token         string        `required:"true"`
-	LogLevel      zerolog.Level `default:"1" split_words:"true"`
-	StorageType   string        `default:"file" split_words:"true"`
-	FilePath      string        `default:"backend" split_words:"true"`
-	ConsulAddress string        `default:"" split_words:"true"`
+	Prefix   string        `default:"borik!"`
+	Token    string        `required:"true"`
+	LogLevel zerolog.Level `default:"1" split_words:"true"`
+
+	HoneycombToken   string `default:"" split_words:"true"`
+	HoneycombDataset string `default:"" split_words:"true"`
 }
 
 // Borik represents an individual instance of Borik
@@ -32,6 +41,7 @@ type Borik struct {
 	Session *discordgo.Session
 	Config  *Config
 	Parser  *parsley.Parser
+	Trace   *sdktrace.TracerProvider
 }
 
 // Instance is the current instance of Borik
@@ -64,32 +74,72 @@ func New() (*Borik, error) {
 
 	log.Debug().Msg("Registering commands")
 	_ = parser.NewCommand("sorik_test", "Test sorik functionality", SorikTest)
-	_ = parser.NewCommand("", "Magikify an image.", MakeImageOpCommand(Magik))
-	_ = parser.NewCommand("magik", "Magikify an image.", MakeImageOpCommand(Magik))
-	_ = parser.NewCommand("lagik", "Lagikify an image.", MakeImageOpCommand(Lagik))
-	_ = parser.NewCommand("gmagik", "Repeatedly magikify an image.", MakeImageOpCommand(Gmagik))
-	_ = parser.NewCommand("arcweld", "Arc-weld an image.", MakeImageOpCommand(Arcweld))
-	_ = parser.NewCommand("malt", "Malt an image.", MakeImageOpCommand(Malt))
+	_ = parser.NewCommand("", "Magikify an image.", MakeImageOpCommand(Magik, "magik"))
+	_ = parser.NewCommand("magik", "Magikify an image.", MakeImageOpCommand(Magik, "magik"))
+	_ = parser.NewCommand("lagik", "Lagikify an image.", MakeImageOpCommand(Lagik, "lagik"))
+	_ = parser.NewCommand("gmagik", "Repeatedly magikify an image.", MakeImageOpCommand(Gmagik, "gmagik"))
+	_ = parser.NewCommand("arcweld", "Arc-weld an image.", MakeImageOpCommand(Arcweld, "arcweld"))
+	_ = parser.NewCommand("malt", "Malt an image.", MakeImageOpCommand(Malt, "malt"))
 	_ = parser.NewCommand("help", "Get help for available commands.", HelpCommand)
-	_ = parser.NewCommand("deepfry", "Deep-fry an image.", MakeImageOpCommand(Deepfry))
-	_ = parser.NewCommand("stevepoint", "Have Steve point at an image.", MakeImageOpCommand(StevePoint))
-	_ = parser.NewCommand("mitchpoint", "Have Mitch point at an image.", MakeImageOpCommand(MitchPoint))
-	_ = parser.NewCommand("divine", "Sever the divine light.", MakeImageOpCommand(Divine))
-	_ = parser.NewCommand("waaw", "Mirror the right half of an image.", MakeImageOpCommand(Waaw))
-	_ = parser.NewCommand("haah", "Mirror the left half of an image.", MakeImageOpCommand(Haah))
-	_ = parser.NewCommand("woow", "Mirror the top half of an image.", MakeImageOpCommand(Woow))
-	_ = parser.NewCommand("hooh", "Mirror the bottom half of an image.", MakeImageOpCommand(Hooh))
-	_ = parser.NewCommand("transform", "Apply transformations to an image.", MakeImageOpCommand(Transform))
-	_ = parser.NewCommand("invert", "Invert the colours of an image.", MakeImageOpCommand(Invert))
-	_ = parser.NewCommand("otsu", "Apply a threshold to an image using Otsu's method.", MakeImageOpCommand(Otsu))
-	_ = parser.NewCommand("rotate", "Rotate an image.", MakeImageOpCommand(Rotate))
+	_ = parser.NewCommand("deepfry", "Deep-fry an image.", MakeImageOpCommand(Deepfry, "deepfry"))
+	_ = parser.NewCommand("stevepoint", "Have Steve point at an image.", MakeImageOpCommand(StevePoint, "stevepoint"))
+	_ = parser.NewCommand("mitchpoint", "Have Mitch point at an image.", MakeImageOpCommand(MitchPoint, "mitchpoint"))
+	_ = parser.NewCommand("divine", "Sever the divine light.", MakeImageOpCommand(Divine, "divine"))
+	_ = parser.NewCommand("waaw", "Mirror the right half of an image.", MakeImageOpCommand(Waaw, "waaw"))
+	_ = parser.NewCommand("haah", "Mirror the left half of an image.", MakeImageOpCommand(Haah, "haah"))
+	_ = parser.NewCommand("woow", "Mirror the top half of an image.", MakeImageOpCommand(Woow, "woow"))
+	_ = parser.NewCommand("hooh", "Mirror the bottom half of an image.", MakeImageOpCommand(Hooh, "hooh"))
+	_ = parser.NewCommand("invert", "Invert the colours of an image.", MakeImageOpCommand(Invert, "invert"))
+	_ = parser.NewCommand("otsu", "Apply a threshold to an image using Otsu's method.", MakeImageOpCommand(Otsu, "otsu"))
+	_ = parser.NewCommand("rotate", "Rotate an image.", MakeImageOpCommand(Rotate, "rotate"))
+	_ = parser.NewCommand("avatar", "Fetch the avatar for a user.", Avatar)
+	_ = parser.NewCommand("sticker", "Fetch a sticker as an image.", Sticker)
+	_ = parser.NewCommand("emoji", "Fetch an emoji as an image.", Emoji)
+	_ = parser.NewCommand("resize", "Resize an image.", MakeImageOpCommand(Resize, "resize"))
 	registerGraphicsFormatCommands(parser)
+
 	log.Debug().Msg("Commands registered")
+
+	traceResource := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String("borik"),
+	)
+
+	var traceProvider *trace.TracerProvider
+
+	if config.HoneycombToken != "" {
+		log.Debug().Msg("Configuring Honeycomb exporter")
+		opts := []otlptracegrpc.Option{
+			otlptracegrpc.WithEndpoint("api.honeycomb.io:443"),
+			otlptracegrpc.WithHeaders(map[string]string{
+				"x-honeycomb-team":    config.HoneycombToken,
+				"x-honeycomb-dataset": config.HoneycombDataset,
+			}),
+			otlptracegrpc.WithTLSCredentials(credentials.NewClientTLSFromCert(nil, "")),
+		}
+
+		client := otlptracegrpc.NewClient(opts...)
+		exporter, err := otlptrace.New(context.Background(), client)
+		if err != nil {
+			return nil, fmt.Errorf("error creating opentelemetry exporter: %w", err)
+		}
+		traceProvider = sdktrace.NewTracerProvider(
+			sdktrace.WithBatcher(exporter),
+			sdktrace.WithResource(traceResource),
+		)
+
+		log.Debug().Msg("Honeycomb configured")
+	} else {
+		traceProvider = sdktrace.NewTracerProvider()
+	}
+
+	otel.SetTracerProvider(traceProvider)
 
 	Instance = &Borik{
 		session,
 		&config,
 		parser,
+		traceProvider,
 	}
 	log.Debug().Msg("Borik instance created")
 

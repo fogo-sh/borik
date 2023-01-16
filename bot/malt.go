@@ -1,9 +1,10 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type MaltArgs struct {
@@ -16,11 +17,11 @@ func (args MaltArgs) GetImageURL() string {
 }
 
 // Malt mixes an image via a combination of operations.
-func Malt(wand *imagick.MagickWand, args MaltArgs) ([]*imagick.MagickWand, error) {
+func Malt(ctx context.Context, wand *imagick.MagickWand, args MaltArgs) ([]*imagick.MagickWand, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 
-	err := wand.SwirlImage(args.Degree)
+	err := wand.SwirlImage(args.Degree, imagick.INTERPOLATE_PIXEL_BILINEAR)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to swirl: %w", err)
 	}
@@ -30,7 +31,7 @@ func Malt(wand *imagick.MagickWand, args MaltArgs) ([]*imagick.MagickWand, error
 		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}
 
-	err = wand.SwirlImage(args.Degree * -1)
+	err = wand.SwirlImage(args.Degree*-1, imagick.INTERPOLATE_PIXEL_BILINEAR)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to swirl: %w", err)
 	}
