@@ -95,6 +95,7 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("sticker", "Fetch a sticker as an image.", Sticker)
 	_ = parser.NewCommand("emoji", "Fetch an emoji as an image.", Emoji)
 	_ = parser.NewCommand("resize", "Resize an image.", MakeImageOpCommand(Resize, "resize"))
+	_ = parser.NewCommand("huecycle", "Create a GIF cycling the hue of an image.", MakeImageOpCommand(HueCycle, "huecycle"))
 	registerGraphicsFormatCommands(parser)
 
 	log.Debug().Msg("Commands registered")
