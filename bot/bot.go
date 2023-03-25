@@ -84,6 +84,8 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("deepfry", "Deep-fry an image.", MakeImageOpCommand(Deepfry, "deepfry"))
 	_ = parser.NewCommand("stevepoint", "Have Steve point at an image.", MakeImageOpCommand(StevePoint, "stevepoint"))
 	_ = parser.NewCommand("mitchpoint", "Have Mitch point at an image.", MakeImageOpCommand(MitchPoint, "mitchpoint"))
+	_ = parser.NewCommand("keenanthumb", "Have Keenan thumbs-up an image.", MakeImageOpCommand(KeenanThumb, "keenanthumb"))
+	_ = parser.NewCommand("sidekeenan", "Have Keenan on the side of an image.", MakeImageOpCommand(SideKeenan, "sidekeenan"))
 	_ = parser.NewCommand("divine", "Sever the divine light.", MakeImageOpCommand(Divine, "divine"))
 	_ = parser.NewCommand("waaw", "Mirror the right half of an image.", MakeImageOpCommand(Waaw, "waaw"))
 	_ = parser.NewCommand("haah", "Mirror the left half of an image.", MakeImageOpCommand(Haah, "haah"))
@@ -96,6 +98,8 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("sticker", "Fetch a sticker as an image.", Sticker)
 	_ = parser.NewCommand("emoji", "Fetch an emoji as an image.", Emoji)
 	_ = parser.NewCommand("resize", "Resize an image.", MakeImageOpCommand(Resize, "resize"))
+	_ = parser.NewCommand("huecycle", "Create a GIF cycling the hue of an image.", MakeImageOpCommand(HueCycle, "huecycle"))
+	_ = parser.NewCommand("modulate", "Modify the brightness, saturation, and hue of an image.", MakeImageOpCommand(Modulate, "modulate"))
 	registerGraphicsFormatCommands(parser)
 
 	log.Debug().Msg("Commands registered")

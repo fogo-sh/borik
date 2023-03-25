@@ -11,7 +11,6 @@ RUN apt-get update && \
       libgif-dev \
       libwebp-dev \
       libheif-dev \
-      ffmpeg \
       liblqr-1-0-dev \
       libglib2.0 \
       --no-install-recommends && \
