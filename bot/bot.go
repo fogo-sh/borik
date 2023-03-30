@@ -85,6 +85,7 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("mitchpoint", "Have Mitch point at an image.", MakeImageOpCommand(MitchPoint, "mitchpoint"))
 	_ = parser.NewCommand("keenanthumb", "Have Keenan thumbs-up an image.", MakeImageOpCommand(KeenanThumb, "keenanthumb"))
 	_ = parser.NewCommand("sidekeenan", "Have Keenan on the side of an image.", MakeImageOpCommand(SideKeenan, "sidekeenan"))
+	_ = parser.NewCommand("jackpog", "Have Jack Pog an image.", MakeImageOpCommand(JackPog, "jackpog"))
 	_ = parser.NewCommand("divine", "Sever the divine light.", MakeImageOpCommand(Divine, "divine"))
 	_ = parser.NewCommand("waaw", "Mirror the right half of an image.", MakeImageOpCommand(Waaw, "waaw"))
 	_ = parser.NewCommand("haah", "Mirror the left half of an image.", MakeImageOpCommand(Haah, "haah"))
