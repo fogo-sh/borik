@@ -3,12 +3,9 @@ package bot
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/kelseyhightower/envconfig"
 	"github.com/nint8835/parsley"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -18,28 +15,14 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 	"google.golang.org/grpc/credentials"
+
+	configPkg "github.com/fogo-sh/borik/pkg/config"
 )
-
-// PersistenceBackend represents a generic backend capable of persisting data.
-type PersistenceBackend interface {
-	Get(string, interface{}) error
-	Put(string, interface{}) error
-}
-
-// Config represents the config that Borik will use to run
-type Config struct {
-	Prefix   string        `default:"borik!"`
-	Token    string        `required:"true"`
-	LogLevel zerolog.Level `default:"1" split_words:"true"`
-
-	HoneycombToken   string `default:"" split_words:"true"`
-	HoneycombDataset string `default:"" split_words:"true"`
-}
 
 // Borik represents an individual instance of Borik
 type Borik struct {
 	Session *discordgo.Session
-	Config  *Config
+	Config  *configPkg.Config
 	Parser  *parsley.Parser
 	Trace   *sdktrace.TracerProvider
 }
@@ -49,15 +32,7 @@ var Instance *Borik
 
 // New constructs a new instance of Borik.
 func New() (*Borik, error) {
-	var config Config
-	err := envconfig.Process("borik", &config)
-
-	if err != nil {
-		return nil, fmt.Errorf("error loading Borik config: %w", err)
-	}
-
-	zerolog.SetGlobalLevel(config.LogLevel)
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	config := configPkg.Instance
 
 	log.Debug().Msg("Creating Discord session")
 	session, err := discordgo.New("Bot " + config.Token)
@@ -141,7 +116,7 @@ func New() (*Borik, error) {
 
 	Instance = &Borik{
 		session,
-		&config,
+		config,
 		parser,
 		traceProvider,
 	}
