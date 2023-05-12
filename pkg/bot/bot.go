@@ -5,17 +5,22 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/nint8835/parsley"
+	"go.temporal.io/sdk/client"
 
 	"github.com/fogo-sh/borik/pkg/config"
+	"github.com/fogo-sh/borik/pkg/logging"
 )
 
 type Bot struct {
-	session  *discordgo.Session
-	parser   *parsley.Parser
-	quitChan chan struct{}
+	session        *discordgo.Session
+	parser         *parsley.Parser
+	temporalClient client.Client
+	quitChan       chan struct{}
 }
 
 func (b *Bot) Start() error {
+	defer b.temporalClient.Close()
+
 	err := b.session.Open()
 	if err != nil {
 		return fmt.Errorf("error opening discord session: %w", err)
@@ -39,6 +44,15 @@ func New() (*Bot, error) {
 	bot := &Bot{
 		quitChan: make(chan struct{}),
 	}
+
+	c, err := client.Dial(client.Options{
+		Namespace: config.Instance.TemporalNamespace,
+		Logger:    logging.NewTemporalLogger(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating temporal client: %w", err)
+	}
+	bot.temporalClient = c
 
 	parser := parsley.New(config.Instance.Prefix)
 	bot.parser = parser
