@@ -7,6 +7,8 @@ import (
 	"go.temporal.io/sdk/worker"
 
 	"github.com/fogo-sh/borik/pkg/config"
+	"github.com/fogo-sh/borik/pkg/jobs/activities"
+	"github.com/fogo-sh/borik/pkg/jobs/workflows"
 	"github.com/fogo-sh/borik/pkg/logging"
 )
 
@@ -41,6 +43,8 @@ func New() (*Worker, error) {
 	}
 
 	w := worker.New(c, config.Instance.TemporalQueueName, worker.Options{})
+	workflows.RegisterWorkflows(w)
+	activities.RegisterActivities(w)
 
 	return &Worker{
 		client:        c,

@@ -65,6 +65,7 @@ func New() (*Bot, error) {
 	bot.session = session
 
 	_ = parser.NewCommand("help", "Get help for available commands.", bot.helpCommand)
+	_ = parser.NewCommand("test", "Test workflow.", bot.workflowTestCommand)
 
 	parser.RegisterHandler(session)
 
