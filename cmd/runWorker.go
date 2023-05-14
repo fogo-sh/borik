@@ -7,6 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"gopkg.in/gographics/imagick.v3/imagick"
 
 	"github.com/fogo-sh/borik/pkg/jobs/worker"
 )
@@ -16,6 +17,9 @@ var runWorkerCmd = &cobra.Command{
 	Short: "Run the Borik worker",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
+		imagick.Initialize()
+		defer imagick.Terminate()
+
 		w, err := worker.New()
 		if err != nil {
 			log.Fatal().Err(err).Msg("Error creating bot")

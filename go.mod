@@ -6,6 +6,7 @@ require (
 	github.com/bwmarrin/discordgo v0.24.0
 	github.com/joho/godotenv v1.4.0
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/nint8835/parsley v1.0.3
 	github.com/rs/zerolog v1.26.1
 	github.com/spf13/cobra v1.7.0
