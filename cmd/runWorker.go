@@ -20,17 +20,25 @@ var runWorkerCmd = &cobra.Command{
 		imagick.Initialize()
 		defer imagick.Terminate()
 
-		w, err := worker.New()
-		if err != nil {
-			log.Fatal().Err(err).Msg("Error creating bot")
-		}
+		workerCount, _ := cmd.Flags().GetUint("concurrency")
 
-		go func() {
-			err := w.Start()
+		var workers []*worker.Worker
+
+		for i := uint(0); i < workerCount; i++ {
+			w, err := worker.New()
 			if err != nil {
-				log.Fatal().Err(err).Msg("Error starting worker")
+				log.Fatal().Err(err).Msg("Error creating worker")
 			}
-		}()
+
+			workers = append(workers, w)
+
+			go func() {
+				err := w.Start()
+				if err != nil {
+					log.Fatal().Err(err).Msg("Error starting worker")
+				}
+			}()
+		}
 
 		log.Info().Msg("Borik worker is now running, press CTRL-C to exit.")
 		sc := make(chan os.Signal, 1)
@@ -38,10 +46,13 @@ var runWorkerCmd = &cobra.Command{
 		<-sc
 		log.Info().Msg("Quitting Borik worker")
 
-		w.Stop()
+		for _, w := range workers {
+			w.Stop()
+		}
 	},
 }
 
 func init() {
+	runWorkerCmd.Flags().Uint("concurrency", 1, "Number of concurrent worker processes to run")
 	runCmd.AddCommand(runWorkerCmd)
 }
