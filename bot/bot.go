@@ -100,6 +100,8 @@ func New() (*Borik, error) {
 	_ = parser.NewCommand("resize", "Resize an image.", MakeImageOpCommand(Resize, "resize"))
 	_ = parser.NewCommand("huecycle", "Create a GIF cycling the hue of an image.", MakeImageOpCommand(HueCycle, "huecycle"))
 	_ = parser.NewCommand("modulate", "Modify the brightness, saturation, and hue of an image.", MakeImageOpCommand(Modulate, "modulate"))
+	_ = parser.NewCommand("presidentsframe", "Apply the President's Frame to an image", MakeImageOpCommand(PresidentsFrame, "presidentsframe"))
+
 	registerGraphicsFormatCommands(parser)
 
 	log.Debug().Msg("Commands registered")
