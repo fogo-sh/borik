@@ -11,28 +11,14 @@ type HelpArgs struct {
 	Command string `default:"" description:"Command to get help for."`
 }
 
-func generateCommandList() *discordgo.MessageEmbed {
-	embed := &discordgo.MessageEmbed{
-		Title:  "Borik Help",
-		Fields: []*discordgo.MessageEmbedField{},
-		Color:  (206 << 16) + (147 << 8) + 216,
-	}
+func generateCommandList() string {
+	commandCodeBlock := "```"
 
 	for _, details := range Instance.Parser.GetCommands() {
-		argString := ""
-		for _, argDetails := range details.Arguments {
-			if argDetails.Required {
-				argString += fmt.Sprintf(" <%s:%s>", argDetails.Name, argDetails.Type)
-			} else {
-				argString += fmt.Sprintf(" [%s:%s=%s]", argDetails.Name, argDetails.Type, argDetails.Default)
-			}
-		}
-		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-			Name:  fmt.Sprintf("%s%s%s", Instance.Config.Prefix, details.Name, argString),
-			Value: details.Description,
-		})
+		commandCodeBlock += fmt.Sprintf("%s%s: %s\n", Instance.Config.Prefix, details.Name, details.Description)
 	}
-	return embed
+
+	return commandCodeBlock + "```"
 }
 
 func generateCommandHelp(command string) (*discordgo.MessageEmbed, error) {
@@ -63,10 +49,8 @@ func generateCommandHelp(command string) (*discordgo.MessageEmbed, error) {
 }
 
 func HelpCommand(message *discordgo.MessageCreate, args HelpArgs) {
-	var embed *discordgo.MessageEmbed
 	if args.Command != "" {
-		var err error
-		embed, err = generateCommandHelp(args.Command)
+		embed, err := generateCommandHelp(args.Command)
 		if err != nil {
 			_, err := Instance.session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\n%s\n```", err.Error()))
 			if err != nil {
@@ -75,12 +59,17 @@ func HelpCommand(message *discordgo.MessageCreate, args HelpArgs) {
 			return
 		}
 
+		_, err = Instance.session.ChannelMessageSendEmbed(message.ChannelID, embed)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send help message")
+		}
 	} else {
-		embed = generateCommandList()
+		helpText := generateCommandList()
+
+		_, err := Instance.session.ChannelMessageSend(message.ChannelID, helpText)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send help message")
+		}
 	}
 
-	_, err := Instance.session.ChannelMessageSendEmbed(message.ChannelID, embed)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to send help message")
-	}
 }
