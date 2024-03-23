@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	_ "embed"
 	"fmt"
 
@@ -25,7 +24,7 @@ func (args DivineArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func Divine(ctx context.Context, wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, error) {
+func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, error) {
 	overlay := imagick.NewMagickWand()
 	err := overlay.ReadImageBlob(divineOverlayImage)
 	if err != nil {

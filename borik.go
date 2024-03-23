@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -28,13 +27,6 @@ func main() {
 		fmt.Printf("Error creating Borik instance: %s\n", err.Error())
 		return
 	}
-
-	defer func() {
-		err := borik.Trace.Shutdown(context.Background())
-		if err != nil {
-			log.Error().Err(err).Msg("Error shutting down trace provider")
-		}
-	}()
 
 	log.Debug().Msg("Opening Discord connection")
 	err = borik.Session.Open()

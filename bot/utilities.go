@@ -2,7 +2,6 @@ package bot
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
-	"go.opentelemetry.io/otel"
 	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
@@ -23,7 +21,7 @@ type ImageOperationArgs interface {
 	GetImageURL() string
 }
 
-type ImageOperation[K ImageOperationArgs] func(context.Context, *imagick.MagickWand, K) ([]*imagick.MagickWand, error)
+type ImageOperation[K ImageOperationArgs] func(*imagick.MagickWand, K) ([]*imagick.MagickWand, error)
 
 // TypingIndicator invokes a typing indicator in the channel of a message
 func TypingIndicator(message *discordgo.MessageCreate) func() {
@@ -125,19 +123,16 @@ func DownloadImage(url string) ([]byte, error) {
 }
 
 // MakeImageOpCommand automatically creates a Parsley command handler for a given ImageOperation
-func MakeImageOpCommand[K ImageOperationArgs](operation ImageOperation[K], name string) func(*discordgo.MessageCreate, K) {
+func MakeImageOpCommand[K ImageOperationArgs](operation ImageOperation[K]) func(*discordgo.MessageCreate, K) {
 	return func(message *discordgo.MessageCreate, args K) {
-		PrepareAndInvokeOperation(message, args, operation, name)
+		PrepareAndInvokeOperation(message, args, operation)
 	}
 }
 
 // PrepareAndInvokeOperation automatically handles invoking a given ImageOperation for a Discord message and returning the finished results
-func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageCreate, args K, operation ImageOperation[K], operationName string) {
-	ctx, span := otel.Tracer("").Start(context.Background(), "invoke_operation")
-	defer span.End()
+func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageCreate, args K, operation ImageOperation[K]) {
 	defer TypingIndicator(message)()
 
-	_, loadSpan := otel.Tracer("").Start(ctx, "load_image")
 	imageUrl := args.GetImageURL()
 	if imageUrl == "" {
 		var err error
@@ -168,17 +163,14 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		return
 	}
 	input = input.CoalesceImages()
-	loadSpan.End()
 
 	var resultFrames []*imagick.MagickWand
 
 	for i := 0; i < int(input.GetNumberImages()); i++ {
-		_, frameSpan := otel.Tracer("").Start(ctx, operationName)
 		input.SetIteratorIndex(i)
 		inputFrame := input.GetImage().Clone()
 		log.Debug().Int("frame", i).Msg("Beginning processing frame")
-		output, err := operation(ctx, inputFrame, args)
-		frameSpan.End()
+		output, err := operation(inputFrame, args)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to process image")
 			return
@@ -197,7 +189,6 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		}
 	}
 
-	_, saveSpan := otel.Tracer("").Start(ctx, "save_image")
 	input.ResetIterator()
 	resultImage.ResetIterator()
 
@@ -256,7 +247,6 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 			log.Error().Err(err).Msg("Failed to send error message")
 		}
 	}
-	saveSpan.End()
 }
 
 // ResizeMaintainAspectRatio resizes an input wand to fit within a box of given width and height, maintaining aspect ratio
