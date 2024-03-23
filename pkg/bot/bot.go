@@ -13,8 +13,8 @@ import (
 // Bot represents an individual instance of Borik
 type Bot struct {
 	session  *discordgo.Session
-	Config   *configPkg.Config
-	Parser   *parsley.Parser
+	config   *configPkg.Config
+	parser   *parsley.Parser
 	quitChan chan struct{}
 }
 
@@ -97,7 +97,6 @@ func New() (*Bot, error) {
 		parser,
 		make(chan struct{}),
 	}
-	log.Debug().Msg("Borik instance created")
 
 	return Instance, nil
 }
