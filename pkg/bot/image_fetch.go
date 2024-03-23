@@ -21,7 +21,7 @@ type AvatarArgs struct {
 // Avatar fetches a user's avatar.
 func Avatar(message *discordgo.MessageCreate, args AvatarArgs) {
 	if len(message.Mentions) != 1 {
-		Instance.Session.ChannelMessageSendReply(
+		Instance.session.ChannelMessageSendReply(
 			message.ChannelID,
 			"You must provide a single user to fetch an avatar for, as a Discord mention.",
 			message.Reference(),
@@ -30,7 +30,7 @@ func Avatar(message *discordgo.MessageCreate, args AvatarArgs) {
 	}
 
 	targetUser := message.Mentions[0]
-	member, err := Instance.Session.GuildMember(message.GuildID, targetUser.ID)
+	member, err := Instance.session.GuildMember(message.GuildID, targetUser.ID)
 	if err != nil {
 		log.Error().Err(err).Msg("Error fetching member")
 		return
@@ -50,7 +50,7 @@ func Avatar(message *discordgo.MessageCreate, args AvatarArgs) {
 	}
 	defer resp.Body.Close()
 
-	Instance.Session.ChannelMessageSendComplex(
+	Instance.session.ChannelMessageSendComplex(
 		message.ChannelID,
 		&discordgo.MessageSend{
 			Reference: message.Reference(),
@@ -136,7 +136,7 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 	} else if message.ReferencedMessage != nil && len(message.ReferencedMessage.StickerItems) >= 1 {
 		targetSticker = message.ReferencedMessage.StickerItems[0]
 	} else {
-		messages, err := Instance.Session.ChannelMessages(message.ChannelID, 20, message.ID, "", "")
+		messages, err := Instance.session.ChannelMessages(message.ChannelID, 20, message.ID, "", "")
 		if err != nil {
 			log.Error().Err(err).Msg("Error fetching message history")
 			return
@@ -151,7 +151,7 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 	}
 
 	if targetSticker == nil {
-		Instance.Session.ChannelMessageSendReply(
+		Instance.session.ChannelMessageSendReply(
 			message.ChannelID,
 			"No sticker found! Please post the sticker you are looking for and try again, or retry this command as a reply on the target message.",
 			message.Reference(),
@@ -161,7 +161,7 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 
 	stickerUrl, contentType, err := getStickerUrl(targetSticker)
 	if err != nil {
-		Instance.Session.ChannelMessageSendReply(
+		Instance.session.ChannelMessageSendReply(
 			message.ChannelID,
 			fmt.Sprintf("Unable to fetch sticker: %s", err),
 			message.Reference(),
@@ -181,7 +181,7 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 	if targetSticker.FormatType == discordgo.StickerFormatTypeAPNG {
 		file, err = apngToGif(resp.Body)
 		if err != nil {
-			Instance.Session.ChannelMessageSendReply(
+			Instance.session.ChannelMessageSendReply(
 				message.ChannelID,
 				fmt.Sprintf("Error converting APNG sticker to GIF:\n```%s```", err),
 				message.Reference(),
@@ -195,7 +195,7 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 		filename = path.Base(resp.Request.URL.Path)
 	}
 
-	Instance.Session.ChannelMessageSendComplex(
+	Instance.session.ChannelMessageSendComplex(
 		message.ChannelID,
 		&discordgo.MessageSend{
 			Reference: message.Reference(),
@@ -227,7 +227,7 @@ func Emoji(message *discordgo.MessageCreate, args EmojiArgs) {
 	} else if message.ReferencedMessage != nil && len(message.ReferencedMessage.GetCustomEmojis()) >= 1 {
 		targetEmoji = message.ReferencedMessage.GetCustomEmojis()[0]
 	} else {
-		messages, err := Instance.Session.ChannelMessages(message.ChannelID, 20, message.ID, "", "")
+		messages, err := Instance.session.ChannelMessages(message.ChannelID, 20, message.ID, "", "")
 		if err != nil {
 			log.Error().Err(err).Msg("Error fetching message history")
 			return
@@ -242,7 +242,7 @@ func Emoji(message *discordgo.MessageCreate, args EmojiArgs) {
 	}
 
 	if targetEmoji == nil {
-		Instance.Session.ChannelMessageSendReply(
+		Instance.session.ChannelMessageSendReply(
 			message.ChannelID,
 			"No emoji found! Please post the emoji you are looking for and try again, or retry this command as a reply on the target message.",
 			message.Reference(),
@@ -259,7 +259,7 @@ func Emoji(message *discordgo.MessageCreate, args EmojiArgs) {
 	}
 	defer resp.Body.Close()
 
-	Instance.Session.ChannelMessageSendComplex(
+	Instance.session.ChannelMessageSendComplex(
 		message.ChannelID,
 		&discordgo.MessageSend{
 			Reference: message.Reference(),

@@ -28,7 +28,7 @@ func TypingIndicator(message *discordgo.MessageCreate) func() {
 	stopTyping := Schedule(
 		func() {
 			log.Debug().Str("channel", message.ChannelID).Msg("Invoking typing indicator in channel")
-			err := Instance.Session.ChannelTyping(message.ChannelID)
+			err := Instance.session.ChannelTyping(message.ChannelID)
 			if err != nil {
 				log.Error().Err(err).Msg("Error while attempting invoke typing indicator in channel")
 				return
@@ -90,7 +90,7 @@ func FindImageURL(m *discordgo.MessageCreate) (string, error) {
 		}
 	}
 
-	messages, err := Instance.Session.ChannelMessages(m.ChannelID, 20, m.ID, "", "")
+	messages, err := Instance.session.ChannelMessages(m.ChannelID, 20, m.ID, "", "")
 	if err != nil {
 		return "", fmt.Errorf("error retrieving message history: %w", err)
 	}
@@ -230,7 +230,7 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 	}
 
 	log.Debug().Msg("Image processed, uploading result")
-	_, err = Instance.Session.ChannelMessageSendComplex(
+	_, err = Instance.session.ChannelMessageSendComplex(
 		message.ChannelID,
 		&discordgo.MessageSend{
 			Reference: message.Reference(),
@@ -242,7 +242,7 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to send image")
-		_, err = Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
+		_, err = Instance.session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to send error message")
 		}

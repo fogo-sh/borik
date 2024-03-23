@@ -2,43 +2,48 @@ package bot
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/kelseyhightower/envconfig"
 	"github.com/nint8835/parsley"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	configPkg "github.com/fogo-sh/borik/pkg/config"
 )
 
-// Config represents the config that Borik will use to run
-type Config struct {
-	Prefix   string        `default:"borik!"`
-	Token    string        `required:"true"`
-	LogLevel zerolog.Level `default:"1" split_words:"true"`
+// Bot represents an individual instance of Borik
+type Bot struct {
+	session  *discordgo.Session
+	Config   *configPkg.Config
+	Parser   *parsley.Parser
+	quitChan chan struct{}
 }
 
-// Borik represents an individual instance of Borik
-type Borik struct {
-	Session *discordgo.Session
-	Config  *Config
-	Parser  *parsley.Parser
+func (b *Bot) Start() error {
+	err := b.session.Open()
+	if err != nil {
+		return fmt.Errorf("error opening discord session: %w", err)
+	}
+
+	<-b.quitChan
+
+	err = b.session.Close()
+	if err != nil {
+		return fmt.Errorf("error closing discord session: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Bot) Stop() {
+	b.quitChan <- struct{}{}
 }
 
 // Instance is the current instance of Borik
-var Instance *Borik
+var Instance *Bot
 
 // New constructs a new instance of Borik.
-func New() (*Borik, error) {
-	var config Config
-	err := envconfig.Process("borik", &config)
-
-	if err != nil {
-		return nil, fmt.Errorf("error loading Borik config: %w", err)
-	}
-
-	zerolog.SetGlobalLevel(config.LogLevel)
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+func New() (*Bot, error) {
+	config := configPkg.Instance
 
 	log.Debug().Msg("Creating Discord session")
 	session, err := discordgo.New("Bot " + config.Token)
@@ -86,10 +91,11 @@ func New() (*Borik, error) {
 
 	log.Debug().Msg("Commands registered")
 
-	Instance = &Borik{
+	Instance = &Bot{
 		session,
-		&config,
+		config,
 		parser,
+		make(chan struct{}),
 	}
 	log.Debug().Msg("Borik instance created")
 
