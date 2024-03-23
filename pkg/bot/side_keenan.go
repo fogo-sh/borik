@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	_ "embed"
 	"fmt"
 
@@ -20,7 +19,7 @@ func (args SideKeenanArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func SideKeenan(ctx context.Context, wand *imagick.MagickWand, args SideKeenanArgs) ([]*imagick.MagickWand, error) {
+func SideKeenan(wand *imagick.MagickWand, args SideKeenanArgs) ([]*imagick.MagickWand, error) {
 	sideKeenan := imagick.NewMagickWand()
 	err := sideKeenan.ReadImageBlob(sideKeenanImage)
 	if err != nil {

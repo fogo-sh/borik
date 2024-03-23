@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	_ "embed"
 	"fmt"
 
@@ -19,7 +18,7 @@ func (args FrameArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func PresidentsFrame(ctx context.Context, wand *imagick.MagickWand, args FrameArgs) ([]*imagick.MagickWand, error) {
+func PresidentsFrame(wand *imagick.MagickWand, args FrameArgs) ([]*imagick.MagickWand, error) {
 	frame := imagick.NewMagickWand()
 	if err := frame.ReadImageBlob(frameImage); err != nil {
 		return nil, fmt.Errorf("error reading frame: %w", err)
