@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	_ "embed"
 	"fmt"
 
@@ -21,7 +20,7 @@ func (args JackPogArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func JackPog(ctx context.Context, wand *imagick.MagickWand, args JackPogArgs) ([]*imagick.MagickWand, error) {
+func JackPog(wand *imagick.MagickWand, args JackPogArgs) ([]*imagick.MagickWand, error) {
 	jack := imagick.NewMagickWand()
 	err := jack.ReadImageBlob(jackPogImage)
 	if err != nil {
