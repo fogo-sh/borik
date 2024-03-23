@@ -1,6 +1,6 @@
 module github.com/fogo-sh/borik
 
-go 1.18
+go 1.22.1
 
 require (
 	github.com/bwmarrin/discordgo v0.24.0
