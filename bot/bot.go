@@ -11,20 +11,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// PersistenceBackend represents a generic backend capable of persisting data.
-type PersistenceBackend interface {
-	Get(string, interface{}) error
-	Put(string, interface{}) error
-}
-
 // Config represents the config that Borik will use to run
 type Config struct {
-	Prefix        string        `default:"borik!"`
-	Token         string        `required:"true"`
-	LogLevel      zerolog.Level `default:"1" split_words:"true"`
-	StorageType   string        `default:"file" split_words:"true"`
-	FilePath      string        `default:"backend" split_words:"true"`
-	ConsulAddress string        `default:"" split_words:"true"`
+	Prefix   string        `default:"borik!"`
+	Token    string        `required:"true"`
+	LogLevel zerolog.Level `default:"1" split_words:"true"`
 }
 
 // Borik represents an individual instance of Borik
