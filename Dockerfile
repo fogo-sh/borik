@@ -28,4 +28,4 @@ RUN go mod download &&\
     go mod verify &&\
     go build
 
-ENTRYPOINT ["/build/borik"]
+ENTRYPOINT ["/build/borik", "run"]
