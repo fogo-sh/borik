@@ -264,3 +264,67 @@ func ResizeMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint
 
 	return wand.ScaleImage(uint(targetWidth), uint(targetHeight))
 }
+
+type OverlayOptions struct {
+	HFlip bool
+	VFlip bool
+
+	OverlayWidthFactor  float64
+	OverlayHeightFactor float64
+
+	//
+	RightToLeft bool
+}
+
+// OverlayImage overlays an image onto another image
+func OverlayImage(wand *imagick.MagickWand, overlay []byte, options OverlayOptions) error {
+	overlayWand := imagick.NewMagickWand()
+	err := overlayWand.ReadImageBlob(overlay)
+	if err != nil {
+		return fmt.Errorf("error reading overlay: %w", err)
+	}
+
+	if options.HFlip {
+		err = overlayWand.FlopImage()
+		if err != nil {
+			return fmt.Errorf("error flipping overlay horizontally: %w", err)
+		}
+	}
+	if options.VFlip {
+		err = overlayWand.FlipImage()
+		if err != nil {
+			return fmt.Errorf("error flipping overlay vertically: %w", err)
+		}
+	}
+
+	inputWidth := wand.GetImageWidth()
+	inputHeight := wand.GetImageHeight()
+
+	err = ResizeMaintainAspectRatio(
+		overlayWand,
+		uint(float64(inputWidth)*options.OverlayWidthFactor),
+		uint(float64(inputHeight)*options.OverlayHeightFactor),
+	)
+	if err != nil {
+		return fmt.Errorf("error resizing overlay: %w", err)
+	}
+
+	overlayWidth := overlayWand.GetImageWidth()
+	overlayHeight := overlayWand.GetImageHeight()
+
+	if options.HFlip {
+		options.RightToLeft = !options.RightToLeft
+	}
+
+	xOffset := 0
+	if options.RightToLeft {
+		xOffset = int(inputWidth - overlayWidth)
+	}
+
+	yOffset := 0
+	if !options.VFlip {
+		yOffset = int(inputHeight - overlayHeight)
+	}
+
+	return wand.CompositeImage(overlayWand, imagick.COMPOSITE_OP_ATOP, true, xOffset, yOffset)
+}

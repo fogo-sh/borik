@@ -2,7 +2,6 @@ package bot
 
 import (
 	_ "embed"
-	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
 )
@@ -20,41 +19,15 @@ func (args SideKeenanArgs) GetImageURL() string {
 }
 
 func SideKeenan(wand *imagick.MagickWand, args SideKeenanArgs) ([]*imagick.MagickWand, error) {
-	sideKeenan := imagick.NewMagickWand()
-	err := sideKeenan.ReadImageBlob(sideKeenanImage)
-	if err != nil {
-		return nil, fmt.Errorf("error reading side keenan: %w", err)
-	}
-
-	if args.Flip {
-		err = sideKeenan.FlopImage()
-		if err != nil {
-			return nil, fmt.Errorf("error flipping side keenan: %w", err)
-		}
-	}
-
-	inputWidth := wand.GetImageWidth()
-	inputHeight := wand.GetImageHeight()
-
-	err = ResizeMaintainAspectRatio(sideKeenan, inputWidth, inputHeight/2)
-	if err != nil {
-		return nil, fmt.Errorf("error resizing side keenan: %w", err)
-	}
-
-	sideKeenanWidth := sideKeenan.GetImageWidth()
-	sideKeenanHeight := sideKeenan.GetImageHeight()
-
-	xOffset := int(inputWidth - sideKeenanWidth)
-	if args.Flip {
-		xOffset = 0
-	}
-
-	yOffset := int(inputHeight - sideKeenanHeight)
-
-	err = wand.CompositeImage(sideKeenan, imagick.COMPOSITE_OP_ATOP, true, xOffset, yOffset)
-	if err != nil {
-		return nil, fmt.Errorf("error compositing image: %w", err)
-	}
-
-	return []*imagick.MagickWand{wand}, nil
+	err := OverlayImage(
+		wand,
+		sideKeenanImage,
+		OverlayOptions{
+			HFlip:               args.Flip,
+			VFlip:               false,
+			OverlayWidthFactor:  1,
+			OverlayHeightFactor: 0.5,
+		},
+	)
+	return []*imagick.MagickWand{wand}, err
 }
