@@ -63,7 +63,7 @@ func Avatar(message *discordgo.MessageCreate, args AvatarArgs) {
 	)
 }
 
-func getStickerUrl(sticker *discordgo.Sticker) (string, string, error) {
+func getStickerUrl(sticker *discordgo.StickerItem) (string, string, error) {
 	switch sticker.FormatType {
 	case discordgo.StickerFormatTypePNG:
 		return fmt.Sprintf(
@@ -130,7 +130,7 @@ func apngToGif(apngInput io.Reader) (io.Reader, error) {
 }
 
 func Sticker(message *discordgo.MessageCreate, args struct{}) {
-	var targetSticker *discordgo.Sticker
+	var targetSticker *discordgo.StickerItem
 	if len(message.StickerItems) >= 1 {
 		targetSticker = message.StickerItems[0]
 	} else if message.ReferencedMessage != nil && len(message.ReferencedMessage.StickerItems) >= 1 {
