@@ -6,19 +6,24 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/nint8835/parsley"
 	"github.com/rs/zerolog/log"
+	"go.temporal.io/sdk/client"
 
 	configPkg "github.com/fogo-sh/borik/pkg/config"
+	"github.com/fogo-sh/borik/pkg/logging"
 )
 
 // Bot represents an individual instance of Borik
 type Bot struct {
-	session  *discordgo.Session
-	config   *configPkg.Config
-	parser   *parsley.Parser
-	quitChan chan struct{}
+	session        *discordgo.Session
+	config         *configPkg.Config
+	parser         *parsley.Parser
+	temporalClient client.Client
+	quitChan       chan struct{}
 }
 
 func (b *Bot) Start() error {
+	defer b.temporalClient.Close()
+
 	err := b.session.Open()
 	if err != nil {
 		return fmt.Errorf("error opening discord session: %w", err)
@@ -45,17 +50,24 @@ var Instance *Bot
 func New() (*Bot, error) {
 	config := configPkg.Instance
 
+	Instance = &Bot{
+		config:   config,
+		quitChan: make(chan struct{}),
+	}
+
 	log.Debug().Msg("Creating Discord session")
 	session, err := discordgo.New("Bot " + config.Token)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new Discord session: %w", err)
 	}
 	session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
+	Instance.session = session
 	log.Debug().Msg("Discord session created")
 
 	log.Debug().Msg("Creating command parser")
 	parser := parsley.New(config.Prefix)
 	parser.RegisterHandler(session)
+	Instance.parser = parser
 	log.Debug().Msg("Parser created")
 
 	log.Debug().Msg("Registering commands")
@@ -87,16 +99,19 @@ func New() (*Bot, error) {
 	_ = parser.NewCommand("huecycle", "Create a GIF cycling the hue of an image.", MakeImageOpCommand(HueCycle))
 	_ = parser.NewCommand("modulate", "Modify the brightness, saturation, and hue of an image.", MakeImageOpCommand(Modulate))
 	_ = parser.NewCommand("presidentsframe", "Apply the President's Frame to an image", MakeImageOpCommand(PresidentsFrame))
+	_ = parser.NewCommand("test", "Test workflow.", Instance.workflowTestCommand)
 	registerGraphicsFormatCommands(parser)
 
 	log.Debug().Msg("Commands registered")
 
-	Instance = &Bot{
-		session,
-		config,
-		parser,
-		make(chan struct{}),
+	c, err := client.Dial(client.Options{
+		Namespace: config.TemporalNamespace,
+		Logger:    logging.NewTemporalLogger(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating temporal client: %w", err)
 	}
+	Instance.temporalClient = c
 
 	return Instance, nil
 }
