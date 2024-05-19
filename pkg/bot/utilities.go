@@ -327,3 +327,34 @@ func OverlayImage(wand *imagick.MagickWand, overlay []byte, options OverlayOptio
 
 	return wand.CompositeImage(overlayWand, imagick.COMPOSITE_OP_ATOP, true, xOffset, yOffset)
 }
+
+type OverlayImageArgs struct {
+	ImageURL string `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
+	HFlip    bool   `default:"false" description:"Flip the overlay horizontally."`
+	VFlip    bool   `default:"false" description:"Flip the overlay vertically."`
+}
+
+func (args OverlayImageArgs) GetImageURL() string {
+	return args.ImageURL
+}
+
+func MakeImageOverlayCommand(overlayImage []byte, initialOptions OverlayOptions) func(*discordgo.MessageCreate, OverlayImageArgs) {
+	return MakeImageOpCommand(func(wand *imagick.MagickWand, args OverlayImageArgs) ([]*imagick.MagickWand, error) {
+		newOptions := initialOptions
+
+		if args.HFlip {
+			newOptions.HFlip = !newOptions.HFlip
+		}
+		if args.VFlip {
+			newOptions.VFlip = !newOptions.VFlip
+		}
+
+		err := OverlayImage(
+			wand,
+			overlayImage,
+			newOptions,
+		)
+
+		return []*imagick.MagickWand{wand}, err
+	})
+}
