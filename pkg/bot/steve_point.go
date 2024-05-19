@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	_ "embed"
 	"fmt"
 
@@ -20,7 +19,7 @@ func (args StevePointArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func StevePoint(ctx context.Context, wand *imagick.MagickWand, args StevePointArgs) ([]*imagick.MagickWand, error) {
+func StevePoint(wand *imagick.MagickWand, args StevePointArgs) ([]*imagick.MagickWand, error) {
 	steve := imagick.NewMagickWand()
 	err := steve.ReadImageBlob(stevePointImage)
 	if err != nil {
