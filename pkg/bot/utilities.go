@@ -312,14 +312,14 @@ func ExecuteSorikScript(command string, source []byte, message *discordgo.Messag
 	fileName := path.Base(u.Path)
 
 	log.Debug().Msg("Image processed, uploading result")
-	_, err = Instance.Session.ChannelFileSend(
+	_, err = Instance.session.ChannelFileSend(
 		message.ChannelID,
 		fileName,
 		destBuffer,
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to send image")
-		_, err = Instance.Session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
+		_, err = Instance.session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to send error message")
 		}
