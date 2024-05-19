@@ -272,7 +272,6 @@ type OverlayOptions struct {
 	OverlayWidthFactor  float64
 	OverlayHeightFactor float64
 
-	//
 	RightToLeft bool
 }
 
