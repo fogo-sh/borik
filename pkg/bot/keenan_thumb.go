@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	_ "embed"
 	"fmt"
 
@@ -20,7 +19,7 @@ func (args KeenanThumbArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func KeenanThumb(ctx context.Context, wand *imagick.MagickWand, args KeenanThumbArgs) ([]*imagick.MagickWand, error) {
+func KeenanThumb(wand *imagick.MagickWand, args KeenanThumbArgs) ([]*imagick.MagickWand, error) {
 	keenan := imagick.NewMagickWand()
 	err := keenan.ReadImageBlob(keenanThumbImage)
 	if err != nil {

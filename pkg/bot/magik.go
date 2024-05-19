@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
@@ -18,7 +17,7 @@ func (args MagikArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func magikHelper(ctx context.Context, wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
+func magikHelper(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 
@@ -36,8 +35,8 @@ func magikHelper(ctx context.Context, wand *imagick.MagickWand, args MagikArgs) 
 }
 
 // Magik runs content-aware scaling on an image.
-func Magik(ctx context.Context, wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
-	return magikHelper(ctx, wand, args)
+func Magik(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWand, error) {
+	return magikHelper(wand, args)
 }
 
 type LagikArgs struct {
@@ -50,9 +49,8 @@ func (args LagikArgs) GetImageURL() string {
 }
 
 // Lagik runs content-aware scaling on an image.
-func Lagik(ctx context.Context, wand *imagick.MagickWand, args LagikArgs) ([]*imagick.MagickWand, error) {
+func Lagik(wand *imagick.MagickWand, args LagikArgs) ([]*imagick.MagickWand, error) {
 	return magikHelper(
-		ctx,
 		wand,
 		MagikArgs{
 			ImageURL:         args.ImageURL,

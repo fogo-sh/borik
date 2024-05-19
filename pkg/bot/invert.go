@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
@@ -16,7 +15,7 @@ func (args InvertArgs) GetImageURL() string {
 }
 
 // Invert inverts an image's colours.
-func Invert(ctx context.Context, wand *imagick.MagickWand, args InvertArgs) ([]*imagick.MagickWand, error) {
+func Invert(wand *imagick.MagickWand, _ InvertArgs) ([]*imagick.MagickWand, error) {
 	wand.SetImageChannelMask(imagick.CHANNEL_RED | imagick.CHANNEL_GREEN | imagick.CHANNEL_BLUE)
 	err := wand.NegateImage(false)
 	if err != nil {

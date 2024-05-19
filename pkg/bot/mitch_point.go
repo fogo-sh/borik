@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	_ "embed"
 	"fmt"
 
@@ -20,7 +19,7 @@ func (args MitchPointArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func MitchPoint(ctx context.Context, wand *imagick.MagickWand, args MitchPointArgs) ([]*imagick.MagickWand, error) {
+func MitchPoint(wand *imagick.MagickWand, args MitchPointArgs) ([]*imagick.MagickWand, error) {
 	mitch := imagick.NewMagickWand()
 	err := mitch.ReadImageBlob(mitchPointImage)
 	if err != nil {

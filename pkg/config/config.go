@@ -15,12 +15,6 @@ type Config struct {
 	Prefix   string `default:"borik!"`
 	Token    string `required:"true"`
 	LogLevel string `default:"info" split_words:"true"`
-
-	HoneycombToken   string `default:"" split_words:"true"`
-	HoneycombDataset string `default:"" split_words:"true"`
-
-	TemporalNamespace string `default:"borik" split_words:"true"`
-	TemporalQueueName string `default:"borik" split_words:"true"`
 }
 
 var Instance *Config

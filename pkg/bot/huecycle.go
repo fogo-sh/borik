@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
@@ -17,7 +16,7 @@ func (args HueCycleArgs) GetImageURL() string {
 }
 
 // HueCycle cycles the hue on an image
-func HueCycle(ctx context.Context, wand *imagick.MagickWand, args HueCycleArgs) ([]*imagick.MagickWand, error) {
+func HueCycle(wand *imagick.MagickWand, args HueCycleArgs) ([]*imagick.MagickWand, error) {
 	wands := []*imagick.MagickWand{wand}
 
 	for i := uint(0); i < args.Steps; i++ {

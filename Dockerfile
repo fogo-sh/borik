@@ -1,4 +1,4 @@
-FROM golang:1.18-bullseye
+FROM golang:1.22-bookworm
 
 WORKDIR /deps
 ENV IMAGEMAGICK_VERSION=7.1.0-57
@@ -28,4 +28,4 @@ RUN go mod download &&\
     go mod verify &&\
     go build
 
-ENTRYPOINT ["/build/borik"]
+ENTRYPOINT ["/build/borik", "run"]

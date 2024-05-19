@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
@@ -19,7 +18,7 @@ func (args ModulateArgs) GetImageURL() string {
 }
 
 // Modulate allows modifying of the brightness, saturation, and hue of an image
-func Modulate(ctx context.Context, wand *imagick.MagickWand, args ModulateArgs) ([]*imagick.MagickWand, error) {
+func Modulate(wand *imagick.MagickWand, args ModulateArgs) ([]*imagick.MagickWand, error) {
 	err := wand.ModulateImage(args.Brightness, args.Saturation, args.Hue)
 	if err != nil {
 		return nil, fmt.Errorf("error modulating image: %w", err)
