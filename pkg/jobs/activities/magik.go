@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
+
+	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
 
 type MagikArgs struct {
@@ -13,8 +15,8 @@ type MagikArgs struct {
 	HeightMultiplier float64
 }
 
-func Magik(ctx context.Context, args OperationArgs) ([][]byte, error) {
-	wand, err := loadFrame(args.Frame)
+func Magik(ctx context.Context, jobWorkspace workspace.Workspace, args OperationArgs) ([]workspace.Artifact, error) {
+	wand, err := jobWorkspace.RetrieveWand(args.Frame)
 	if err != nil {
 		return nil, err
 	}
@@ -38,5 +40,5 @@ func Magik(ctx context.Context, args OperationArgs) ([][]byte, error) {
 		return nil, fmt.Errorf("error while attempting to resize image: %w", err)
 	}
 
-	return saveFrames(wand)
+	return saveFrames(jobWorkspace, wand)
 }

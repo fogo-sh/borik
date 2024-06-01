@@ -59,7 +59,13 @@ func (b *Bot) workflowTestCommand(message *discordgo.MessageCreate, args testArg
 		return
 	}
 
-	resultBuf := bytes.NewBuffer(result.Image)
+	image, err := result.Workspace.Retrieve(result.Image)
+	if err != nil {
+		b.session.ChannelMessageSend(message.ChannelID, "Error retrieving image: "+err.Error())
+		return
+	}
+
+	resultBuf := bytes.NewBuffer(image)
 
 	// Send result as a file attachment
 	_, err = b.session.ChannelFileSend(message.ChannelID, fmt.Sprintf("output.%s", result.Format), resultBuf)

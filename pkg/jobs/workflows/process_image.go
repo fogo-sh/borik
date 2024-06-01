@@ -8,6 +8,7 @@ import (
 	"go.temporal.io/sdk/workflow"
 
 	"github.com/fogo-sh/borik/pkg/jobs/activities"
+	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
 
 type ProcessImageArgs struct {
@@ -17,8 +18,9 @@ type ProcessImageArgs struct {
 }
 
 type ProcessedImageResult struct {
-	Image  []byte
-	Format string
+	Image     workspace.Artifact
+	Format    string
+	Workspace workspace.Workspace
 }
 
 func ProcessImageWorkflow(ctx workflow.Context, args ProcessImageArgs) (ProcessedImageResult, error) {
@@ -29,29 +31,34 @@ func ProcessImageWorkflow(ctx workflow.Context, args ProcessImageArgs) (Processe
 		},
 	})
 
-	var imageBytes []byte
-	err := workflow.ExecuteActivity(ctx, activities.LoadImage, args.ImageURL).Get(ctx, &imageBytes)
+	jobWorkspace, err := workspace.InitJobWorkspace(workflow.GetInfo(ctx).WorkflowExecution.ID)
+	if err != nil {
+		return ProcessedImageResult{}, fmt.Errorf("error initializing job workspace: %w", err)
+	}
+
+	var inputArtifact workspace.Artifact
+	err = workflow.ExecuteActivity(ctx, activities.LoadImage, jobWorkspace, args.ImageURL).Get(ctx, &inputArtifact)
 	if err != nil {
 		return ProcessedImageResult{}, fmt.Errorf("error loading image: %w", err)
 	}
 
-	var frames [][]byte
-	err = workflow.ExecuteActivity(ctx, activities.SplitImage, imageBytes).Get(ctx, &frames)
+	var inputFrames []workspace.Artifact
+	err = workflow.ExecuteActivity(ctx, activities.SplitImage, jobWorkspace, inputArtifact).Get(ctx, &inputFrames)
 	if err != nil {
 		return ProcessedImageResult{}, fmt.Errorf("error splitting image: %w", err)
 	}
 
 	var futures []workflow.Future
-	for _, frame := range frames {
-		futures = append(futures, workflow.ExecuteActivity(ctx, args.ActivityName, activities.OperationArgs{
+	for _, frame := range inputFrames {
+		futures = append(futures, workflow.ExecuteActivity(ctx, args.ActivityName, jobWorkspace, activities.OperationArgs{
 			Frame: frame,
 			Args:  args.ActivityArgs,
 		}))
 	}
 
-	var results [][]byte
+	var results []workspace.Artifact
 	for _, future := range futures {
-		var result [][]byte
+		var result []workspace.Artifact
 		err := future.Get(ctx, &result)
 		if err != nil {
 			return ProcessedImageResult{}, fmt.Errorf("error executing activity: %w", err)
@@ -59,8 +66,8 @@ func ProcessImageWorkflow(ctx workflow.Context, args ProcessImageArgs) (Processe
 		results = append(results, result...)
 	}
 
-	var outputBytes []byte
-	err = workflow.ExecuteActivity(ctx, activities.JoinImage, results).Get(ctx, &outputBytes)
+	var outputArtifact workspace.Artifact
+	err = workflow.ExecuteActivity(ctx, activities.JoinImage, jobWorkspace, results).Get(ctx, &outputArtifact)
 	if err != nil {
 		return ProcessedImageResult{}, fmt.Errorf("error joining image: %w", err)
 	}
@@ -71,7 +78,8 @@ func ProcessImageWorkflow(ctx workflow.Context, args ProcessImageArgs) (Processe
 	}
 
 	return ProcessedImageResult{
-		Image:  outputBytes,
-		Format: imageFormat,
+		Image:     outputArtifact,
+		Workspace: jobWorkspace,
+		Format:    imageFormat,
 	}, nil
 }

@@ -18,6 +18,8 @@ type Config struct {
 
 	TemporalNamespace string `default:"borik" split_words:"true"`
 	TemporalQueueName string `default:"borik" split_words:"true"`
+
+	WorkspacePath string `default:"workspace" split_words:"true"`
 }
 
 var Instance *Config
