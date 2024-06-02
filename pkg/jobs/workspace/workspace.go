@@ -82,6 +82,10 @@ func (w Workspace) RetrieveWand(artifact Artifact) (*imagick.MagickWand, error) 
 	return wand, nil
 }
 
+func (w Workspace) Cleanup() error {
+	return os.RemoveAll(w.Path)
+}
+
 func InitJobWorkspace(jobID string) (Workspace, error) {
 	err := EnsureExists(config.Instance.WorkspacePath)
 	if err != nil {

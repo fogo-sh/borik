@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/rs/zerolog/log"
 	"go.temporal.io/sdk/client"
 
 	"github.com/fogo-sh/borik/pkg/config"
@@ -63,6 +64,11 @@ func (b *Bot) workflowTestCommand(message *discordgo.MessageCreate, args testArg
 	if err != nil {
 		b.session.ChannelMessageSend(message.ChannelID, "Error retrieving image: "+err.Error())
 		return
+	}
+
+	err = result.Workspace.Cleanup()
+	if err != nil {
+		log.Error().Err(err).Msg("Error cleaning up workspace")
 	}
 
 	resultBuf := bytes.NewBuffer(image)
