@@ -21,6 +21,9 @@ var sideKeenanImage []byte
 //go:embed overlay_images/steve_point.png
 var stevePointImage []byte
 
+//go:embed overlay_images/andrew_pog.png
+var andrewPogImage []byte
+
 func registerOverlayCommands(parser *parsley.Parser) {
 	_ = parser.NewCommand(
 		"jackpog",
@@ -75,6 +78,19 @@ func registerOverlayCommands(parser *parsley.Parser) {
 			OverlayOptions{
 				OverlayWidthFactor:  1,
 				OverlayHeightFactor: 1,
+				RightToLeft:         true,
+			},
+		),
+	)
+
+	_ = parser.NewCommand(
+		"andrewpog",
+		"Have Andrew Pog an image.",
+		MakeImageOverlayCommand(
+			andrewPogImage,
+			OverlayOptions{
+				OverlayWidthFactor:  1,
+				OverlayHeightFactor: 0.75,
 				RightToLeft:         true,
 			},
 		),
