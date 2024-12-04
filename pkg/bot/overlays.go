@@ -24,7 +24,7 @@ var stevePointImage []byte
 //go:embed overlay_images/andrew_pog.png
 var andrewPogImage []byte
 
-//go:embed overlay_images/matlab_kid_trans.png
+//go:embed overlay_images/trans_matlab_kid.png
 var matlabKidImage []byte
 
 func registerOverlayCommands(parser *parsley.Parser) {
@@ -105,8 +105,9 @@ func registerOverlayCommands(parser *parsley.Parser) {
 		MakeImageOverlayCommand(
 			matlabKidImage,
 			OverlayOptions{
-				OverlayWidthFactor:  1,
-				OverlayHeightFactor: 0.35,
+				VFlip:               true,
+				OverlayWidthFactor:  1.2,
+				OverlayHeightFactor: 1.3,
 				RightToLeft:         true,
 			},
 		),
