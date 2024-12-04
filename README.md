@@ -9,7 +9,7 @@ A discord bot, written using [discordgo](https://github.com/bwmarrin/discordgo),
   CGO_CFLAGS_ALLOW=-Xpreprocessor go build -a
   ```
 - Copy `.env.dist` to `.env`, and populate it with a token and a prefix
-- `go run .`
+- `go run . run`
 
 ### Nix
 

@@ -3,3 +3,4 @@ borik
 .idea/
 result
 *.swp
+.DS_Store
