@@ -24,6 +24,9 @@ var stevePointImage []byte
 //go:embed overlay_images/andrew_pog.png
 var andrewPogImage []byte
 
+//go:embed overlay_images/matlab_kid_trans.png
+var matlabKidImage []byte
+
 func registerOverlayCommands(parser *parsley.Parser) {
 	_ = parser.NewCommand(
 		"jackpog",
@@ -91,6 +94,19 @@ func registerOverlayCommands(parser *parsley.Parser) {
 			OverlayOptions{
 				OverlayWidthFactor:  1,
 				OverlayHeightFactor: 0.75,
+				RightToLeft:         true,
+			},
+		),
+	)
+
+	_ = parser.NewCommand(
+		"matlabkid",
+		"Have matlab kid possess an image",
+		MakeImageOverlayCommand(
+			matlabKidImage,
+			OverlayOptions{
+				OverlayWidthFactor:  1,
+				OverlayHeightFactor: 0.35,
 				RightToLeft:         true,
 			},
 		),
