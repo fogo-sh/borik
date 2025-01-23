@@ -14,7 +14,11 @@ import (
 type Config struct {
 	Prefix   string `default:"borik!"`
 	Token    string `required:"true"`
+	AppId    string `default:"" split_words:"true"`
+	GuildId  string `default:"" split_words:"true"`
 	LogLevel string `default:"info" split_words:"true"`
+
+	RegisterSlashCommandsGlobally bool `default:"false" split_words:"true"`
 
 	OpenaiBaseUrl        string `default:"https://llm.ops.bootleg.technology/v1" split_words:"true"`
 	OpenaiApiKey         string `default:"" split_words:"true"`

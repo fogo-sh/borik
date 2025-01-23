@@ -65,3 +65,9 @@ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/gographics/imagick.v3 v3.7.2 h1:PmsYCf60YS/7f1omBTDaoS6yp4817Wv61S0JpWH4cMc=
 gopkg.in/gographics/imagick.v3 v3.7.2/go.mod h1:7I4S9VWdwr88yzYi7g+ZL4H8oZuH9cmSQI7GsZCcYFM=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+pkg.nit.so/switchboard v0.0.0-20240930133908-cf045dc997ba h1:OiDsks1Kf2VMOaVDg01IRFOs2GUJx3jKoGnmgbUfK+k=
+pkg.nit.so/switchboard v0.0.0-20240930133908-cf045dc997ba/go.mod h1:6w0eM5WM34YQ+uqM+Sj9o2hO8Qrs+p2nlTDdAP/DkTQ=
+pkg.nit.so/switchboard v0.0.0-20250910234335-a13500b03fa6 h1:H09yhQPzIs9P52PXWrZuSa1UJmB5tL982t/g6yEOQc0=
+pkg.nit.so/switchboard v0.0.0-20250910234335-a13500b03fa6/go.mod h1:6w0eM5WM34YQ+uqM+Sj9o2hO8Qrs+p2nlTDdAP/DkTQ=
+pkg.nit.so/switchboard v0.0.0-20260215230932-6bc26ad833f6 h1:k40KE7yKZpoMj2rhdKPV/4L9PDNChbaD7g5nmAPdjLE=
+pkg.nit.so/switchboard v0.0.0-20260215230932-6bc26ad833f6/go.mod h1:6w0eM5WM34YQ+uqM+Sj9o2hO8Qrs+p2nlTDdAP/DkTQ=

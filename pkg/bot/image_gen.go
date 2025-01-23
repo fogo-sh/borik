@@ -154,14 +154,14 @@ func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, seed int) ([]*imagick
 
 func ImageEditCommand(message *discordgo.MessageCreate, args ImageEditArgs) {
 	seed := rand.Int()
-	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
+	PrepareAndInvokeOperation(NewOperationContextFromMessage(Instance.session, message), args, func(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
 		return ImageEdit(wand, args, seed)
 	})
 }
 
 func LoopEditCommand(message *discordgo.MessageCreate, args LoopEditArgs) {
 	seed := rand.Int()
-	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args LoopEditArgs) ([]*imagick.MagickWand, error) {
+	PrepareAndInvokeOperation(NewOperationContextFromMessage(Instance.session, message), args, func(wand *imagick.MagickWand, args LoopEditArgs) ([]*imagick.MagickWand, error) {
 		return LoopEdit(wand, args, seed)
 	})
 }

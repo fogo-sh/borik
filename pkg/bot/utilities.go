@@ -23,6 +23,60 @@ type ImageOperationArgs interface {
 
 type ImageOperation[K ImageOperationArgs] func(*imagick.MagickWand, K) ([]*imagick.MagickWand, error)
 
+type OperationContext struct {
+	Session     *discordgo.Session
+	Message     *discordgo.MessageCreate
+	Interaction *discordgo.InteractionCreate
+}
+
+func NewOperationContextFromMessage(session *discordgo.Session, message *discordgo.MessageCreate) *OperationContext {
+	return &OperationContext{
+		Session: session,
+		Message: message,
+	}
+}
+
+func NewOperationContextFromInteraction(session *discordgo.Session, interaction *discordgo.InteractionCreate) *OperationContext {
+	return &OperationContext{
+		Session:     session,
+		Interaction: interaction,
+	}
+}
+
+func (ctx *OperationContext) GetChannelID() string {
+	if ctx.Message != nil {
+		return ctx.Message.ChannelID
+	} else if ctx.Interaction != nil {
+		return ctx.Interaction.ChannelID
+	}
+	return ""
+}
+
+func (ctx *OperationContext) Reference() *discordgo.MessageReference {
+	if ctx.Message == nil {
+		return nil
+	}
+	return ctx.Message.Reference()
+}
+
+func (ctx *OperationContext) RunCallbacks(
+	onMessageCreate func(*discordgo.MessageCreate),
+	onInteractionCreate func(*discordgo.InteractionCreate),
+) {
+	if ctx.Message != nil && onMessageCreate != nil {
+		onMessageCreate(ctx.Message)
+	} else if ctx.Interaction != nil && onInteractionCreate != nil {
+		onInteractionCreate(ctx.Interaction)
+	}
+}
+
+func TypingIndicatorForContext(ctx *OperationContext) func() {
+	if ctx.Message != nil {
+		return TypingIndicator(ctx.Message)
+	}
+	return func() {}
+}
+
 // TypingIndicator invokes a typing indicator in the channel of a message
 func TypingIndicator(message *discordgo.MessageCreate) func() {
 	stopTyping := Schedule(
@@ -78,8 +132,8 @@ func ImageURLFromMessage(m *discordgo.Message) string {
 	return ""
 }
 
-// FindImageURL attempts to find an image in a given message, falling back to scanning message history if one cannot be found.
-func FindImageURL(m *discordgo.MessageCreate) (string, error) {
+// FindImageURLFromMessage attempts to find an image in a given message, falling back to scanning message history if one cannot be found.
+func FindImageURLFromMessage(m *discordgo.MessageCreate) (string, error) {
 	if imageUrl := ImageURLFromMessage(m.Message); imageUrl != "" {
 		return imageUrl, nil
 	}
@@ -90,7 +144,11 @@ func FindImageURL(m *discordgo.MessageCreate) (string, error) {
 		}
 	}
 
-	messages, err := Instance.session.ChannelMessages(m.ChannelID, 20, m.ID, "", "")
+	return FindImageURLInChannel(Instance.session, m.ChannelID, m.ID)
+}
+
+func FindImageURLInChannel(s *discordgo.Session, channelID string, beforeID string) (string, error) {
+	messages, err := s.ChannelMessages(channelID, 20, beforeID, "", "")
 	if err != nil {
 		return "", fmt.Errorf("error retrieving message history: %w", err)
 	}
@@ -122,21 +180,46 @@ func DownloadImage(url string) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-// MakeImageOpCommand automatically creates a Parsley command handler for a given ImageOperation
-func MakeImageOpCommand[K ImageOperationArgs](operation ImageOperation[K]) func(*discordgo.MessageCreate, K) {
+// MakeImageOpTextCommand automatically creates a Parsley command handler for a given ImageOperation
+func MakeImageOpTextCommand[K ImageOperationArgs](operation ImageOperation[K]) func(*discordgo.MessageCreate, K) {
 	return func(message *discordgo.MessageCreate, args K) {
-		PrepareAndInvokeOperation(message, args, operation)
+		PrepareAndInvokeOperation(NewOperationContextFromMessage(Instance.session, message), args, operation)
 	}
 }
 
-// PrepareAndInvokeOperation automatically handles invoking a given ImageOperation for a Discord message and returning the finished results
-func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageCreate, args K, operation ImageOperation[K]) {
-	defer TypingIndicator(message)()
+func MakeImageOpSlashCommand[K ImageOperationArgs](operation ImageOperation[K]) func(*discordgo.Session, *discordgo.InteractionCreate, K) {
+	return func(session *discordgo.Session, interaction *discordgo.InteractionCreate, args K) {
+		PrepareAndInvokeOperation(NewOperationContextFromInteraction(session, interaction), args, operation)
+	}
+}
+
+// PrepareAndInvokeOperation automatically handles invoking a given ImageOperation and returning the finished results
+func PrepareAndInvokeOperation[K ImageOperationArgs](ctx *OperationContext, args K, operation ImageOperation[K]) {
+	defer TypingIndicatorForContext(ctx)()
+
+	if ctx.Interaction != nil {
+		err := ctx.Session.InteractionRespond(ctx.Interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		})
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send deferred interaction response")
+			return
+		}
+	}
 
 	imageUrl := args.GetImageURL()
 	if imageUrl == "" {
 		var err error
-		imageUrl, err = FindImageURL(message)
+
+		ctx.RunCallbacks(
+			func(m *discordgo.MessageCreate) {
+				imageUrl, err = FindImageURLFromMessage(m)
+			},
+			func(i *discordgo.InteractionCreate) {
+				imageUrl, err = FindImageURLInChannel(Instance.session, i.ChannelID, "")
+			},
+		)
+
 		if err != nil {
 			log.Error().Err(err).Msg("Error while attempting to find image to process")
 			return
@@ -165,7 +248,6 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 	input = input.CoalesceImages()
 
 	var resultFrames []*imagick.MagickWand
-
 	for i := 0; i < int(input.GetNumberImages()); i++ {
 		input.SetIteratorIndex(i)
 		inputFrame := input.GetImage().Clone()
@@ -179,7 +261,6 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 	}
 
 	resultImage := imagick.NewMagickWand()
-
 	for index, frame := range resultFrames {
 		log.Debug().Int("frame", index).Msg("Adding frame to result image")
 		err := resultImage.AddImage(frame)
@@ -239,23 +320,41 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 	originalFileNameNoExt := strings.TrimSuffix(originalFileName, path.Ext(originalFileName))
 
 	log.Debug().Msg("Image processed, uploading result")
-	_, err = Instance.session.ChannelMessageSendComplex(
-		message.ChannelID,
-		&discordgo.MessageSend{
-			Reference: message.Reference(),
-			File: &discordgo.File{
-				Name:   fmt.Sprintf("%s.%s", originalFileNameNoExt, strings.ToLower(resultImage.GetImageFormat())),
-				Reader: destBuffer,
-			},
+
+	ctx.RunCallbacks(
+		func(m *discordgo.MessageCreate) {
+			_, err = ctx.Session.ChannelMessageSendComplex(
+				m.ChannelID,
+				&discordgo.MessageSend{
+					Reference: m.Reference(),
+					File: &discordgo.File{
+						Name:   fmt.Sprintf("%s.%s", originalFileNameNoExt, strings.ToLower(resultImage.GetImageFormat())),
+						Reader: destBuffer,
+					},
+				},
+			)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to send image")
+				_, err = ctx.Session.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to send error message")
+				}
+			}
+		},
+		func(i *discordgo.InteractionCreate) {
+			_, err = ctx.Session.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+				Files: []*discordgo.File{
+					{
+						Name:   fmt.Sprintf("%s.%s", originalFileNameNoExt, strings.ToLower(resultImage.GetImageFormat())),
+						Reader: destBuffer,
+					},
+				},
+			})
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to edit deferred interaction response")
+			}
 		},
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to send image")
-		_, err = Instance.session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Failed to send resulting image: `%s`", err.Error()))
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to send error message")
-		}
-	}
 }
 
 // ResizeMaintainAspectRatio resizes an input wand to fit within a box of given width and height, maintaining aspect ratio
@@ -355,7 +454,7 @@ func (args OverlayImageArgs) GetImageURL() string {
 }
 
 func MakeImageOverlayCommand(overlayImage []byte, initialOptions OverlayOptions) func(*discordgo.MessageCreate, OverlayImageArgs) {
-	return MakeImageOpCommand(func(wand *imagick.MagickWand, args OverlayImageArgs) ([]*imagick.MagickWand, error) {
+	return MakeImageOpTextCommand(func(wand *imagick.MagickWand, args OverlayImageArgs) ([]*imagick.MagickWand, error) {
 		newOptions := initialOptions
 
 		if args.HFlip {
@@ -399,7 +498,7 @@ func OverlayImageFixed(wand *imagick.MagickWand, overlay []byte, options FixedOv
 }
 
 func MakeImageFixedOverlayCommand(overlayImage []byte, options FixedOverlayOptions) func(*discordgo.MessageCreate, OverlayImageArgs) {
-	return MakeImageOpCommand(func(wand *imagick.MagickWand, args OverlayImageArgs) ([]*imagick.MagickWand, error) {
+	return MakeImageOpTextCommand(func(wand *imagick.MagickWand, args OverlayImageArgs) ([]*imagick.MagickWand, error) {
 		err := OverlayImageFixed(
 			wand,
 			overlayImage,

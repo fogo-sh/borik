@@ -112,7 +112,7 @@ func (args graphicsFormatArgs) GetImageURL() string {
 }
 
 func MakeGraphicsFormatOpCommand(format graphicsFormat) func(*discordgo.MessageCreate, graphicsFormatArgs) {
-	return MakeImageOpCommand(func(wand *imagick.MagickWand, args graphicsFormatArgs) ([]*imagick.MagickWand, error) {
+	return MakeImageOpTextCommand(func(wand *imagick.MagickWand, args graphicsFormatArgs) ([]*imagick.MagickWand, error) {
 		return convertGraphicsFormat(wand, format, args.Dither)
 	})
 }
