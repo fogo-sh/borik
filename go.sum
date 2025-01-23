@@ -52,3 +52,5 @@ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/gographics/imagick.v3 v3.6.0 h1:MzgZPeYPD0fh1SZl2PlM6Z3tfMKZ/XCHdnhudf4oum0=
 gopkg.in/gographics/imagick.v3 v3.6.0/go.mod h1:+Q9nyA2xRZXrDyTtJ/eko+8V/5E7bWYs08ndkZp8UmA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+pkg.nit.so/switchboard v0.0.0-20240930133908-cf045dc997ba h1:OiDsks1Kf2VMOaVDg01IRFOs2GUJx3jKoGnmgbUfK+k=
+pkg.nit.so/switchboard v0.0.0-20240930133908-cf045dc997ba/go.mod h1:6w0eM5WM34YQ+uqM+Sj9o2hO8Qrs+p2nlTDdAP/DkTQ=
