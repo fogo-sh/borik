@@ -193,7 +193,7 @@ func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, metadata AISessionMet
 
 func ImageEditCommand(message *discordgo.MessageCreate, args ImageEditArgs) {
 	seed := rand.Int()
-	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
+	PrepareAndInvokeOperation(NewOperationContextFromMessage(Instance.session, message), args, func(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
 		return ImageEdit(wand, args, AISessionMetadata{
 			Seed:      seed,
 			SessionID: message.ID,
@@ -204,7 +204,7 @@ func ImageEditCommand(message *discordgo.MessageCreate, args ImageEditArgs) {
 
 func LoopEditCommand(message *discordgo.MessageCreate, args LoopEditArgs) {
 	seed := rand.Int()
-	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args LoopEditArgs) ([]*imagick.MagickWand, error) {
+	PrepareAndInvokeOperation(NewOperationContextFromMessage(Instance.session, message), args, func(wand *imagick.MagickWand, args LoopEditArgs) ([]*imagick.MagickWand, error) {
 		return LoopEdit(wand, args, AISessionMetadata{
 			Seed:      seed,
 			SessionID: message.ID,

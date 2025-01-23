@@ -14,7 +14,7 @@ type HelpArgs struct {
 func generateCommandList() string {
 	commandCodeBlock := "```"
 
-	for _, details := range Instance.parser.GetCommands() {
+	for _, details := range Instance.textParser.GetCommands() {
 		commandCodeBlock += fmt.Sprintf("%s%s: %s\n", Instance.config.Prefix, details.Name, details.Description)
 	}
 
@@ -22,7 +22,7 @@ func generateCommandList() string {
 }
 
 func generateCommandHelp(command string) (*discordgo.MessageEmbed, error) {
-	commandDetails, err := Instance.parser.GetCommand(command)
+	commandDetails, err := Instance.textParser.GetCommand(command)
 	if err != nil {
 		return nil, fmt.Errorf("error getting command details: %w", err)
 	}
