@@ -1,8 +1,7 @@
-version: "3"
-
 services:
   borik:
     image: ghcr.io/fogo-sh/borik
     restart: always
+    build: .
     env_file:
       - .env
