@@ -10,6 +10,7 @@ require (
 	github.com/rs/zerolog v1.32.0
 	github.com/spf13/cobra v1.8.0
 	gopkg.in/gographics/imagick.v3 v3.6.0
+	pkg.nit.so/switchboard v0.0.0-20240930133908-cf045dc997ba
 )
 
 require (
