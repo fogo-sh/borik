@@ -77,6 +77,17 @@ func registerOverlayCommands(parser *parsley.Parser) {
 		),
 	)
 	_ = parser.NewCommand(
+		"mitchpointy",
+		"Have Mitch pointy at an image.",
+		MakeImageOverlayCommand(
+			mitchPointImage,
+			OverlayOptions{
+				OverlayWidthFactor:  1,
+				OverlayHeightFactor: 1,
+			},
+		),
+	)
+	_ = parser.NewCommand(
 		"stevepoint",
 		"Have Steve point at an image.",
 		MakeImageOverlayCommand(
