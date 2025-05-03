@@ -229,13 +229,16 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 		return
 	}
 
+	originalFileName := path.Base(imageUrl)
+	originalFileNameNoExt := strings.TrimSuffix(originalFileName, path.Ext(originalFileName))
+
 	log.Debug().Msg("Image processed, uploading result")
 	_, err = Instance.session.ChannelMessageSendComplex(
 		message.ChannelID,
 		&discordgo.MessageSend{
 			Reference: message.Reference(),
 			File: &discordgo.File{
-				Name:   fmt.Sprintf("output.%s", strings.ToLower(resultImage.GetImageFormat())),
+				Name:   fmt.Sprintf("%s.%s", originalFileNameNoExt, strings.ToLower(resultImage.GetImageFormat())),
 				Reader: destBuffer,
 			},
 		},
