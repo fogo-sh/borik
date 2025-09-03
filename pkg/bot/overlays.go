@@ -30,6 +30,9 @@ var matlabKidImage []byte
 //go:embed overlay_images/natalie_climb.png
 var natalieClimbImage []byte
 
+//go:embed overlay_images/denny_standing.png
+var dennyStandingImage []byte
+
 func registerOverlayCommands(parser *parsley.Parser) {
 	_ = parser.NewCommand(
 		"jackpog",
@@ -124,6 +127,18 @@ func registerOverlayCommands(parser *parsley.Parser) {
 			OverlayOptions{
 				OverlayWidthFactor:  1,
 				OverlayHeightFactor: 1,
+			},
+		),
+	)
+
+	_ = parser.NewCommand(
+		"dennystanding",
+		"Have Denny standing in an image.",
+		MakeImageOverlayCommand(
+			dennyStandingImage,
+			OverlayOptions{
+				OverlayWidthFactor:  0.4,
+				OverlayHeightFactor: 0.6,
 			},
 		),
 	)
