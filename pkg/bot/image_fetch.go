@@ -116,8 +116,13 @@ func apngToGif(apngInput io.Reader) (io.Reader, error) {
 		return nil, fmt.Errorf("error setting format: %w", err)
 	}
 
+	imageBlob, err := wand.GetImagesBlob()
+	if err != nil {
+		return nil, fmt.Errorf("error generating output image: %w", err)
+	}
+
 	outBuffer := new(bytes.Buffer)
-	_, err = outBuffer.Write(wand.GetImagesBlob())
+	_, err = outBuffer.Write(imageBlob)
 	if err != nil {
 		return nil, fmt.Errorf("error outputting image: %w", err)
 	}

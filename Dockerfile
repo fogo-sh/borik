@@ -1,7 +1,7 @@
-FROM golang:1.22-bookworm
+FROM golang:1.25-trixie
 
 WORKDIR /deps
-ENV IMAGEMAGICK_VERSION=7.1.0-57
+ENV IMAGEMAGICK_VERSION=7.1.2-3
 
 RUN apt-get update && \
     apt-get -q -y install \

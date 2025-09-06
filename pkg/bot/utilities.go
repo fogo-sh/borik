@@ -222,8 +222,14 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](message *discordgo.MessageC
 	resultImage = resultImage.DeconstructImages()
 	destBuffer := new(bytes.Buffer)
 
+	imageBlob, err := resultImage.GetImagesBlob()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get image blob")
+		return
+	}
+
 	log.Debug().Msg("Writing output image")
-	_, err = destBuffer.Write(resultImage.GetImagesBlob())
+	_, err = destBuffer.Write(imageBlob)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to write image")
 		return
