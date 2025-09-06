@@ -1,0 +1,15 @@
+.dockerignore
+.editorconfig
+.env
+.env.dist
+.git
+.github
+.gitignore
+.idea
+borik
+compose.yml
+Dockerfile
+flake.lock
+flake.nix
+LICENCE
+README.md

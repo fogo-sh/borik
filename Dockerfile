@@ -23,9 +23,11 @@ RUN apt-get update && \
     rm -rf /deps
 
 WORKDIR /build
+
+COPY go.mod go.sum ./
+RUN go mod download
+
 COPY . .
-RUN go mod download &&\
-    go mod verify &&\
-    go build
+RUN go build
 
 ENTRYPOINT ["/build/borik", "run"]
