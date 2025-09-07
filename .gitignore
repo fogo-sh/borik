@@ -4,3 +4,4 @@ borik
 result
 *.swp
 .DS_Store
+/bazel-*
