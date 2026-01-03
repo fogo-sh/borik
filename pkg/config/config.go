@@ -15,6 +15,8 @@ type Config struct {
 	Prefix   string `default:"borik!"`
 	Token    string `required:"true"`
 	LogLevel string `default:"info" split_words:"true"`
+
+	OpenAIBaseUrl string `default:"http://llama.internal.bootleg.technology/v1" split_words:"true"`
 }
 
 var Instance *Config
