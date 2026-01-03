@@ -33,6 +33,9 @@ var natalieClimbImage []byte
 //go:embed overlay_images/denny_standing.png
 var dennyStandingImage []byte
 
+//go:embed overlay_images/shinji_throw.png
+var shinjiThrowImage []byte
+
 func registerOverlayCommands(parser *parsley.Parser) {
 	_ = parser.NewCommand(
 		"jackpog",
@@ -139,6 +142,19 @@ func registerOverlayCommands(parser *parsley.Parser) {
 			OverlayOptions{
 				OverlayWidthFactor:  0.4,
 				OverlayHeightFactor: 0.6,
+			},
+		),
+	)
+	_ = parser.NewCommand(
+		"shinji",
+		"Have Shinji throw at an image.",
+		MakeImageFixedOverlayCommand(
+			shinjiThrowImage,
+			FixedOverlayOptions{
+				X:      925,
+				Y:      147,
+				Width:  431,
+				Height: 377,
 			},
 		),
 	)
