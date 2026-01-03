@@ -284,13 +284,6 @@ type OverlayOptions struct {
 	RightToLeft bool
 }
 
-type FixedOverlayOptions struct {
-	X      int
-	Y      int
-	Width  int
-	Height int
-}
-
 // OverlayImage overlays an image onto another image
 func OverlayImage(wand *imagick.MagickWand, overlay []byte, options OverlayOptions) error {
 	overlayWand := imagick.NewMagickWand()
@@ -369,33 +362,6 @@ func MakeImageOverlayCommand(overlayImage []byte, initialOptions OverlayOptions)
 			wand,
 			overlayImage,
 			newOptions,
-		)
-
-		return []*imagick.MagickWand{wand}, err
-	})
-}
-
-func OverlayImageFixed(wand *imagick.MagickWand, overlay []byte, options FixedOverlayOptions) error {
-	overlayWand := imagick.NewMagickWand()
-	err := overlayWand.ReadImageBlob(overlay)
-	if err != nil {
-		return fmt.Errorf("error reading overlay: %w", err)
-	}
-
-	err = overlayWand.ResizeImage(uint(options.Width), uint(options.Height), imagick.FILTER_LANCZOS)
-	if err != nil {
-		return fmt.Errorf("error resizing overlay: %w", err)
-	}
-
-	return wand.CompositeImage(overlayWand, imagick.COMPOSITE_OP_ATOP, true, options.X, options.Y)
-}
-
-func MakeImageFixedOverlayCommand(overlayImage []byte, options FixedOverlayOptions) func(*discordgo.MessageCreate, OverlayImageArgs) {
-	return MakeImageOpCommand(func(wand *imagick.MagickWand, args OverlayImageArgs) ([]*imagick.MagickWand, error) {
-		err := OverlayImageFixed(
-			wand,
-			overlayImage,
-			options,
 		)
 
 		return []*imagick.MagickWand{wand}, err
