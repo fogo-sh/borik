@@ -1,14 +1,17 @@
 package bot
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"math/rand/v2"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/openai/openai-go/v3"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type ImageGenArgs struct {
@@ -54,4 +57,50 @@ func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
 			Reference: message.Reference(),
 		},
 	)
+}
+
+type ImageEditArgs struct {
+	Prompt   string `description:"Prompt to edit the image with."`
+	ImageURL string `default:"" description:"URL of the image to edit."`
+}
+
+func (args ImageEditArgs) GetImageURL() string {
+	return args.ImageURL
+}
+
+func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
+	imageBlob, err := wand.GetImageBlob()
+	if err != nil {
+		return nil, fmt.Errorf("error getting image blob: %w", err)
+	}
+	imageReader := bytes.NewReader(imageBlob)
+
+	editedImage, err := Instance.openAiClient.Images.Edit(
+		context.TODO(),
+		openai.ImageEditParams{
+			Image: openai.ImageEditParamsImageUnion{
+				OfFileArray: []io.Reader{imageReader},
+			},
+			// TODO: Seed
+			Prompt:         args.Prompt,
+			Model:          "qwen-image-edit",
+			ResponseFormat: openai.ImageEditParamsResponseFormatB64JSON,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error editing image: %w", err)
+	}
+
+	decodedImg, err := base64.StdEncoding.DecodeString(editedImage.Data[0].B64JSON)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding edited image: %w", err)
+	}
+
+	wand = imagick.NewMagickWand()
+	err = wand.ReadImageBlob(decodedImg)
+	if err != nil {
+		return nil, fmt.Errorf("error reading edited image blob: %w", err)
+	}
+
+	return []*imagick.MagickWand{wand}, nil
 }
