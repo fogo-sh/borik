@@ -30,7 +30,7 @@ func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
 		openai.ImageGenerateParams{
 			Prompt:         finalPrompt,
 			Size:           "512x512",
-			Model:          "z-image-turbo",
+			Model:          "flux-2-klein-4b",
 			ResponseFormat: openai.ImageGenerateParamsResponseFormatB64JSON,
 		},
 	)
@@ -83,7 +83,7 @@ func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickW
 			},
 			// TODO: Seed
 			Prompt:         args.Prompt,
-			Model:          "qwen-image-edit",
+			Model:          "flux-2-klein-4b",
 			ResponseFormat: openai.ImageEditParamsResponseFormatB64JSON,
 		},
 	)
