@@ -75,7 +75,9 @@ func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickW
 	}
 	imageReader := bytes.NewReader(imageBlob)
 
-	seed := rand.Int()
+	// TODO: Provide a consistent, random seed for all frames in a given image
+	// seed := rand.Int()
+	seed := 42
 	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, seed)
 	finalPrompt := args.Prompt + stableDiffusionOpts
 
@@ -85,8 +87,15 @@ func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickW
 			Image: openai.ImageEditParamsImageUnion{
 				OfFileArray: []io.Reader{imageReader},
 			},
-			Prompt:         finalPrompt,
-			Model:          "flux-2-klein-4b",
+			Prompt: finalPrompt,
+			Model:  "flux-2-klein-4b",
+			// OpenAI's models require one of a few specific sizes, but stable-diffusion.cpp is more flexible
+			// Pass the original image size to prevent it cropping it
+			Size: openai.ImageEditParamsSize(fmt.Sprintf(
+				"%dx%d",
+				wand.GetImageWidth(),
+				wand.GetImageHeight(),
+			)),
 			ResponseFormat: openai.ImageEditParamsResponseFormatB64JSON,
 		},
 	)
