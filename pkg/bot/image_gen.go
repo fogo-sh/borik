@@ -75,14 +75,17 @@ func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickW
 	}
 	imageReader := bytes.NewReader(imageBlob)
 
+	seed := rand.Int()
+	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, seed)
+	finalPrompt := args.Prompt + stableDiffusionOpts
+
 	editedImage, err := Instance.openAiClient.Images.Edit(
 		context.TODO(),
 		openai.ImageEditParams{
 			Image: openai.ImageEditParamsImageUnion{
 				OfFileArray: []io.Reader{imageReader},
 			},
-			// TODO: Seed
-			Prompt:         args.Prompt,
+			Prompt:         finalPrompt,
 			Model:          "flux-2-klein-4b",
 			ResponseFormat: openai.ImageEditParamsResponseFormatB64JSON,
 		},
