@@ -68,16 +68,13 @@ func (args ImageEditArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
+func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs, seed int) ([]*imagick.MagickWand, error) {
 	imageBlob, err := wand.GetImageBlob()
 	if err != nil {
 		return nil, fmt.Errorf("error getting image blob: %w", err)
 	}
 	imageReader := bytes.NewReader(imageBlob)
 
-	// TODO: Provide a consistent, random seed for all frames in a given image
-	// seed := rand.Int()
-	seed := 42
 	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, seed)
 	finalPrompt := args.Prompt + stableDiffusionOpts
 
@@ -115,4 +112,11 @@ func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickW
 	}
 
 	return []*imagick.MagickWand{wand}, nil
+}
+
+func ImageEditCommand(message *discordgo.MessageCreate, args ImageEditArgs) {
+	seed := rand.Int()
+	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
+		return ImageEdit(wand, args, seed)
+	})
 }

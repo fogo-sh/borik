@@ -90,7 +90,7 @@ func New() (*Bot, error) {
 	_ = parser.NewCommand("modulate", "Modify the brightness, saturation, and hue of an image.", MakeImageOpCommand(Modulate))
 	_ = parser.NewCommand("presidentsframe", "Apply the President's Frame to an image", MakeImageOpCommand(PresidentsFrame))
 	_ = parser.NewCommand("imagegen", "Generate an image from a prompt.", ImageGen)
-	_ = parser.NewCommand("imageedit", "Edit an image based on a prompt.", MakeImageOpCommand(ImageEdit))
+	_ = parser.NewCommand("imageedit", "Edit an image based on a prompt.", ImageEditCommand)
 	registerGraphicsFormatCommands(parser)
 	registerOverlayCommands(parser)
 
