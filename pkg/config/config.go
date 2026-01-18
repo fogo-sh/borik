@@ -16,7 +16,8 @@ type Config struct {
 	Token    string `required:"true"`
 	LogLevel string `default:"info" split_words:"true"`
 
-	OpenAIBaseUrl string `default:"http://llama.internal.bootleg.technology/v1" split_words:"true"`
+	OpenaiBaseUrl string `default:"https://llm.ops.bootleg.technology/v1" split_words:"true"`
+	OpenaiApiKey  string `default:"" split_words:"true"`
 }
 
 var Instance *Config

@@ -49,7 +49,8 @@ func New() (*Bot, error) {
 	config := configPkg.Instance
 
 	openAiClient := openai.NewClient(
-		option.WithBaseURL(config.OpenAIBaseUrl),
+		option.WithBaseURL(config.OpenaiBaseUrl),
+		option.WithAPIKey(config.OpenaiApiKey),
 	)
 
 	log.Debug().Msg("Creating Discord session")
@@ -89,10 +90,16 @@ func New() (*Bot, error) {
 	_ = parser.NewCommand("huecycle", "Create a GIF cycling the hue of an image.", MakeImageOpCommand(HueCycle))
 	_ = parser.NewCommand("modulate", "Modify the brightness, saturation, and hue of an image.", MakeImageOpCommand(Modulate))
 	_ = parser.NewCommand("presidentsframe", "Apply the President's Frame to an image", MakeImageOpCommand(PresidentsFrame))
-	_ = parser.NewCommand("imagegen", "Generate an image from a prompt.", ImageGen)
-	_ = parser.NewCommand("imageedit", "Edit an image based on a prompt.", ImageEditCommand)
 	registerGraphicsFormatCommands(parser)
 	registerOverlayCommands(parser)
+
+	if config.OpenaiApiKey != "" {
+		log.Debug().Msg("Registering OpenAI commands")
+		_ = parser.NewCommand("imagegen", "Generate an image from a prompt.", ImageGen)
+		_ = parser.NewCommand("imageedit", "Edit an image based on a prompt.", ImageEditCommand)
+	} else {
+		log.Warn().Msg("OpenAI API key not set; skipping registration of OpenAI commands")
+	}
 
 	log.Debug().Msg("Commands registered")
 
