@@ -97,6 +97,7 @@ func New() (*Bot, error) {
 		log.Debug().Msg("Registering OpenAI commands")
 		_ = parser.NewCommand("imagegen", "Generate an image from a prompt.", ImageGen)
 		_ = parser.NewCommand("imageedit", "Edit an image based on a prompt.", ImageEditCommand)
+		_ = parser.NewCommand("loopedit", "Repeatedly edit an image based on a prompt.", LoopEditCommand)
 	} else {
 		log.Warn().Msg("OpenAI API key not set; skipping registration of OpenAI commands")
 	}
