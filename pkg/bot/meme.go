@@ -12,17 +12,17 @@ import (
 	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
-//go:embed fonts/impact.ttf
-var impactFontData []byte
+//go:embed fonts/anton.ttf
+var antonFontData []byte
 
-var impactFontPath string
+var antonFontPath string
 
 func init() {
-	fontPath := filepath.Join(os.TempDir(), "borik-impact.ttf")
-	if err := os.WriteFile(fontPath, impactFontData, 0644); err != nil {
-		log.Fatal().Err(err).Msg("Failed to write embedded Impact font to temp file")
+	fontPath := filepath.Join(os.TempDir(), "borik-anton.ttf")
+	if err := os.WriteFile(fontPath, antonFontData, 0644); err != nil {
+		log.Fatal().Err(err).Msg("Failed to write embedded Anton font to temp file")
 	}
-	impactFontPath = fontPath
+	antonFontPath = fontPath
 }
 
 const (
@@ -81,7 +81,7 @@ func memeFitText(wand *imagick.MagickWand, text string, zoneWidth, zoneHeight, i
 
 	dw := imagick.NewDrawingWand()
 	defer dw.Destroy()
-	if err := dw.SetFont(impactFontPath); err != nil {
+	if err := dw.SetFont(antonFontPath); err != nil {
 		log.Error().Err(err).Msg("Failed to set font")
 		return 1, text
 	}
@@ -144,7 +144,7 @@ func drawMemeText(wand *imagick.MagickWand, text string, bottom bool) error {
 	if bottom {
 		metricsDw := imagick.NewDrawingWand()
 		defer metricsDw.Destroy()
-		_ = metricsDw.SetFont(impactFontPath)
+		_ = metricsDw.SetFont(antonFontPath)
 		metricsDw.SetFontSize(fontSize)
 		metricsDw.SetTextKerning(kerning)
 		metricsDw.SetStrokeWidth(strokeWidth)
@@ -179,7 +179,7 @@ func drawMemeText(wand *imagick.MagickWand, text string, bottom bool) error {
 
 	dw := imagick.NewDrawingWand()
 	defer dw.Destroy()
-	if err := dw.SetFont(impactFontPath); err != nil {
+	if err := dw.SetFont(antonFontPath); err != nil {
 		return fmt.Errorf("error setting font: %w", err)
 	}
 	dw.SetFontSize(fontSize)
