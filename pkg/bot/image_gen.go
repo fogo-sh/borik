@@ -46,7 +46,7 @@ func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
 	Instance.session.ChannelMessageSendComplex(
 		message.ChannelID,
 		&discordgo.MessageSend{
-			Content: fmt.Sprintf("Generated image with seed: %d", seed),
+			Reference: message.Reference(),
 			Files: []*discordgo.File{
 				{
 					Name:        "generated.png",
@@ -54,7 +54,6 @@ func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
 					Reader:      base64.NewDecoder(base64.StdEncoding, strings.NewReader(image.Data[0].B64JSON)),
 				},
 			},
-			Reference: message.Reference(),
 		},
 	)
 }
