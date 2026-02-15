@@ -90,6 +90,7 @@ func New() (*Bot, error) {
 	_ = parser.NewCommand("huecycle", "Create a GIF cycling the hue of an image.", MakeImageOpCommand(HueCycle))
 	_ = parser.NewCommand("modulate", "Modify the brightness, saturation, and hue of an image.", MakeImageOpCommand(Modulate))
 	_ = parser.NewCommand("presidentsframe", "Apply the President's Frame to an image", MakeImageOpCommand(PresidentsFrame))
+	_ = parser.NewCommand("meme", "Add meme text to an image. Use | to separate top and bottom text.", MakeImageOpCommand(Meme))
 	registerGraphicsFormatCommands(parser)
 	registerOverlayCommands(parser)
 
