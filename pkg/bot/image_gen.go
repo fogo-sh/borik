@@ -12,6 +12,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/openai/openai-go/v3"
 	"gopkg.in/gographics/imagick.v3/imagick"
+
+	"github.com/fogo-sh/borik/pkg/config"
 )
 
 type ImageGenArgs struct {
@@ -30,7 +32,7 @@ func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
 		openai.ImageGenerateParams{
 			Prompt:         finalPrompt,
 			Size:           "512x512",
-			Model:          "flux-2-klein-4b",
+			Model:          config.Instance.OpenaiImageGenModel,
 			ResponseFormat: openai.ImageGenerateParamsResponseFormatB64JSON,
 		},
 	)
@@ -75,7 +77,7 @@ func editImage(wand *imagick.MagickWand, args ImageEditArgs, seed int) (*imagick
 				OfFileArray: []io.Reader{imageReader},
 			},
 			Prompt: finalPrompt,
-			Model:  "flux-2-klein-4b",
+			Model:  config.Instance.OpenaiImageEditModel,
 			// OpenAI's models require one of a few specific sizes, but stable-diffusion.cpp is more flexible
 			// Pass the original image size to prevent it cropping it
 			Size: openai.ImageEditParamsSize(fmt.Sprintf(
