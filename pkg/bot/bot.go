@@ -5,6 +5,8 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/nint8835/parsley"
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/option"
 	"github.com/rs/zerolog/log"
 
 	configPkg "github.com/fogo-sh/borik/pkg/config"
@@ -12,10 +14,11 @@ import (
 
 // Bot represents an individual instance of Borik
 type Bot struct {
-	session  *discordgo.Session
-	config   *configPkg.Config
-	parser   *parsley.Parser
-	quitChan chan struct{}
+	session      *discordgo.Session
+	openAiClient openai.Client
+	config       *configPkg.Config
+	parser       *parsley.Parser
+	quitChan     chan struct{}
 }
 
 func (b *Bot) Start() error {
@@ -44,6 +47,11 @@ var Instance *Bot
 // New constructs a new instance of Borik.
 func New() (*Bot, error) {
 	config := configPkg.Instance
+
+	openAiClient := openai.NewClient(
+		option.WithBaseURL(config.OpenaiBaseUrl),
+		option.WithAPIKey(config.OpenaiApiKey),
+	)
 
 	log.Debug().Msg("Creating Discord session")
 	session, err := discordgo.New("Bot " + config.Token)
@@ -85,10 +93,20 @@ func New() (*Bot, error) {
 	registerGraphicsFormatCommands(parser)
 	registerOverlayCommands(parser)
 
+	if config.OpenaiApiKey != "" {
+		log.Debug().Msg("Registering OpenAI commands")
+		_ = parser.NewCommand("imagegen", "Generate an image from a prompt.", ImageGen)
+		_ = parser.NewCommand("imageedit", "Edit an image based on a prompt.", ImageEditCommand)
+		_ = parser.NewCommand("loopedit", "Repeatedly edit an image based on a prompt.", LoopEditCommand)
+	} else {
+		log.Warn().Msg("OpenAI API key not set; skipping registration of OpenAI commands")
+	}
+
 	log.Debug().Msg("Commands registered")
 
 	Instance = &Bot{
 		session,
+		openAiClient,
 		config,
 		parser,
 		make(chan struct{}),
