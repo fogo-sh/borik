@@ -18,26 +18,32 @@ type AvatarArgs struct {
 	UseGuildAvatar bool   `default:"true" description:"Attempt to fetch the user's guild avatar first. Disable to always use their global avatar.'"`
 }
 
-// Avatar fetches a user's avatar.
-func Avatar(message *discordgo.MessageCreate, args AvatarArgs) {
-	if len(message.Mentions) != 1 {
-		Instance.session.ChannelMessageSendReply(
-			message.ChannelID,
-			"You must provide a single user to fetch an avatar for, as a Discord mention.",
-			message.Reference(),
-		)
-		return
+type AvatarSlashArgs struct {
+	User           *discordgo.User `description:"User to fetch the avatar for. Defaults to yourself."`
+	UseGuildAvatar bool            `default:"true" description:"Attempt to fetch the user's guild avatar first. Disable to always use their global avatar."`
+}
+
+func fetchAvatar(ctx *OperationContext, targetUser *discordgo.User, guildID string, useGuildAvatar bool) {
+	defer TypingIndicatorForContext(ctx)()
+
+	if ctx.Interaction != nil {
+		err := ctx.Session.InteractionRespond(ctx.Interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		})
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send deferred interaction response")
+			return
+		}
 	}
 
-	targetUser := message.Mentions[0]
-	member, err := Instance.session.GuildMember(message.GuildID, targetUser.ID)
+	member, err := ctx.Session.GuildMember(guildID, targetUser.ID)
 	if err != nil {
 		log.Error().Err(err).Msg("Error fetching member")
 		return
 	}
 
 	var avatarUrl string
-	if args.UseGuildAvatar {
+	if useGuildAvatar {
 		avatarUrl = member.AvatarURL("1024")
 	} else {
 		avatarUrl = targetUser.AvatarURL("1024")
@@ -50,16 +56,66 @@ func Avatar(message *discordgo.MessageCreate, args AvatarArgs) {
 	}
 	defer resp.Body.Close()
 
-	Instance.session.ChannelMessageSendComplex(
-		message.ChannelID,
-		&discordgo.MessageSend{
-			Reference: message.Reference(),
-			File: &discordgo.File{
-				Name:        path.Base(resp.Request.URL.Path),
-				ContentType: resp.Header.Get("Content-Type"),
-				Reader:      resp.Body,
-			},
+	file := &discordgo.File{
+		Name:        path.Base(resp.Request.URL.Path),
+		ContentType: resp.Header.Get("Content-Type"),
+		Reader:      resp.Body,
+	}
+
+	ctx.RunCallbacks(
+		func(m *discordgo.MessageCreate) {
+			Instance.session.ChannelMessageSendComplex(
+				m.ChannelID,
+				&discordgo.MessageSend{
+					Reference: m.Reference(),
+					Files:     []*discordgo.File{file},
+				},
+			)
 		},
+		func(i *discordgo.InteractionCreate) {
+			if _, err := ctx.Session.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+				Files: []*discordgo.File{file},
+			}); err != nil {
+				log.Error().Err(err).Msg("Failed to edit deferred interaction response")
+			}
+		},
+	)
+}
+
+// Avatar fetches a user's avatar.
+func Avatar(message *discordgo.MessageCreate, args AvatarArgs) {
+	if len(message.Mentions) != 1 {
+		Instance.session.ChannelMessageSendReply(
+			message.ChannelID,
+			"You must provide a single user to fetch an avatar for, as a Discord mention.",
+			message.Reference(),
+		)
+		return
+	}
+
+	fetchAvatar(
+		NewOperationContextFromMessage(Instance.session, message),
+		message.Mentions[0],
+		message.GuildID,
+		args.UseGuildAvatar,
+	)
+}
+
+func AvatarSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, args AvatarSlashArgs) {
+	targetUser := args.User
+	if targetUser == nil {
+		if interaction.Member != nil {
+			targetUser = interaction.Member.User
+		} else if interaction.User != nil {
+			targetUser = interaction.User
+		}
+	}
+
+	fetchAvatar(
+		NewOperationContextFromInteraction(session, interaction),
+		targetUser,
+		interaction.GuildID,
+		args.UseGuildAvatar,
 	)
 }
 

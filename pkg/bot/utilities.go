@@ -453,8 +453,8 @@ func (args OverlayImageArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func MakeImageOverlayCommand(overlayImage []byte, initialOptions OverlayOptions) func(*discordgo.MessageCreate, OverlayImageArgs) {
-	return MakeImageOpTextCommand(func(wand *imagick.MagickWand, args OverlayImageArgs) ([]*imagick.MagickWand, error) {
+func MakeImageOverlayOp(overlayImage []byte, initialOptions OverlayOptions) ImageOperation[OverlayImageArgs] {
+	return func(wand *imagick.MagickWand, args OverlayImageArgs) ([]*imagick.MagickWand, error) {
 		newOptions := initialOptions
 
 		if args.HFlip {
@@ -471,7 +471,7 @@ func MakeImageOverlayCommand(overlayImage []byte, initialOptions OverlayOptions)
 		)
 
 		return []*imagick.MagickWand{wand}, err
-	})
+	}
 }
 
 func OverlayImageFixed(wand *imagick.MagickWand, overlay []byte, options FixedOverlayOptions) error {
@@ -497,8 +497,8 @@ func OverlayImageFixed(wand *imagick.MagickWand, overlay []byte, options FixedOv
 	return nil
 }
 
-func MakeImageFixedOverlayCommand(overlayImage []byte, options FixedOverlayOptions) func(*discordgo.MessageCreate, OverlayImageArgs) {
-	return MakeImageOpTextCommand(func(wand *imagick.MagickWand, args OverlayImageArgs) ([]*imagick.MagickWand, error) {
+func MakeImageFixedOverlayOp(overlayImage []byte, options FixedOverlayOptions) ImageOperation[OverlayImageArgs] {
+	return func(wand *imagick.MagickWand, args OverlayImageArgs) ([]*imagick.MagickWand, error) {
 		err := OverlayImageFixed(
 			wand,
 			overlayImage,
@@ -506,5 +506,5 @@ func MakeImageFixedOverlayCommand(overlayImage []byte, options FixedOverlayOptio
 		)
 
 		return []*imagick.MagickWand{wand}, err
-	})
+	}
 }
