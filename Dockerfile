@@ -13,6 +13,9 @@ RUN apt-get update && \
       libheif-dev \
       liblqr-1-0-dev \
       libglib2.0 \
+      ghostscript \
+      libfreetype6-dev \
+      libfontconfig1-dev \
       --no-install-recommends && \
     wget https://github.com/ImageMagick/ImageMagick/archive/${IMAGEMAGICK_VERSION}.tar.gz && \
 	tar xvzf ${IMAGEMAGICK_VERSION}.tar.gz && \
