@@ -2,7 +2,6 @@ package bot
 
 import (
 	"fmt"
-	"slices"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/nint8835/parsley"
@@ -54,6 +53,7 @@ type Command struct {
 	description  string
 	textHandler  interface{}
 	slashHandler interface{}
+	enabled      func(*configPkg.Config) bool
 }
 
 var commands = []Command{
@@ -92,7 +92,7 @@ var commands = []Command{
 		name:         "help",
 		description:  "Get help for available commands.",
 		textHandler:  HelpCommand,
-		slashHandler: nil,
+		slashHandler: HelpSlashCommand,
 	},
 	{
 		name:         "deepfry",
@@ -152,7 +152,7 @@ var commands = []Command{
 		name:         "avatar",
 		description:  "Fetch the avatar for a user.",
 		textHandler:  Avatar,
-		slashHandler: nil,
+		slashHandler: AvatarSlashCommand,
 	},
 	{
 		name:         "sticker",
@@ -196,31 +196,34 @@ var commands = []Command{
 		textHandler:  MakeImageOpTextCommand(Meme),
 		slashHandler: MakeImageOpSlashCommand(Meme),
 	},
-}
-
-var enabledCommands = []string{
-	"magik",
-	"lagik",
-	"gmagik",
-	"arcweld",
-	"malt",
-	"deepfry",
-	"divine",
-	"waaw",
-	"haah",
-	"woow",
-	"hooh",
-	"invert",
-	"otsu",
-	"rotate",
-	"avatar",
-	"sticker",
-	"emoji",
-	"resize",
-	"huecycle",
-	"modulate",
-	"presidentsframe",
-	"meme",
+	{
+		name:         "aigen",
+		description:  "Generate an image from a prompt.",
+		textHandler:  ImageGenTextCommand,
+		slashHandler: ImageGenSlashCommand,
+		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
+	},
+	{
+		name:         "aiedit",
+		description:  "Edit an image based on a prompt.",
+		textHandler:  MakeImageOpTextCommand(ImageEdit),
+		slashHandler: MakeImageOpSlashCommand(ImageEdit),
+		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
+	},
+	{
+		name:         "ailoopedit",
+		description:  "Repeatedly edit an image based on a prompt.",
+		textHandler:  MakeImageOpTextCommand(LoopEdit),
+		slashHandler: MakeImageOpSlashCommand(LoopEdit),
+		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
+	},
+	{
+		name:         "aiflipflop",
+		description:  "Flip-flop between two images, editing each based on a prompt.",
+		textHandler:  MakeImageOpTextCommand(FlipFlop),
+		slashHandler: MakeImageOpSlashCommand(FlipFlop),
+		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
+	},
 }
 
 // New constructs a new instance of Borik.
@@ -274,73 +277,71 @@ func New() (*Bot, error) {
 
 	log.Debug().Msg("Registering commands")
 
+	if config.OpenaiApiKey == "" {
+		log.Warn().Msg("OpenAI API key not set; skipping registration of OpenAI commands")
+	}
+
 	_ = textParser.NewCommand("", "Magikify an image.", MakeImageOpTextCommand(Magik))
 
-	for _, command := range commands {
-		if slices.Contains(enabledCommands, command.name) {
+	allCommands := append([]Command{}, commands...)
+	allCommands = append(allCommands, generateGraphicsFormatCommands()...)
+	allCommands = append(allCommands, generateOverlayCommands()...)
+
+	for _, command := range allCommands {
+		if command.enabled != nil && !command.enabled(config) {
+			log.Debug().Str("command", command.name).Msg("Skipping disabled command")
+			continue
+		}
+
+		_ = textParser.NewCommand(
+			command.name,
+			command.description,
+			command.textHandler,
+		)
+
+		if slashParser != nil && command.slashHandler != nil {
+			_ = slashParser.AddCommand(&switchboard.Command{
+				Name:        command.name,
+				Description: command.description,
+				Handler:     command.slashHandler,
+				GuildID:     slashGuildId,
+			})
+		}
+
+		for _, alias := range command.aliases {
 			_ = textParser.NewCommand(
-				command.name,
+				alias,
 				command.description,
 				command.textHandler,
 			)
 
 			if slashParser != nil && command.slashHandler != nil {
 				_ = slashParser.AddCommand(&switchboard.Command{
-					Name:        command.name,
+					Name:        alias,
 					Description: command.description,
 					Handler:     command.slashHandler,
 					GuildID:     slashGuildId,
 				})
 			}
+		}
 
-			for _, alias := range command.aliases {
-				_ = textParser.NewCommand(
-					alias,
-					command.description,
-					command.textHandler,
-				)
-
-				if slashParser != nil && command.slashHandler != nil {
-					_ = slashParser.AddCommand(&switchboard.Command{
-						Name:        alias,
-						Description: command.description,
-						Handler:     command.slashHandler,
-						GuildID:     slashGuildId,
-					})
-				}
-			}
-
-			if slashParser != nil && command.slashHandler != nil {
-				for _, alias := range command.slashAliases {
-					_ = slashParser.AddCommand(&switchboard.Command{
-						Name:        alias,
-						Description: command.description,
-						Handler:     command.slashHandler,
-						GuildID:     slashGuildId,
-					})
-				}
+		if slashParser != nil && command.slashHandler != nil {
+			for _, alias := range command.slashAliases {
+				_ = slashParser.AddCommand(&switchboard.Command{
+					Name:        alias,
+					Description: command.description,
+					Handler:     command.slashHandler,
+					GuildID:     slashGuildId,
+				})
 			}
 		}
 	}
-
-	registerGraphicsFormatCommands(textParser)
-	registerOverlayCommands(textParser)
 
 	if slashParser != nil {
 		err = slashParser.SyncCommands(session, config.AppId)
 		if err != nil {
 			return nil, fmt.Errorf("error syncing commands: %w", err)
 		}
-	}
-
-	if config.OpenaiApiKey != "" {
-		log.Debug().Msg("Registering OpenAI commands")
-		_ = textParser.NewCommand("aigen", "Generate an image from a prompt.", ImageGen)
-		_ = textParser.NewCommand("aiedit", "Edit an image based on a prompt.", ImageEditCommand)
-		_ = textParser.NewCommand("ailoopedit", "Repeatedly edit an image based on a prompt.", LoopEditCommand)
-		_ = textParser.NewCommand("aiflipflop", "Flip-flop between two images, editing each based on a prompt.", FlipFlopCommand)
-	} else {
-		log.Warn().Msg("OpenAI API key not set; skipping registration of OpenAI commands")
 	}
 
 	log.Debug().Msg("Commands registered")
