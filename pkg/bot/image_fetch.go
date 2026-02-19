@@ -82,6 +82,8 @@ func Avatar(message *discordgo.MessageCreate, args AvatarArgs) {
 }
 
 func AvatarSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, args AvatarSlashArgs) {
+	ctx := NewOperationContextFromInteraction(session, interaction)
+
 	targetUser := args.User
 	if targetUser == nil {
 		if interaction.Member != nil {
@@ -91,12 +93,14 @@ func AvatarSlashCommand(session *discordgo.Session, interaction *discordgo.Inter
 		}
 	}
 
-	fetchAvatar(
-		NewOperationContextFromInteraction(session, interaction),
-		targetUser,
-		interaction.GuildID,
-		args.UseGuildAvatar,
-	)
+	if targetUser == nil {
+		if err := ctx.SendText("Unable to determine target user."); err != nil {
+			log.Error().Err(err).Msg("Failed to send error message")
+		}
+		return
+	}
+
+	fetchAvatar(ctx, targetUser, interaction.GuildID, args.UseGuildAvatar)
 }
 
 func getStickerUrl(sticker *discordgo.StickerItem) (string, string, error) {
