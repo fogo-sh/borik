@@ -34,16 +34,16 @@ var dennyStandingImage []byte
 //go:embed overlay_images/shinji_throw.png
 var shinjiThrowImage []byte
 
-func generateOverlayCommands() []Command {
-	makeOverlayCommand := func(name, description string, op ImageOperation[OverlayImageArgs]) Command {
-		return Command{
-			name:         name,
-			description:  description,
-			textHandler:  MakeImageOpTextCommand(op),
-			slashHandler: MakeImageOpSlashCommand(op),
-		}
+func makeOverlayCommand(name, description string, op ImageOperation[OverlayImageArgs]) Command {
+	return Command{
+		name:         name,
+		description:  description,
+		textHandler:  MakeImageOpTextCommand(op),
+		slashHandler: MakeImageOpSlashCommand(op),
 	}
+}
 
+func generateOverlayCommands() []Command {
 	return []Command{
 		makeOverlayCommand("jackpog", "Have Jack Pog an image.", MakeImageOverlayOp(jackPogImage, OverlayOptions{
 			OverlayWidthFactor:  1,
