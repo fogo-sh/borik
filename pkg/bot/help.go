@@ -14,7 +14,7 @@ type HelpArgs struct {
 func generateCommandList() string {
 	commandCodeBlock := "```"
 
-	for _, details := range Instance.parser.GetCommands() {
+	for _, details := range Instance.textParser.GetCommands() {
 		commandCodeBlock += fmt.Sprintf("%s%s: %s\n", Instance.config.Prefix, details.Name, details.Description)
 	}
 
@@ -22,7 +22,7 @@ func generateCommandList() string {
 }
 
 func generateCommandHelp(command string) (*discordgo.MessageEmbed, error) {
-	commandDetails, err := Instance.parser.GetCommand(command)
+	commandDetails, err := Instance.textParser.GetCommand(command)
 	if err != nil {
 		return nil, fmt.Errorf("error getting command details: %w", err)
 	}
@@ -48,28 +48,30 @@ func generateCommandHelp(command string) (*discordgo.MessageEmbed, error) {
 	return embed, nil
 }
 
-func HelpCommand(message *discordgo.MessageCreate, args HelpArgs) {
+func help(ctx *OperationContext, args HelpArgs) {
 	if args.Command != "" {
 		embed, err := generateCommandHelp(args.Command)
 		if err != nil {
-			_, err := Instance.session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("```\n%s\n```", err.Error()))
-			if err != nil {
-				log.Error().Err(err).Msg("Error sending error message")
+			if sendErr := ctx.SendText(fmt.Sprintf("```\n%s\n```", err.Error())); sendErr != nil {
+				log.Error().Err(sendErr).Msg("Error sending error message")
 			}
 			return
 		}
 
-		_, err = Instance.session.ChannelMessageSendEmbed(message.ChannelID, embed)
-		if err != nil {
+		if err := ctx.SendEmbed(embed); err != nil {
 			log.Error().Err(err).Msg("Failed to send help message")
 		}
 	} else {
-		helpText := generateCommandList()
-
-		_, err := Instance.session.ChannelMessageSend(message.ChannelID, helpText)
-		if err != nil {
+		if err := ctx.SendText(generateCommandList()); err != nil {
 			log.Error().Err(err).Msg("Failed to send help message")
 		}
 	}
+}
 
+func HelpCommand(message *discordgo.MessageCreate, args HelpArgs) {
+	help(NewOperationContextFromMessage(Instance.session, message), args)
+}
+
+func HelpSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, args HelpArgs) {
+	help(NewOperationContextFromInteraction(session, interaction), args)
 }

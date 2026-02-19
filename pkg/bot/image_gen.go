@@ -11,6 +11,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/openai/openai-go/v3"
+	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v3/imagick"
 
 	"github.com/fogo-sh/borik/pkg/config"
@@ -20,8 +21,13 @@ type ImageGenArgs struct {
 	Prompt string `description:"Prompt to generate an image for."`
 }
 
-func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
-	defer TypingIndicator(message)()
+func generateImage(ctx *OperationContext, args ImageGenArgs) {
+	defer TypingIndicatorForContext(ctx)()
+
+	if err := ctx.DeferResponse(); err != nil {
+		log.Error().Err(err).Msg("Failed to defer response")
+		return
+	}
 
 	seed := rand.Int()
 	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, seed)
@@ -37,30 +43,33 @@ func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
 		},
 	)
 	if err != nil {
-		Instance.session.ChannelMessageSendReply(
-			message.ChannelID,
-			"Error generating image: `"+err.Error()+"`",
-			message.Reference(),
-		)
+		if sendErr := ctx.SendText("Error generating image: `" + err.Error() + "`"); sendErr != nil {
+			log.Error().Err(sendErr).Msg("Failed to send error response")
+		}
 		return
 	}
 
-	Instance.session.ChannelMessageSendComplex(
-		message.ChannelID,
-		&discordgo.MessageSend{
-			Reference: message.Reference(),
-			Files: []*discordgo.File{
-				{
-					Name:        "generated.png",
-					ContentType: "image/png",
-					Reader:      base64.NewDecoder(base64.StdEncoding, strings.NewReader(image.Data[0].B64JSON)),
-				},
-			},
-		},
-	)
+	file := &discordgo.File{
+		Name:        "generated.png",
+		ContentType: "image/png",
+		Reader:      base64.NewDecoder(base64.StdEncoding, strings.NewReader(image.Data[0].B64JSON)),
+	}
+
+	if err := ctx.SendFiles([]*discordgo.File{file}); err != nil {
+		log.Error().Err(err).Msg("Failed to send generated image")
+	}
 }
 
-func editImage(wand *imagick.MagickWand, args ImageEditArgs, seed int) (*imagick.MagickWand, error) {
+func ImageGenTextCommand(message *discordgo.MessageCreate, args ImageGenArgs) {
+	generateImage(NewOperationContextFromMessage(Instance.session, message), args)
+}
+
+func ImageGenSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, args ImageGenArgs) {
+	generateImage(NewOperationContextFromInteraction(session, interaction), args)
+}
+
+func editImage(wand *imagick.MagickWand, args ImageEditArgs) (*imagick.MagickWand, error) {
+	seed := args.Seed
 	imageBlob, err := wand.GetImageBlob()
 	if err != nil {
 		return nil, fmt.Errorf("error getting image blob: %w", err)
@@ -109,14 +118,18 @@ func editImage(wand *imagick.MagickWand, args ImageEditArgs, seed int) (*imagick
 type ImageEditArgs struct {
 	Prompt   string `description:"Prompt to edit the image with."`
 	ImageURL string `default:"" description:"URL of the image to edit."`
+	Seed     int    `default:"0" description:"Seed for image generation. Leave as 0 for a random seed."`
 }
 
 func (args ImageEditArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs, seed int) ([]*imagick.MagickWand, error) {
-	editedImage, err := editImage(wand, args, seed)
+func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
+	if args.Seed == 0 {
+		args.Seed = rand.Int()
+	}
+	editedImage, err := editImage(wand, args)
 	if err != nil {
 		return nil, err
 	}
@@ -128,13 +141,17 @@ type LoopEditArgs struct {
 	Prompt   string `description:"Prompt to edit the image with."`
 	ImageURL string `default:"" description:"URL of the image to edit."`
 	Steps    uint   `default:"4" description:"Number of edit iterations to perform."`
+	Seed     int    `default:"0" description:"Seed for image generation. Leave as 0 for a random seed."`
 }
 
 func (args LoopEditArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, seed int) ([]*imagick.MagickWand, error) {
+func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs) ([]*imagick.MagickWand, error) {
+	if args.Seed == 0 {
+		args.Seed = rand.Int()
+	}
 	editedFrames := make([]*imagick.MagickWand, 0, args.Steps)
 
 	currentWand := wand
@@ -142,7 +159,8 @@ func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, seed int) ([]*imagick
 	for range args.Steps {
 		currentWand, err = editImage(currentWand, ImageEditArgs{
 			Prompt: args.Prompt,
-		}, seed)
+			Seed:   args.Seed,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -150,18 +168,4 @@ func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, seed int) ([]*imagick
 	}
 
 	return editedFrames, nil
-}
-
-func ImageEditCommand(message *discordgo.MessageCreate, args ImageEditArgs) {
-	seed := rand.Int()
-	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
-		return ImageEdit(wand, args, seed)
-	})
-}
-
-func LoopEditCommand(message *discordgo.MessageCreate, args LoopEditArgs) {
-	seed := rand.Int()
-	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args LoopEditArgs) ([]*imagick.MagickWand, error) {
-		return LoopEdit(wand, args, seed)
-	})
 }

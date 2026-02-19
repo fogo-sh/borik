@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bwmarrin/discordgo"
-	"github.com/nint8835/parsley"
 	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
@@ -111,18 +109,22 @@ func (args graphicsFormatArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func MakeGraphicsFormatOpCommand(format graphicsFormat) func(*discordgo.MessageCreate, graphicsFormatArgs) {
-	return MakeImageOpCommand(func(wand *imagick.MagickWand, args graphicsFormatArgs) ([]*imagick.MagickWand, error) {
+func makeGraphicsFormatOp(format graphicsFormat) ImageOperation[graphicsFormatArgs] {
+	return func(wand *imagick.MagickWand, args graphicsFormatArgs) ([]*imagick.MagickWand, error) {
 		return convertGraphicsFormat(wand, format, args.Dither)
-	})
+	}
 }
 
-func registerGraphicsFormatCommands(parser *parsley.Parser) {
+func generateGraphicsFormatCommands() []Command {
+	var cmds []Command
 	for _, format := range graphicsFormats {
-		_ = parser.NewCommand(
-			strings.ToLower(format.Name),
-			fmt.Sprintf("Convert an image to %s graphics", format.Name),
-			MakeGraphicsFormatOpCommand(format),
-		)
+		op := makeGraphicsFormatOp(format)
+		cmds = append(cmds, Command{
+			name:         strings.ToLower(format.Name),
+			description:  fmt.Sprintf("Convert an image to %s graphics", format.Name),
+			textHandler:  MakeImageOpTextCommand(op),
+			slashHandler: MakeImageOpSlashCommand(op),
+		})
 	}
+	return cmds
 }
