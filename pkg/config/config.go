@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -10,13 +11,23 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Prefixes is a custom type for command prefixes, split on "|" to allow
+// commas and other special characters as prefix values.
+// Example: BORIK_PREFIXES="borik!|,"
+type Prefixes []string
+
+func (p *Prefixes) Decode(value string) error {
+	*p = strings.Split(value, "|")
+	return nil
+}
+
 // Config represents the config that Borik will use to run
 type Config struct {
-	Prefix   string `default:"borik!"`
-	Token    string `required:"true"`
-	AppId    string `default:"" split_words:"true"`
-	GuildId  string `default:"" split_words:"true"`
-	LogLevel string `default:"info" split_words:"true"`
+	Prefixes Prefixes `default:"borik!"`
+	Token    string   `required:"true"`
+	AppId    string   `default:"" split_words:"true"`
+	GuildId  string   `default:"" split_words:"true"`
+	LogLevel string   `default:"info" split_words:"true"`
 
 	RegisterSlashCommandsGlobally bool `default:"false" split_words:"true"`
 

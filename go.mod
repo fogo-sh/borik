@@ -6,7 +6,7 @@ require (
 	github.com/bwmarrin/discordgo v0.29.1-0.20260214123928-f43dd94faaac
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/nint8835/parsley v1.2.0
+	github.com/nint8835/parsley v1.3.0
 	github.com/openai/openai-go/v3 v3.22.0
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.10.1
