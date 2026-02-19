@@ -91,7 +91,7 @@ func ImageGenSlashCommand(session *discordgo.Session, interaction *discordgo.Int
 	generateImage(NewOperationContextFromInteraction(session, interaction), args)
 }
 
-func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionMetadata) (*imagick.MagickWand, error) {
+func editImage(wand *imagick.MagickWand, args ImageEditArgs) (*imagick.MagickWand, error) {
 	err := ShrinkMaintainAspectRatio(wand, 896, 896)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
@@ -103,7 +103,7 @@ func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionM
 	}
 	imageReader := bytes.NewReader(imageBlob)
 
-	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, metadata.Seed)
+	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, args.Seed)
 	finalPrompt := args.Prompt + stableDiffusionOpts
 
 	params := openai.ImageEditParams{
@@ -121,7 +121,7 @@ func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionM
 		)),
 		ResponseFormat: openai.ImageEditParamsResponseFormatB64JSON,
 	}
-	attachSessionMetadata(&params, metadata)
+	attachSessionMetadata(&params, AISessionMetadata{Seed: args.Seed})
 
 	editedImage, err := Instance.openAiClient.Images.Edit(
 		context.TODO(),
@@ -152,6 +152,7 @@ func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionM
 type ImageEditArgs struct {
 	Prompt   string `description:"Prompt to edit the image with."`
 	ImageURL string `default:"" description:"URL of the image to edit."`
+	Seed     int    `default:"0" description:"Seed for image generation. Leave as 0 for a random seed."`
 }
 
 func (args ImageEditArgs) GetImageURL() string {
@@ -159,8 +160,10 @@ func (args ImageEditArgs) GetImageURL() string {
 }
 
 func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
-	seed := rand.Int()
-	editedImage, err := editImage(wand, args, AISessionMetadata{Seed: seed})
+	if args.Seed == 0 {
+		args.Seed = rand.Int()
+	}
+	editedImage, err := editImage(wand, args)
 	if err != nil {
 		return nil, err
 	}
@@ -172,6 +175,7 @@ type LoopEditArgs struct {
 	Prompt   string `description:"Prompt to edit the image with."`
 	ImageURL string `default:"" description:"URL of the image to edit."`
 	Steps    uint   `default:"4" description:"Number of edit iterations to perform."`
+	Seed     int    `default:"0" description:"Seed for image generation. Leave as 0 for a random seed."`
 }
 
 func (args LoopEditArgs) GetImageURL() string {
@@ -179,17 +183,19 @@ func (args LoopEditArgs) GetImageURL() string {
 }
 
 func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs) ([]*imagick.MagickWand, error) {
-	seed := rand.Int()
-	metadata := AISessionMetadata{Seed: seed}
+	if args.Seed == 0 {
+		args.Seed = rand.Int()
+	}
 	editedFrames := make([]*imagick.MagickWand, 0, args.Steps)
 
 	currentWand := wand
 	var err error
 	for range args.Steps {
-		metadata.Seed++ // Increment the seed for each iteration to produce different results
+		args.Seed++ // Increment the seed for each iteration to produce different results
 		currentWand, err = editImage(currentWand, ImageEditArgs{
 			Prompt: args.Prompt,
-		}, metadata)
+			Seed:   args.Seed,
+		})
 		if err != nil {
 			return nil, err
 		}
