@@ -68,7 +68,8 @@ func ImageGenSlashCommand(session *discordgo.Session, interaction *discordgo.Int
 	generateImage(NewOperationContextFromInteraction(session, interaction), args)
 }
 
-func editImage(wand *imagick.MagickWand, args ImageEditArgs, seed int) (*imagick.MagickWand, error) {
+func editImage(wand *imagick.MagickWand, args ImageEditArgs) (*imagick.MagickWand, error) {
+	seed := args.Seed
 	imageBlob, err := wand.GetImageBlob()
 	if err != nil {
 		return nil, fmt.Errorf("error getting image blob: %w", err)
@@ -117,6 +118,7 @@ func editImage(wand *imagick.MagickWand, args ImageEditArgs, seed int) (*imagick
 type ImageEditArgs struct {
 	Prompt   string `description:"Prompt to edit the image with."`
 	ImageURL string `default:"" description:"URL of the image to edit."`
+	Seed     int    `default:"0" description:"Seed for image generation. Leave as 0 for a random seed."`
 }
 
 func (args ImageEditArgs) GetImageURL() string {
@@ -124,8 +126,10 @@ func (args ImageEditArgs) GetImageURL() string {
 }
 
 func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
-	seed := rand.Int()
-	editedImage, err := editImage(wand, args, seed)
+	if args.Seed == 0 {
+		args.Seed = rand.Int()
+	}
+	editedImage, err := editImage(wand, args)
 	if err != nil {
 		return nil, err
 	}
@@ -137,6 +141,7 @@ type LoopEditArgs struct {
 	Prompt   string `description:"Prompt to edit the image with."`
 	ImageURL string `default:"" description:"URL of the image to edit."`
 	Steps    uint   `default:"4" description:"Number of edit iterations to perform."`
+	Seed     int    `default:"0" description:"Seed for image generation. Leave as 0 for a random seed."`
 }
 
 func (args LoopEditArgs) GetImageURL() string {
@@ -144,7 +149,9 @@ func (args LoopEditArgs) GetImageURL() string {
 }
 
 func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs) ([]*imagick.MagickWand, error) {
-	seed := rand.Int()
+	if args.Seed == 0 {
+		args.Seed = rand.Int()
+	}
 	editedFrames := make([]*imagick.MagickWand, 0, args.Steps)
 
 	currentWand := wand
@@ -152,7 +159,8 @@ func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs) ([]*imagick.MagickWan
 	for range args.Steps {
 		currentWand, err = editImage(currentWand, ImageEditArgs{
 			Prompt: args.Prompt,
-		}, seed)
+			Seed:   args.Seed,
+		})
 		if err != nil {
 			return nil, err
 		}
