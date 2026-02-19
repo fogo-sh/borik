@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/nint8835/parsley"
@@ -276,9 +277,11 @@ func New() (*Bot, error) {
 
 	_ = textParser.NewCommand("", "Magikify an image.", MakeImageOpTextCommand(Magik))
 
-	allCommands := append([]Command{}, commands...)
-	allCommands = append(allCommands, generateGraphicsFormatCommands()...)
-	allCommands = append(allCommands, generateOverlayCommands()...)
+	allCommands := slices.Concat(
+		commands,
+		generateGraphicsFormatCommands(),
+		generateOverlayCommands(),
+	)
 
 	for _, command := range allCommands {
 		if command.enabled != nil && !command.enabled(config) {

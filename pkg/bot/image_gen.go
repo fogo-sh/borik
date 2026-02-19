@@ -21,6 +21,53 @@ type ImageGenArgs struct {
 	Prompt string `description:"Prompt to generate an image for."`
 }
 
+func generateImage(ctx *OperationContext, args ImageGenArgs) {
+	defer TypingIndicatorForContext(ctx)()
+
+	if err := ctx.DeferResponse(); err != nil {
+		log.Error().Err(err).Msg("Failed to defer response")
+		return
+	}
+
+	seed := rand.Int()
+	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, seed)
+	finalPrompt := args.Prompt + stableDiffusionOpts
+
+	image, err := Instance.openAiClient.Images.Generate(
+		context.TODO(),
+		openai.ImageGenerateParams{
+			Prompt:         finalPrompt,
+			Size:           "512x512",
+			Model:          config.Instance.OpenaiImageGenModel,
+			ResponseFormat: openai.ImageGenerateParamsResponseFormatB64JSON,
+		},
+	)
+	if err != nil {
+		if sendErr := ctx.SendText("Error generating image: `" + err.Error() + "`"); sendErr != nil {
+			log.Error().Err(sendErr).Msg("Failed to send error response")
+		}
+		return
+	}
+
+	file := &discordgo.File{
+		Name:        "generated.png",
+		ContentType: "image/png",
+		Reader:      base64.NewDecoder(base64.StdEncoding, strings.NewReader(image.Data[0].B64JSON)),
+	}
+
+	if err := ctx.SendFiles([]*discordgo.File{file}); err != nil {
+		log.Error().Err(err).Msg("Failed to send generated image")
+	}
+}
+
+func ImageGenTextCommand(message *discordgo.MessageCreate, args ImageGenArgs) {
+	generateImage(NewOperationContextFromMessage(Instance.session, message), args)
+}
+
+func ImageGenSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, args ImageGenArgs) {
+	generateImage(NewOperationContextFromInteraction(session, interaction), args)
+}
+
 func editImage(wand *imagick.MagickWand, args ImageEditArgs, seed int) (*imagick.MagickWand, error) {
 	imageBlob, err := wand.GetImageBlob()
 	if err != nil {
@@ -113,86 +160,4 @@ func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs) ([]*imagick.MagickWan
 	}
 
 	return editedFrames, nil
-}
-
-func generateImage(ctx *OperationContext, args ImageGenArgs) {
-	defer TypingIndicatorForContext(ctx)()
-
-	if ctx.Interaction != nil {
-		err := ctx.Session.InteractionRespond(ctx.Interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-		})
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to send deferred interaction response")
-			return
-		}
-	}
-
-	seed := rand.Int()
-	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, seed)
-	finalPrompt := args.Prompt + stableDiffusionOpts
-
-	image, err := Instance.openAiClient.Images.Generate(
-		context.TODO(),
-		openai.ImageGenerateParams{
-			Prompt:         finalPrompt,
-			Size:           "512x512",
-			Model:          config.Instance.OpenaiImageGenModel,
-			ResponseFormat: openai.ImageGenerateParamsResponseFormatB64JSON,
-		},
-	)
-	if err != nil {
-		ctx.RunCallbacks(
-			func(m *discordgo.MessageCreate) {
-				Instance.session.ChannelMessageSendReply(
-					m.ChannelID,
-					"Error generating image: `"+err.Error()+"`",
-					m.Reference(),
-				)
-			},
-			func(i *discordgo.InteractionCreate) {
-				errMsg := "Error generating image: `" + err.Error() + "`"
-				if _, editErr := ctx.Session.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-					Content: &errMsg,
-				}); editErr != nil {
-					log.Error().Err(editErr).Msg("Failed to send error response")
-				}
-			},
-		)
-		return
-	}
-
-	file := &discordgo.File{
-		Name:        "generated.png",
-		ContentType: "image/png",
-		Reader:      base64.NewDecoder(base64.StdEncoding, strings.NewReader(image.Data[0].B64JSON)),
-	}
-
-	ctx.RunCallbacks(
-		func(m *discordgo.MessageCreate) {
-			Instance.session.ChannelMessageSendComplex(
-				m.ChannelID,
-				&discordgo.MessageSend{
-					Reference: m.Reference(),
-					Files:     []*discordgo.File{file},
-				},
-			)
-		},
-		func(i *discordgo.InteractionCreate) {
-			_, err := ctx.Session.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-				Files: []*discordgo.File{file},
-			})
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to edit deferred interaction response")
-			}
-		},
-	)
-}
-
-func ImageGenTextCommand(message *discordgo.MessageCreate, args ImageGenArgs) {
-	generateImage(NewOperationContextFromMessage(Instance.session, message), args)
-}
-
-func ImageGenSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, args ImageGenArgs) {
-	generateImage(NewOperationContextFromInteraction(session, interaction), args)
 }

@@ -26,14 +26,9 @@ type AvatarSlashArgs struct {
 func fetchAvatar(ctx *OperationContext, targetUser *discordgo.User, guildID string, useGuildAvatar bool) {
 	defer TypingIndicatorForContext(ctx)()
 
-	if ctx.Interaction != nil {
-		err := ctx.Session.InteractionRespond(ctx.Interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-		})
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to send deferred interaction response")
-			return
-		}
+	if err := ctx.DeferResponse(); err != nil {
+		log.Error().Err(err).Msg("Failed to defer response")
+		return
 	}
 
 	member, err := ctx.Session.GuildMember(guildID, targetUser.ID)
@@ -62,24 +57,9 @@ func fetchAvatar(ctx *OperationContext, targetUser *discordgo.User, guildID stri
 		Reader:      resp.Body,
 	}
 
-	ctx.RunCallbacks(
-		func(m *discordgo.MessageCreate) {
-			Instance.session.ChannelMessageSendComplex(
-				m.ChannelID,
-				&discordgo.MessageSend{
-					Reference: m.Reference(),
-					Files:     []*discordgo.File{file},
-				},
-			)
-		},
-		func(i *discordgo.InteractionCreate) {
-			if _, err := ctx.Session.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-				Files: []*discordgo.File{file},
-			}); err != nil {
-				log.Error().Err(err).Msg("Failed to edit deferred interaction response")
-			}
-		},
-	)
+	if err := ctx.SendFiles([]*discordgo.File{file}); err != nil {
+		log.Error().Err(err).Msg("Failed to send avatar")
+	}
 }
 
 // Avatar fetches a user's avatar.

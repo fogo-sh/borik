@@ -52,62 +52,19 @@ func help(ctx *OperationContext, args HelpArgs) {
 	if args.Command != "" {
 		embed, err := generateCommandHelp(args.Command)
 		if err != nil {
-			errMsg := fmt.Sprintf("```\n%s\n```", err.Error())
-			ctx.RunCallbacks(
-				func(m *discordgo.MessageCreate) {
-					if _, sendErr := Instance.session.ChannelMessageSend(m.ChannelID, errMsg); sendErr != nil {
-						log.Error().Err(sendErr).Msg("Error sending error message")
-					}
-				},
-				func(i *discordgo.InteractionCreate) {
-					ctx.Session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-						Type: discordgo.InteractionResponseChannelMessageWithSource,
-						Data: &discordgo.InteractionResponseData{
-							Content: errMsg,
-						},
-					})
-				},
-			)
+			if sendErr := ctx.SendText(fmt.Sprintf("```\n%s\n```", err.Error())); sendErr != nil {
+				log.Error().Err(sendErr).Msg("Error sending error message")
+			}
 			return
 		}
 
-		ctx.RunCallbacks(
-			func(m *discordgo.MessageCreate) {
-				if _, sendErr := Instance.session.ChannelMessageSendEmbed(m.ChannelID, embed); sendErr != nil {
-					log.Error().Err(sendErr).Msg("Failed to send help message")
-				}
-			},
-			func(i *discordgo.InteractionCreate) {
-				if err := ctx.Session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Embeds: []*discordgo.MessageEmbed{embed},
-					},
-				}); err != nil {
-					log.Error().Err(err).Msg("Failed to send help interaction response")
-				}
-			},
-		)
+		if err := ctx.SendEmbed(embed); err != nil {
+			log.Error().Err(err).Msg("Failed to send help message")
+		}
 	} else {
-		helpText := generateCommandList()
-
-		ctx.RunCallbacks(
-			func(m *discordgo.MessageCreate) {
-				if _, sendErr := Instance.session.ChannelMessageSend(m.ChannelID, helpText); sendErr != nil {
-					log.Error().Err(sendErr).Msg("Failed to send help message")
-				}
-			},
-			func(i *discordgo.InteractionCreate) {
-				if err := ctx.Session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: helpText,
-					},
-				}); err != nil {
-					log.Error().Err(err).Msg("Failed to send help interaction response")
-				}
-			},
-		)
+		if err := ctx.SendText(generateCommandList()); err != nil {
+			log.Error().Err(err).Msg("Failed to send help message")
+		}
 	}
 }
 
