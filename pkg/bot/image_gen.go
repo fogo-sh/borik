@@ -86,6 +86,11 @@ func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
 }
 
 func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionMetadata) (*imagick.MagickWand, error) {
+	err := ShrinkMaintainAspectRatio(wand, 896, 896)
+	if err != nil {
+		return nil, fmt.Errorf("error resizing image: %w", err)
+	}
+
 	imageBlob, err := wand.GetImageBlob()
 	if err != nil {
 		return nil, fmt.Errorf("error getting image blob: %w", err)
@@ -118,6 +123,10 @@ func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionM
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error editing image: %w", err)
+	}
+
+	if len(editedImage.Data) == 0 {
+		return nil, fmt.Errorf("no image data returned from edit")
 	}
 
 	decodedImg, err := base64.StdEncoding.DecodeString(editedImage.Data[0].B64JSON)
