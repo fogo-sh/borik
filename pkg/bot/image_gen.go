@@ -177,6 +177,7 @@ func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, metadata AISessionMet
 	currentWand := wand
 	var err error
 	for range args.Steps {
+		metadata.Seed++ // Increment the seed for each iteration to produce different results
 		currentWand, err = editImage(currentWand, ImageEditArgs{
 			Prompt: args.Prompt,
 		}, metadata)
