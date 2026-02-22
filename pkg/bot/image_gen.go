@@ -16,6 +16,23 @@ import (
 	"github.com/fogo-sh/borik/pkg/config"
 )
 
+type AISessionMetadata struct {
+	Seed      int
+	SessionID string
+	UserID    string
+}
+
+type AIParams interface {
+	SetExtraFields(map[string]any)
+}
+
+func attachSessionMetadata(params AIParams, metadata AISessionMetadata) {
+	params.SetExtraFields(map[string]any{
+		"litellm_session_id": metadata.SessionID,
+		"user":               metadata.UserID,
+	})
+}
+
 type ImageGenArgs struct {
 	Prompt string `description:"Prompt to generate an image for."`
 }
@@ -27,14 +44,23 @@ func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
 	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, seed)
 	finalPrompt := args.Prompt + stableDiffusionOpts
 
+	params := openai.ImageGenerateParams{
+		Prompt:         finalPrompt,
+		Size:           "512x512",
+		Model:          config.Instance.OpenaiImageGenModel,
+		ResponseFormat: openai.ImageGenerateParamsResponseFormatB64JSON,
+	}
+	attachSessionMetadata(
+		&params,
+		AISessionMetadata{
+			SessionID: message.ID,
+			UserID:    message.Author.ID,
+		},
+	)
+
 	image, err := Instance.openAiClient.Images.Generate(
 		context.TODO(),
-		openai.ImageGenerateParams{
-			Prompt:         finalPrompt,
-			Size:           "512x512",
-			Model:          config.Instance.OpenaiImageGenModel,
-			ResponseFormat: openai.ImageGenerateParamsResponseFormatB64JSON,
-		},
+		params,
 	)
 	if err != nil {
 		Instance.session.ChannelMessageSendReply(
@@ -60,36 +86,48 @@ func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
 	)
 }
 
-func editImage(wand *imagick.MagickWand, args ImageEditArgs, seed int) (*imagick.MagickWand, error) {
+func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionMetadata) (*imagick.MagickWand, error) {
+	err := ShrinkMaintainAspectRatio(wand, 896, 896)
+	if err != nil {
+		return nil, fmt.Errorf("error resizing image: %w", err)
+	}
+
 	imageBlob, err := wand.GetImageBlob()
 	if err != nil {
 		return nil, fmt.Errorf("error getting image blob: %w", err)
 	}
 	imageReader := bytes.NewReader(imageBlob)
 
-	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, seed)
+	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, metadata.Seed)
 	finalPrompt := args.Prompt + stableDiffusionOpts
+
+	params := openai.ImageEditParams{
+		Image: openai.ImageEditParamsImageUnion{
+			OfFileArray: []io.Reader{imageReader},
+		},
+		Prompt: finalPrompt,
+		Model:  config.Instance.OpenaiImageEditModel,
+		// OpenAI's models require one of a few specific sizes, but stable-diffusion.cpp is more flexible
+		// Pass the original image size to prevent it cropping it
+		Size: openai.ImageEditParamsSize(fmt.Sprintf(
+			"%dx%d",
+			wand.GetImageWidth(),
+			wand.GetImageHeight(),
+		)),
+		ResponseFormat: openai.ImageEditParamsResponseFormatB64JSON,
+	}
+	attachSessionMetadata(&params, metadata)
 
 	editedImage, err := Instance.openAiClient.Images.Edit(
 		context.TODO(),
-		openai.ImageEditParams{
-			Image: openai.ImageEditParamsImageUnion{
-				OfFileArray: []io.Reader{imageReader},
-			},
-			Prompt: finalPrompt,
-			Model:  config.Instance.OpenaiImageEditModel,
-			// OpenAI's models require one of a few specific sizes, but stable-diffusion.cpp is more flexible
-			// Pass the original image size to prevent it cropping it
-			Size: openai.ImageEditParamsSize(fmt.Sprintf(
-				"%dx%d",
-				wand.GetImageWidth(),
-				wand.GetImageHeight(),
-			)),
-			ResponseFormat: openai.ImageEditParamsResponseFormatB64JSON,
-		},
+		params,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error editing image: %w", err)
+	}
+
+	if len(editedImage.Data) == 0 {
+		return nil, fmt.Errorf("no image data returned from edit")
 	}
 
 	decodedImg, err := base64.StdEncoding.DecodeString(editedImage.Data[0].B64JSON)
@@ -115,8 +153,8 @@ func (args ImageEditArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs, seed int) ([]*imagick.MagickWand, error) {
-	editedImage, err := editImage(wand, args, seed)
+func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionMetadata) ([]*imagick.MagickWand, error) {
+	editedImage, err := editImage(wand, args, metadata)
 	if err != nil {
 		return nil, err
 	}
@@ -134,15 +172,16 @@ func (args LoopEditArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, seed int) ([]*imagick.MagickWand, error) {
+func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, metadata AISessionMetadata) ([]*imagick.MagickWand, error) {
 	editedFrames := make([]*imagick.MagickWand, 0, args.Steps)
 
 	currentWand := wand
 	var err error
 	for range args.Steps {
+		metadata.Seed++ // Increment the seed for each iteration to produce different results
 		currentWand, err = editImage(currentWand, ImageEditArgs{
 			Prompt: args.Prompt,
-		}, seed)
+		}, metadata)
 		if err != nil {
 			return nil, err
 		}
@@ -155,13 +194,21 @@ func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, seed int) ([]*imagick
 func ImageEditCommand(message *discordgo.MessageCreate, args ImageEditArgs) {
 	seed := rand.Int()
 	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
-		return ImageEdit(wand, args, seed)
+		return ImageEdit(wand, args, AISessionMetadata{
+			Seed:      seed,
+			SessionID: message.ID,
+			UserID:    message.Author.ID,
+		})
 	})
 }
 
 func LoopEditCommand(message *discordgo.MessageCreate, args LoopEditArgs) {
 	seed := rand.Int()
 	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args LoopEditArgs) ([]*imagick.MagickWand, error) {
-		return LoopEdit(wand, args, seed)
+		return LoopEdit(wand, args, AISessionMetadata{
+			Seed:      seed,
+			SessionID: message.ID,
+			UserID:    message.Author.ID,
+		})
 	})
 }

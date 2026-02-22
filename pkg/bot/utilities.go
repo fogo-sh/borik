@@ -274,6 +274,18 @@ func ResizeMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint
 	return wand.ScaleImage(uint(targetWidth), uint(targetHeight))
 }
 
+// ShrinkMaintainAspectRatio shrinks an input wand to fit within a box of given width and height if it exceeds those dimensions, maintaining aspect ratio
+func ShrinkMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint) error {
+	inputHeight := float64(wand.GetImageHeight())
+	inputWidth := float64(wand.GetImageWidth())
+
+	if inputWidth <= float64(width) && inputHeight <= float64(height) {
+		return nil
+	}
+
+	return ResizeMaintainAspectRatio(wand, width, height)
+}
+
 type OverlayOptions struct {
 	HFlip bool
 	VFlip bool
