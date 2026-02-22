@@ -54,6 +54,7 @@ func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
 		&params,
 		AISessionMetadata{
 			SessionID: message.ID,
+			UserID:    message.Author.ID,
 		},
 	)
 
