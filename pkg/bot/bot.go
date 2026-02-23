@@ -62,7 +62,7 @@ func New() (*Bot, error) {
 	log.Debug().Msg("Discord session created")
 
 	log.Debug().Msg("Creating command parser")
-	parser := parsley.New(config.Prefix)
+	parser := parsley.New(config.Prefixes...)
 	parser.RegisterHandler(session)
 	log.Debug().Msg("Parser created")
 
