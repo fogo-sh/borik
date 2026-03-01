@@ -59,6 +59,29 @@ func Schedule(what func(), delay time.Duration) chan bool {
 	return stop
 }
 
+// ImageURLFromComponent attempts to retrieve an image URL from a given component, recursing into child components if necessary
+func ImageURLFromComponent(component discordgo.MessageComponent) string {
+	switch c := component.(type) {
+	case *discordgo.MediaGallery:
+		if len(c.Items) == 0 {
+			return ""
+		}
+
+		return c.Items[0].Media.URL
+	case *discordgo.Container:
+		for _, child := range c.Components {
+			url := ImageURLFromComponent(child)
+			if url != "" {
+				return url
+			}
+		}
+
+		return ""
+	default:
+		return ""
+	}
+}
+
 // ImageURLFromMessage attempts to retrieve an image URL from a given message.
 func ImageURLFromMessage(m *discordgo.Message) string {
 	for _, embed := range m.Embeds {
@@ -72,6 +95,13 @@ func ImageURLFromMessage(m *discordgo.Message) string {
 	for _, attachment := range m.Attachments {
 		if strings.HasPrefix(attachment.ContentType, "image/") {
 			return attachment.URL
+		}
+	}
+
+	for _, component := range m.Components {
+		url := ImageURLFromComponent(component)
+		if url != "" {
+			return url
 		}
 	}
 
