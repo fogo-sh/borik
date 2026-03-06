@@ -212,3 +212,53 @@ func LoopEditCommand(message *discordgo.MessageCreate, args LoopEditArgs) {
 		})
 	})
 }
+
+type FlipFlopArgs struct {
+	Prompt1  string `description:"First prompt to edit the image with."`
+	Prompt2  string `description:"Second prompt to edit the image with."`
+	ImageURL string `default:"" description:"URL of the image to edit."`
+	Steps    uint   `default:"4" description:"Number of edit iterations to perform."`
+}
+
+func (args FlipFlopArgs) GetImageURL() string {
+	return args.ImageURL
+}
+
+func FlipFlop(wand *imagick.MagickWand, args FlipFlopArgs, metadata AISessionMetadata) ([]*imagick.MagickWand, error) {
+	editedFrames := make([]*imagick.MagickWand, 0, args.Steps*2+1)
+
+	editedFrames = append(editedFrames, wand)
+
+	currentWand := wand
+	var err error
+	for range args.Steps {
+		metadata.Seed++ // Increment the seed for each iteration to produce different results
+		currentWand, err = editImage(currentWand, ImageEditArgs{
+			Prompt: args.Prompt1,
+		}, metadata)
+		if err != nil {
+			return nil, err
+		}
+		editedFrames = append(editedFrames, currentWand)
+		currentWand, err = editImage(currentWand, ImageEditArgs{
+			Prompt: args.Prompt2,
+		}, metadata)
+		if err != nil {
+			return nil, err
+		}
+		editedFrames = append(editedFrames, currentWand)
+	}
+
+	return editedFrames, nil
+}
+
+func FlipFlopCommand(message *discordgo.MessageCreate, args FlipFlopArgs) {
+	seed := rand.Int()
+	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args FlipFlopArgs) ([]*imagick.MagickWand, error) {
+		return FlipFlop(wand, args, AISessionMetadata{
+			Seed:      seed,
+			SessionID: message.ID,
+			UserID:    message.Author.ID,
+		})
+	})
+}
