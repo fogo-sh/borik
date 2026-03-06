@@ -99,6 +99,7 @@ func New() (*Bot, error) {
 		_ = parser.NewCommand("aigen", "Generate an image from a prompt.", ImageGen)
 		_ = parser.NewCommand("aiedit", "Edit an image based on a prompt.", ImageEditCommand)
 		_ = parser.NewCommand("ailoopedit", "Repeatedly edit an image based on a prompt.", LoopEditCommand)
+		_ = parser.NewCommand("aiflipflop", "Flip-flop between two images, editing each based on a prompt.", FlipFlopCommand)
 	} else {
 		log.Warn().Msg("OpenAI API key not set; skipping registration of OpenAI commands")
 	}
