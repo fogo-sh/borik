@@ -35,6 +35,8 @@ type Config struct {
 	OpenaiApiKey         string `default:"" split_words:"true"`
 	OpenaiImageGenModel  string `default:"flux-2-klein-4b" split_words:"true"`
 	OpenaiImageEditModel string `default:"flux-2-klein-4b" split_words:"true"`
+
+	NodeRendererUrl string `default:"" split_words:"true"`
 }
 
 var Instance *Config

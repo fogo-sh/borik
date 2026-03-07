@@ -225,6 +225,41 @@ var commands = []Command{
 		slashHandler: MakeAIImageOpSlashCommand(FlipFlop),
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
+	{
+		name:         "sphere",
+		description:  "Map an image onto a rotating sphere.",
+		textHandler:  MakeRendererTextCommand(SphereOp),
+		slashHandler: MakeRendererSlashCommand(SphereOp),
+		enabled:      func(c *configPkg.Config) bool { return c.NodeRendererUrl != "" },
+	},
+	{
+		name:         "insidesphere",
+		description:  "View an image from inside a sphere.",
+		textHandler:  MakeRendererTextCommand(InsideSphereOp),
+		slashHandler: MakeRendererSlashCommand(InsideSphereOp),
+		enabled:      func(c *configPkg.Config) bool { return c.NodeRendererUrl != "" },
+	},
+	{
+		name:         "lowpolysphere",
+		description:  "Map an image onto a low-poly rotating sphere.",
+		textHandler:  MakeRendererTextCommand(LowPolySphereOp),
+		slashHandler: MakeRendererSlashCommand(LowPolySphereOp),
+		enabled:      func(c *configPkg.Config) bool { return c.NodeRendererUrl != "" },
+	},
+	{
+		name:         "pyramid",
+		description:  "Map an image onto a rotating pyramid.",
+		textHandler:  MakeRendererTextCommand(PyramidOp),
+		slashHandler: MakeRendererSlashCommand(PyramidOp),
+		enabled:      func(c *configPkg.Config) bool { return c.NodeRendererUrl != "" },
+	},
+	{
+		name:         "spin",
+		description:  "Spin an image 360 degrees in 3D space.",
+		textHandler:  MakeRendererTextCommand(Spin360Op),
+		slashHandler: MakeRendererSlashCommand(Spin360Op),
+		enabled:      func(c *configPkg.Config) bool { return c.NodeRendererUrl != "" },
+	},
 }
 
 // New constructs a new instance of Borik.

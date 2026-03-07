@@ -1,0 +1,24 @@
+{
+  "name": "borik-node-renderer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "express": "^5.0.0",
+    "p5": "^1.11.0",
+    "puppeteer": "^24.38.0",
+    "sharp": "^0.33.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/p5": "^1.7.7",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0"
+  }
+}
