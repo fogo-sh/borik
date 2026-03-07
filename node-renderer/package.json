@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "express": "^5.0.0",
-    "gl": "^6.0.2",
     "p5": "^1.11.0",
+    "puppeteer": "^24.38.0",
     "sharp": "^0.33.0"
   },
   "devDependencies": {
