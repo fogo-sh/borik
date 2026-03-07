@@ -17,7 +17,7 @@ func generateCommandList() string {
 	commandCodeBlock.WriteString("```")
 
 	for _, details := range Instance.textParser.GetCommands() {
-		commandCodeBlock.WriteString(fmt.Sprintf("%s%s: %s\n", Instance.config.Prefix, details.Name, details.Description))
+		commandCodeBlock.WriteString(fmt.Sprintf("%s%s: %s\n", Instance.config.Prefixes[0], details.Name, details.Description))
 	}
 
 	return commandCodeBlock.String() + "```"
@@ -29,7 +29,7 @@ func generateCommandHelp(command string) (*discordgo.MessageEmbed, error) {
 		return nil, fmt.Errorf("error getting command details: %w", err)
 	}
 	embed := &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("%s%s", Instance.config.Prefix, command),
+		Title:       fmt.Sprintf("%s%s", Instance.config.Prefixes[0], command),
 		Description: commandDetails.Description,
 		Fields:      []*discordgo.MessageEmbedField{},
 		Color:       (206 << 16) + (147 << 8) + 216,

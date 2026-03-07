@@ -23,8 +23,8 @@ github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/
 github.com/mattn/go-isatty v0.0.19/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
-github.com/nint8835/parsley v1.2.0 h1:55d9NBchEATdgzohYfL5yo5+eGG8TB+gSuihNV475mw=
-github.com/nint8835/parsley v1.2.0/go.mod h1:33ZXbFaqezukR59fEB3pBxh9gqnOIiZp8+AVrmPStmo=
+github.com/nint8835/parsley v1.3.0 h1:SY/GLOk9lf/gfsIY0VTBbbde8jyXV3RRcbJ7YNLDG3I=
+github.com/nint8835/parsley v1.3.0/go.mod h1:33ZXbFaqezukR59fEB3pBxh9gqnOIiZp8+AVrmPStmo=
 github.com/openai/openai-go/v3 v3.22.0 h1:6MEoNoV8sbjOVmXdvhmuX3BjVbVdcExbVyGixiyJ8ys=
 github.com/openai/openai-go/v3 v3.22.0/go.mod h1:cdufnVK14cWcT9qA1rRtrXx4FTRsgbDPW7Ia7SS5cZo=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
