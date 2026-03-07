@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
@@ -12,13 +13,14 @@ type HelpArgs struct {
 }
 
 func generateCommandList() string {
-	commandCodeBlock := "```"
+	var commandCodeBlock strings.Builder
+	commandCodeBlock.WriteString("```")
 
 	for _, details := range Instance.textParser.GetCommands() {
-		commandCodeBlock += fmt.Sprintf("%s%s: %s\n", Instance.config.Prefix, details.Name, details.Description)
+		commandCodeBlock.WriteString(fmt.Sprintf("%s%s: %s\n", Instance.config.Prefix, details.Name, details.Description))
 	}
 
-	return commandCodeBlock + "```"
+	return commandCodeBlock.String() + "```"
 }
 
 func generateCommandHelp(command string) (*discordgo.MessageEmbed, error) {

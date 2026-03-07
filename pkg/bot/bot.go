@@ -52,8 +52,8 @@ type Command struct {
 	aliases      []string
 	slashAliases []string
 	description  string
-	textHandler  interface{}
-	slashHandler interface{}
+	textHandler  any
+	slashHandler any
 	enabled      func(*configPkg.Config) bool
 }
 

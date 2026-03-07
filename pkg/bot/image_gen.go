@@ -221,14 +221,14 @@ func FlipFlop(wand *imagick.MagickWand, args FlipFlopArgs) ([]*imagick.MagickWan
 		metadata.Seed++ // Increment the seed for each iteration to produce different results
 		currentWand, err = editImage(currentWand, ImageEditArgs{
 			Prompt: args.Prompt1,
-		}, metadata)
+		}, metadata.Seed)
 		if err != nil {
 			return nil, err
 		}
 		editedFrames = append(editedFrames, currentWand)
 		currentWand, err = editImage(currentWand, ImageEditArgs{
 			Prompt: args.Prompt2,
-		}, metadata)
+		}, metadata.Seed)
 		if err != nil {
 			return nil, err
 		}
