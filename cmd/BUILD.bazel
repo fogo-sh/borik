@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cmd",
+    srcs = [
+        "root.go",
+        "run.go",
+    ],
+    importpath = "github.com/fogo-sh/borik/cmd",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/bot",
+        "//pkg/config",
+        "@com_github_rs_zerolog//log",
+        "@com_github_spf13_cobra//:cobra",
+    ],
+)

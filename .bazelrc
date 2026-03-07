@@ -1,0 +1,2 @@
+# macOS: allow -Xpreprocessor in CGO CFLAGS (matches mise.toml / flake.nix)
+build --action_env=CGO_CFLAGS_ALLOW=-Xpreprocessor

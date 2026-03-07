@@ -1,0 +1,10 @@
+# This package groups the BUILD files used as build_file for http_archive rules.
+# The actual rules live in the *.BUILD files at this level.
+
+# Alias so external repos (e.g. imagick Go module patch) can reference imagemagick
+# via the stable canonical label @@//third_party:imagemagick.
+alias(
+    name = "imagemagick",
+    actual = "@imagemagick_src//:imagemagick",
+    visibility = ["//visibility:public"],
+)
