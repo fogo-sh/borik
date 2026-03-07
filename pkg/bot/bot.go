@@ -207,22 +207,22 @@ var commands = []Command{
 	{
 		name:         "aiedit",
 		description:  "Edit an image based on a prompt.",
-		textHandler:  MakeImageOpTextCommand(ImageEdit),
-		slashHandler: MakeImageOpSlashCommand(ImageEdit),
+		textHandler:  MakeAIImageOpTextCommand(ImageEdit),
+		slashHandler: MakeAIImageOpSlashCommand(ImageEdit),
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
 		name:         "ailoopedit",
 		description:  "Repeatedly edit an image based on a prompt.",
-		textHandler:  MakeImageOpTextCommand(LoopEdit),
-		slashHandler: MakeImageOpSlashCommand(LoopEdit),
+		textHandler:  MakeAIImageOpTextCommand(LoopEdit),
+		slashHandler: MakeAIImageOpSlashCommand(LoopEdit),
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
 		name:         "aiflipflop",
 		description:  "Flip-flop between two images, editing each based on a prompt.",
-		textHandler:  MakeImageOpTextCommand(FlipFlop),
-		slashHandler: MakeImageOpSlashCommand(FlipFlop),
+		textHandler:  MakeAIImageOpTextCommand(FlipFlop),
+		slashHandler: MakeAIImageOpSlashCommand(FlipFlop),
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 }
