@@ -166,6 +166,7 @@ export async function renderAnimation(req: RenderRequest): Promise<RenderResult>
               p.setup = () => {
                 p.createCanvas(size, size, p.WEBGL);
                 p.pixelDensity(1);
+                p.noStroke();
                 p.noLoop();
                 sketch = p;
               };
