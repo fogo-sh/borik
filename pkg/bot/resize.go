@@ -7,10 +7,10 @@ import (
 )
 
 type ResizeArgs struct {
-	ImageURL string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
-	Mode     string  `default:"percent" description:"Mode of resizing to do. Controls how the width and height arguments are handled. Must be percent or absolute."`
-	Width    float64 `description:"Target width. In absolute mode this should be the target width in pixels. For percent mode, this should be a percentage represented as a whole number (for example, 150 == 150%)"`
-	Height   float64 `description:"Target height. In absolute mode this should be the target height in pixels. For percent mode, this should be a percentage represented as a whole number (for example, 150 == 150%)"`
+	Width    float64 `description:"Width in pixels (absolute) or percent (e.g. 150 = 150%)."`
+	Height   float64 `description:"Height in pixels (absolute) or percent (e.g. 150 = 150%)."`
+	ImageURL string  `default:"" description:"Image URL to process. Leave blank to auto-find."`
+	Mode     string  `default:"percent" description:"Resize mode (percent/absolute) for width/height values."`
 }
 
 func (args ResizeArgs) GetImageURL() string {

@@ -11,6 +11,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/openai/openai-go/v3"
+	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v3/imagick"
 
 	"github.com/fogo-sh/borik/pkg/config"
@@ -37,8 +38,13 @@ type ImageGenArgs struct {
 	Prompt string `description:"Prompt to generate an image for."`
 }
 
-func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
-	defer TypingIndicator(message)()
+func generateImage(ctx *OperationContext, args ImageGenArgs) {
+	defer TypingIndicatorForContext(ctx)()
+
+	if err := ctx.DeferResponse(); err != nil {
+		log.Error().Err(err).Msg("Failed to defer response")
+		return
+	}
 
 	seed := rand.Int()
 	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, seed)
@@ -50,40 +56,39 @@ func ImageGen(message *discordgo.MessageCreate, args ImageGenArgs) {
 		Model:          config.Instance.OpenaiImageGenModel,
 		ResponseFormat: openai.ImageGenerateParamsResponseFormatB64JSON,
 	}
-	attachSessionMetadata(
-		&params,
-		AISessionMetadata{
-			SessionID: message.ID,
-			UserID:    message.Author.ID,
-		},
-	)
+	attachSessionMetadata(&params, AISessionMetadata{
+		SessionID: ctx.GetSourceID(),
+		UserID:    ctx.GetUserID(),
+	})
 
 	image, err := Instance.openAiClient.Images.Generate(
 		context.TODO(),
 		params,
 	)
 	if err != nil {
-		Instance.session.ChannelMessageSendReply(
-			message.ChannelID,
-			"Error generating image: `"+err.Error()+"`",
-			message.Reference(),
-		)
+		if sendErr := ctx.SendText("Error generating image: `" + err.Error() + "`"); sendErr != nil {
+			log.Error().Err(sendErr).Msg("Failed to send error response")
+		}
 		return
 	}
 
-	Instance.session.ChannelMessageSendComplex(
-		message.ChannelID,
-		&discordgo.MessageSend{
-			Reference: message.Reference(),
-			Files: []*discordgo.File{
-				{
-					Name:        "generated.png",
-					ContentType: "image/png",
-					Reader:      base64.NewDecoder(base64.StdEncoding, strings.NewReader(image.Data[0].B64JSON)),
-				},
-			},
-		},
-	)
+	file := &discordgo.File{
+		Name:        "generated.png",
+		ContentType: "image/png",
+		Reader:      base64.NewDecoder(base64.StdEncoding, strings.NewReader(image.Data[0].B64JSON)),
+	}
+
+	if err := ctx.SendFiles([]*discordgo.File{file}); err != nil {
+		log.Error().Err(err).Msg("Failed to send generated image")
+	}
+}
+
+func ImageGenTextCommand(message *discordgo.MessageCreate, args ImageGenArgs) {
+	generateImage(NewOperationContextFromMessage(Instance.session, message), args)
+}
+
+func ImageGenSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, args ImageGenArgs) {
+	generateImage(NewOperationContextFromInteraction(session, interaction), args)
 }
 
 func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionMetadata) (*imagick.MagickWand, error) {
@@ -191,28 +196,6 @@ func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, metadata AISessionMet
 	return editedFrames, nil
 }
 
-func ImageEditCommand(message *discordgo.MessageCreate, args ImageEditArgs) {
-	seed := rand.Int()
-	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args ImageEditArgs) ([]*imagick.MagickWand, error) {
-		return ImageEdit(wand, args, AISessionMetadata{
-			Seed:      seed,
-			SessionID: message.ID,
-			UserID:    message.Author.ID,
-		})
-	})
-}
-
-func LoopEditCommand(message *discordgo.MessageCreate, args LoopEditArgs) {
-	seed := rand.Int()
-	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args LoopEditArgs) ([]*imagick.MagickWand, error) {
-		return LoopEdit(wand, args, AISessionMetadata{
-			Seed:      seed,
-			SessionID: message.ID,
-			UserID:    message.Author.ID,
-		})
-	})
-}
-
 type FlipFlopArgs struct {
 	Prompt1  string `description:"First prompt to edit the image with."`
 	Prompt2  string `description:"Second prompt to edit the image with."`
@@ -250,15 +233,4 @@ func FlipFlop(wand *imagick.MagickWand, args FlipFlopArgs, metadata AISessionMet
 	}
 
 	return editedFrames, nil
-}
-
-func FlipFlopCommand(message *discordgo.MessageCreate, args FlipFlopArgs) {
-	seed := rand.Int()
-	PrepareAndInvokeOperation(message, args, func(wand *imagick.MagickWand, args FlipFlopArgs) ([]*imagick.MagickWand, error) {
-		return FlipFlop(wand, args, AISessionMetadata{
-			Seed:      seed,
-			SessionID: message.ID,
-			UserID:    message.Author.ID,
-		})
-	})
 }
