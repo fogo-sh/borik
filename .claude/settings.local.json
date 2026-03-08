@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bazelisk build:*)",
+      "Bash(bazelisk clean:*)"
+    ]
+  }
+}
