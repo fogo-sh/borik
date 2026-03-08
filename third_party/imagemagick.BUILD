@@ -8,16 +8,6 @@ filegroup(
 
 configure_make(
     name = "imagemagick",
-    lib_source = ":all",
-    deps = [
-        "@zlib_src//:zlib",
-        "@libjpeg_turbo_src//:libjpeg_turbo",
-        "@libpng_src//:libpng",
-        "@giflib_src//:giflib",
-        "@libwebp_src//:libwebp",
-        "@freetype_src//:freetype",
-        "@liblqr_src//:liblqr",
-    ],
     configure_options = [
         "--enable-static",
         "--disable-shared",
@@ -68,10 +58,20 @@ configure_make(
         "LQR_CFLAGS": "-I$$EXT_BUILD_DEPS$$/include/lqr-1",
         "LQR_LIBS": "-L$$EXT_BUILD_DEPS$$/lib -llqr-1",
     },
+    lib_source = ":all",
     out_include_dir = "include/ImageMagick-7",
     out_static_libs = [
         "libMagickWand-7.Q16HDRI.a",
         "libMagickCore-7.Q16HDRI.a",
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "@freetype",
+        "@giflib",
+        "@libjpeg_turbo",
+        "@liblqr_src//:liblqr",
+        "@libpng",
+        "@libwebp",
+        "@zlib",
+    ],
 )
