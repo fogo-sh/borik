@@ -8,8 +8,6 @@ filegroup(
 
 cmake(
     name = "libwebp",
-    lib_source = ":all",
-    out_static_libs = ["libwebp.a", "libsharpyuv.a", "libwebpmux.a", "libwebpdemux.a"],
     cache_entries = {
         "BUILD_SHARED_LIBS": "OFF",
         "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
@@ -23,5 +21,12 @@ cmake(
         "WEBP_BUILD_WEBPINFO": "OFF",
         "WEBP_BUILD_WEBPMUX": "ON",
     },
+    lib_source = ":all",
+    out_static_libs = [
+        "libwebp.a",
+        "libsharpyuv.a",
+        "libwebpmux.a",
+        "libwebpdemux.a",
+    ],
     visibility = ["//visibility:public"],
 )
