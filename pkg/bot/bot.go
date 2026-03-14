@@ -192,6 +192,12 @@ var commands = []Command{
 		slashHandler: MakeImageOpSlashCommand(PresidentsFrame),
 	},
 	{
+		name:         "heritage",
+		description:  "Turn an image into a Canadian Heritage Minute.",
+		textHandler:  MakeImageOpTextCommand(Heritage),
+		slashHandler: MakeImageOpSlashCommand(Heritage),
+	},
+	{
 		name:         "meme",
 		description:  "Add meme text to an image.",
 		textHandler:  MakeImageOpTextCommand(Meme),

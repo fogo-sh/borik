@@ -481,6 +481,29 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](ctx *OperationContext, args
 	}
 }
 
+// FindTransparentOpeningRect finds the bounding rectangle of the transparent region in an image
+func FindTransparentOpeningRect(frame *imagick.MagickWand) (x, y, width, height int, err error) {
+	analysis := frame.Clone()
+	defer analysis.Destroy()
+
+	if err := analysis.SetImageAlphaChannel(imagick.ALPHA_CHANNEL_EXTRACT); err != nil {
+		return 0, 0, 0, 0, fmt.Errorf("error extracting alpha channel: %w", err)
+	}
+	if err := analysis.NegateImage(false); err != nil {
+		return 0, 0, 0, 0, fmt.Errorf("error negating alpha mask: %w", err)
+	}
+	if err := analysis.TrimImage(0); err != nil {
+		return 0, 0, 0, 0, fmt.Errorf("error trimming: %w", err)
+	}
+
+	_, _, ox, oy, err := analysis.GetImagePage()
+	if err != nil {
+		return 0, 0, 0, 0, fmt.Errorf("error getting trimmed region geometry: %w", err)
+	}
+
+	return ox, oy, int(analysis.GetImageWidth()), int(analysis.GetImageHeight()), nil
+}
+
 // ResizeMaintainAspectRatio resizes an input wand to fit within a box of given width and height, maintaining aspect ratio
 func ResizeMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint) error {
 	inputHeight := float64(wand.GetImageHeight())
