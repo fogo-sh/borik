@@ -481,6 +481,29 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](ctx *OperationContext, args
 	}
 }
 
+// FindTransparentOpeningRect finds the bounding rectangle of the transparent region in an image
+func FindTransparentOpeningRect(frame *imagick.MagickWand) (x, y, width, height int, err error) {
+	analysis := frame.Clone()
+	defer analysis.Destroy()
+
+	if err := analysis.SetImageAlphaChannel(imagick.ALPHA_CHANNEL_EXTRACT); err != nil {
+		return 0, 0, 0, 0, fmt.Errorf("error extracting alpha channel: %w", err)
+	}
+	if err := analysis.NegateImage(false); err != nil {
+		return 0, 0, 0, 0, fmt.Errorf("error negating alpha mask: %w", err)
+	}
+	if err := analysis.TrimImage(0); err != nil {
+		return 0, 0, 0, 0, fmt.Errorf("error trimming: %w", err)
+	}
+
+	_, _, ox, oy, err := analysis.GetImagePage()
+	if err != nil {
+		return 0, 0, 0, 0, fmt.Errorf("error getting trimmed region geometry: %w", err)
+	}
+
+	return ox, oy, int(analysis.GetImageWidth()), int(analysis.GetImageHeight()), nil
+}
+
 // ResizeMaintainAspectRatio resizes an input wand to fit within a box of given width and height, maintaining aspect ratio
 func ResizeMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint) error {
 	inputHeight := float64(wand.GetImageHeight())
@@ -519,11 +542,103 @@ type OverlayOptions struct {
 	RightToLeft bool
 }
 
-type FixedOverlayOptions struct {
-	X      int
-	Y      int
-	Width  int
-	Height int
+// FrameArgs are the arguments for frame commands.
+type FrameArgs struct {
+	ImageURL string `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
+}
+
+func (args FrameArgs) GetImageURL() string {
+	return args.ImageURL
+}
+
+// FitMode controls how the input image is resized to fill the frame opening.
+type FitMode int
+
+const (
+	// FitModeFit resizes to fit within the opening, maintaining aspect ratio.
+	FitModeFit FitMode = iota
+	// FitModeStretch stretches the image to exactly fill the opening, ignoring aspect ratio.
+	FitModeStretch
+	// FitModeFitHeight resizes so the height matches the opening, maintaining aspect ratio.
+	// The width may exceed the opening width and will be clipped.
+	FitModeFitHeight
+)
+
+// PositionMode controls where the input image is placed within the frame opening.
+type PositionMode int
+
+const (
+	// PositionModeCentered centers the image within the opening.
+	PositionModeCentered PositionMode = iota
+	// PositionModeTopLeft places the image in the top-left corner of the opening.
+	PositionModeTopLeft
+)
+
+// FrameOptions controls the behaviour of a frame command.
+type FrameOptions struct {
+	FitMode      FitMode
+	PositionMode PositionMode
+}
+
+// FrameImage places wand into the given opening of a frame, resizing according to options,
+// centering on a white background, and compositing behind the frame.
+func FrameImage(wand *imagick.MagickWand, frame *imagick.MagickWand, openX, openY, openW, openH int, options FrameOptions) ([]*imagick.MagickWand, error) {
+	switch options.FitMode {
+	case FitModeStretch:
+		if err := wand.ResizeImage(uint(openW), uint(openH), imagick.FILTER_LANCZOS); err != nil {
+			return nil, fmt.Errorf("error resizing image: %w", err)
+		}
+	case FitModeFit:
+		if err := ResizeMaintainAspectRatio(wand, uint(openW), uint(openH)); err != nil {
+			return nil, fmt.Errorf("error resizing image: %w", err)
+		}
+	case FitModeFitHeight:
+		scale := float64(openH) / float64(wand.GetImageHeight())
+		newW := uint(float64(wand.GetImageWidth()) * scale)
+		if err := wand.ResizeImage(newW, uint(openH), imagick.FILTER_LANCZOS); err != nil {
+			return nil, fmt.Errorf("error resizing image: %w", err)
+		}
+	}
+
+	bg := imagick.NewMagickWand()
+	bgColor := imagick.NewPixelWand()
+	bgColor.SetColor("white")
+	if err := bg.NewImage(uint(openW), uint(openH), bgColor); err != nil {
+		return nil, fmt.Errorf("error creating background: %w", err)
+	}
+
+	x, y := 0, 0
+	if options.PositionMode == PositionModeCentered {
+		x = (openW - int(wand.GetImageWidth())) / 2
+		y = (openH - int(wand.GetImageHeight())) / 2
+	}
+	if err := bg.CompositeImage(wand, imagick.COMPOSITE_OP_OVER, true, x, y); err != nil {
+		return nil, fmt.Errorf("error compositing image onto background: %w", err)
+	}
+
+	if err := frame.CompositeImage(bg, imagick.COMPOSITE_OP_DST_OVER, true, openX, openY); err != nil {
+		return nil, fmt.Errorf("error compositing background onto frame: %w", err)
+	}
+
+	return []*imagick.MagickWand{frame}, nil
+}
+
+// MakeImageFrameOp creates an ImageOperation that places the input image into the transparent
+// opening of a frame image, auto-detecting the opening position and size.
+func MakeImageFrameOp(frameBytes []byte, options FrameOptions) ImageOperation[FrameArgs] {
+	return func(wand *imagick.MagickWand, args FrameArgs) ([]*imagick.MagickWand, error) {
+		frame := imagick.NewMagickWand()
+		if err := frame.ReadImageBlob(frameBytes); err != nil {
+			return nil, fmt.Errorf("error reading frame: %w", err)
+		}
+
+		openX, openY, openW, openH, err := FindTransparentOpeningRect(frame)
+		if err != nil {
+			return nil, fmt.Errorf("error finding frame opening: %w", err)
+		}
+
+		return FrameImage(wand, frame, openX, openY, openW, openH, options)
+	}
 }
 
 // OverlayImage overlays an image onto another image
@@ -610,37 +725,3 @@ func MakeImageOverlayOp(overlayImage []byte, initialOptions OverlayOptions) Imag
 	}
 }
 
-func OverlayImageFixed(wand *imagick.MagickWand, overlay []byte, options FixedOverlayOptions) error {
-	overlayWand := imagick.NewMagickWand()
-	err := overlayWand.ReadImageBlob(overlay)
-	if err != nil {
-		return fmt.Errorf("error reading overlay: %w", err)
-	}
-
-	err = wand.ResizeImage(uint(options.Width), uint(options.Height), imagick.FILTER_LANCZOS)
-	if err != nil {
-		return fmt.Errorf("error resizing input: %w", err)
-	}
-
-	err = overlayWand.CompositeImage(wand, imagick.COMPOSITE_OP_DST_OVER, true, options.X, options.Y)
-	if err != nil {
-		return fmt.Errorf("error compositing: %w", err)
-	}
-
-	wand.Clear()
-	wand.AddImage(overlayWand)
-
-	return nil
-}
-
-func MakeImageFixedOverlayOp(overlayImage []byte, options FixedOverlayOptions) ImageOperation[OverlayImageArgs] {
-	return func(wand *imagick.MagickWand, args OverlayImageArgs) ([]*imagick.MagickWand, error) {
-		err := OverlayImageFixed(
-			wand,
-			overlayImage,
-			options,
-		)
-
-		return []*imagick.MagickWand{wand}, err
-	}
-}

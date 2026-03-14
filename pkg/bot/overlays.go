@@ -4,35 +4,32 @@ import (
 	_ "embed"
 )
 
-//go:embed overlay_images/jack_pog.png
+//go:embed images/overlays/jack_pog.png
 var jackPogImage []byte
 
-//go:embed overlay_images/keenan_thumb.png
+//go:embed images/overlays/keenan_thumb.png
 var keenanThumbImage []byte
 
-//go:embed overlay_images/mitch_point.png
+//go:embed images/overlays/mitch_point.png
 var mitchPointImage []byte
 
-//go:embed overlay_images/side_keenan.png
+//go:embed images/overlays/side_keenan.png
 var sideKeenanImage []byte
 
-//go:embed overlay_images/steve_point.png
+//go:embed images/overlays/steve_point.png
 var stevePointImage []byte
 
-//go:embed overlay_images/andrew_pog.png
+//go:embed images/overlays/andrew_pog.png
 var andrewPogImage []byte
 
-//go:embed overlay_images/trans_matlab_kid.png
+//go:embed images/overlays/trans_matlab_kid.png
 var matlabKidImage []byte
 
-//go:embed overlay_images/natalie_climb.png
+//go:embed images/overlays/natalie_climb.png
 var natalieClimbImage []byte
 
-//go:embed overlay_images/denny_standing.png
+//go:embed images/overlays/denny_standing.png
 var dennyStandingImage []byte
-
-//go:embed overlay_images/shinji_throw.png
-var shinjiThrowImage []byte
 
 func makeOverlayCommand(name, description string, op ImageOperation[OverlayImageArgs]) Command {
 	return Command{
@@ -85,12 +82,6 @@ func generateOverlayCommands() []Command {
 		makeOverlayCommand("dennystanding", "Have Denny standing in an image.", MakeImageOverlayOp(dennyStandingImage, OverlayOptions{
 			OverlayWidthFactor:  0.4,
 			OverlayHeightFactor: 0.6,
-		})),
-		makeOverlayCommand("shinji", "Have Shinji throw at an image.", MakeImageFixedOverlayOp(shinjiThrowImage, FixedOverlayOptions{
-			X:      925,
-			Y:      147,
-			Width:  431,
-			Height: 377,
 		})),
 	}
 }

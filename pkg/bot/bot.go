@@ -186,12 +186,6 @@ var commands = []Command{
 		slashHandler: MakeImageOpSlashCommand(Modulate),
 	},
 	{
-		name:         "presidentsframe",
-		description:  "Apply the President's Frame to an image",
-		textHandler:  MakeImageOpTextCommand(PresidentsFrame),
-		slashHandler: MakeImageOpSlashCommand(PresidentsFrame),
-	},
-	{
 		name:         "meme",
 		description:  "Add meme text to an image.",
 		textHandler:  MakeImageOpTextCommand(Meme),
@@ -287,6 +281,7 @@ func New() (*Bot, error) {
 	allCommands := slices.Concat(
 		commands,
 		generateGraphicsFormatCommands(),
+		generateFrameCommands(),
 		generateOverlayCommands(),
 	)
 
