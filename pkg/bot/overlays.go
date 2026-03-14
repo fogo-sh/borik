@@ -31,9 +31,6 @@ var natalieClimbImage []byte
 //go:embed overlay_images/denny_standing.png
 var dennyStandingImage []byte
 
-//go:embed overlay_images/shinji_throw.png
-var shinjiThrowImage []byte
-
 func makeOverlayCommand(name, description string, op ImageOperation[OverlayImageArgs]) Command {
 	return Command{
 		name:         name,
@@ -85,12 +82,6 @@ func generateOverlayCommands() []Command {
 		makeOverlayCommand("dennystanding", "Have Denny standing in an image.", MakeImageOverlayOp(dennyStandingImage, OverlayOptions{
 			OverlayWidthFactor:  0.4,
 			OverlayHeightFactor: 0.6,
-		})),
-		makeOverlayCommand("shinji", "Have Shinji throw at an image.", MakeImageFixedOverlayOp(shinjiThrowImage, FixedOverlayOptions{
-			X:      925,
-			Y:      147,
-			Width:  431,
-			Height: 377,
 		})),
 	}
 }
