@@ -564,9 +564,20 @@ const (
 	FitModeFitHeight
 )
 
+// PositionMode controls where the input image is placed within the frame opening.
+type PositionMode int
+
+const (
+	// PositionModeCentered centers the image within the opening.
+	PositionModeCentered PositionMode = iota
+	// PositionModeTopLeft places the image in the top-left corner of the opening.
+	PositionModeTopLeft
+)
+
 // FrameOptions controls the behaviour of a frame command.
 type FrameOptions struct {
-	FitMode FitMode
+	FitMode      FitMode
+	PositionMode PositionMode
 }
 
 // FrameImage places wand into the given opening of a frame, resizing according to options,
@@ -596,8 +607,11 @@ func FrameImage(wand *imagick.MagickWand, frame *imagick.MagickWand, openX, open
 		return nil, fmt.Errorf("error creating background: %w", err)
 	}
 
-	x := (openW - int(wand.GetImageWidth())) / 2
-	y := (openH - int(wand.GetImageHeight())) / 2
+	x, y := 0, 0
+	if options.PositionMode == PositionModeCentered {
+		x = (openW - int(wand.GetImageWidth())) / 2
+		y = (openH - int(wand.GetImageHeight())) / 2
+	}
 	if err := bg.CompositeImage(wand, imagick.COMPOSITE_OP_OVER, true, x, y); err != nil {
 		return nil, fmt.Errorf("error compositing image onto background: %w", err)
 	}
