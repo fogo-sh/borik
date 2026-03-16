@@ -312,6 +312,26 @@ func AiZoom(wand *imagick.MagickWand, args AiZoomArgs, metadata AISessionMetadat
 		return nil, fmt.Errorf("error negating mask for zoom: %w", err)
 	}
 
+	black := imagick.NewPixelWand()
+	black.SetColor("black")
+
+	// Fill the transparent area with black to create a proper mask
+	err = mask.SetImageBackgroundColor(black)
+	if err != nil {
+		return nil, fmt.Errorf("error setting mask background color for zoom: %w", err)
+	}
+	mask = mask.MergeImageLayers(imagick.IMAGE_LAYER_FLATTEN)
+
+	// Fill the transparent area of the canvas with grey to aid in editing
+	grey := imagick.NewPixelWand()
+	grey.SetColor("#7f7f7f")
+
+	err = canvas.SetImageBackgroundColor(grey)
+	if err != nil {
+		return nil, fmt.Errorf("error setting canvas background color for zoom: %w", err)
+	}
+	canvas = canvas.MergeImageLayers(imagick.IMAGE_LAYER_FLATTEN)
+
 	editedImage, err := editImage(canvas, ImageEditArgs{
 		Prompt: args.Prompt,
 	}, metadata, mask)
