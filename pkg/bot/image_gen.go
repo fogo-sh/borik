@@ -324,7 +324,7 @@ func AiZoom(wand *imagick.MagickWand, args AiZoomArgs, metadata AISessionMetadat
 
 	// Fill the transparent area of the canvas with grey to aid in editing
 	grey := imagick.NewPixelWand()
-	grey.SetColor("#7f7f7f")
+	grey.SetColor("#00ff00")
 
 	err = canvas.SetImageBackgroundColor(grey)
 	if err != nil {
@@ -332,8 +332,10 @@ func AiZoom(wand *imagick.MagickWand, args AiZoomArgs, metadata AISessionMetadat
 	}
 	canvas = canvas.MergeImageLayers(imagick.IMAGE_LAYER_FLATTEN)
 
+	prompt := args.Prompt + " <lora:flux-outpaint-lora:1>"
+
 	editedImage, err := editImage(canvas, ImageEditArgs{
-		Prompt: args.Prompt,
+		Prompt: prompt,
 	}, metadata, mask)
 	if err != nil {
 		return nil, err
