@@ -17,6 +17,8 @@ import (
 	"github.com/fogo-sh/borik/pkg/config"
 )
 
+var AI_EDIT_MAX_DIMENSION uint = 896
+
 type AISessionMetadata struct {
 	Seed      int
 	SessionID string
@@ -105,7 +107,7 @@ func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionM
 
 	var maskReader io.Reader
 	if mask != nil {
-		err = ShrinkMaintainAspectRatio(mask, 896, 896)
+		err = ShrinkMaintainAspectRatio(mask, AI_EDIT_MAX_DIMENSION, AI_EDIT_MAX_DIMENSION)
 		if err != nil {
 			return nil, fmt.Errorf("error resizing mask: %w", err)
 		}
@@ -253,6 +255,7 @@ func FlipFlop(wand *imagick.MagickWand, args FlipFlopArgs, metadata AISessionMet
 type AiZoomArgs struct {
 	ImageURL string `default:"" description:"URL of the image to edit."`
 	Prompt   string `default:"Expand the image outwards." description:"Prompt to edit the image with."`
+	Amount   uint   `default:"20" description:"Amount to zoom out, in percent."`
 }
 
 func (args AiZoomArgs) GetImageURL() string {
@@ -263,19 +266,24 @@ func AiZoom(wand *imagick.MagickWand, args AiZoomArgs, metadata AISessionMetadat
 	originalWidth := wand.GetImageWidth()
 	originalHeight := wand.GetImageHeight()
 
-	// Resize the image to be smaller, then let the model edit it back to the original size, which should have a zoom effect
-	err := ShrinkMaintainAspectRatio(wand, uint(float64(wand.GetImageWidth())*0.8), uint(float64(wand.GetImageHeight())*0.8))
-	if err != nil {
-		return nil, fmt.Errorf("error resizing image for zoom: %w", err)
+	sizeMultiplier := 1 - float64(args.Amount)/100.0
+
+	var err error
+
+	// If the image can be used as-is without the target canvas exceeding the max size for resizing, do so to not lose quality
+	// Otherwise, shrink it
+	if originalWidth < uint(float64(AI_EDIT_MAX_DIMENSION)*sizeMultiplier) && originalHeight < uint(float64(AI_EDIT_MAX_DIMENSION)*sizeMultiplier) {
+		originalWidth = uint(float64(originalWidth) / sizeMultiplier)
+		originalHeight = uint(float64(originalHeight) / sizeMultiplier)
+	} else {
+		err = ShrinkMaintainAspectRatio(wand, uint(float64(wand.GetImageWidth())*sizeMultiplier), uint(float64(wand.GetImageHeight())*sizeMultiplier))
+		if err != nil {
+			return nil, fmt.Errorf("error resizing image for zoom: %w", err)
+		}
 	}
 
 	// Place the shrunk image in the center of a transparent canvas of the original size
 	canvas := imagick.NewMagickWand()
-
-	err = canvas.SetBackgroundColor(imagick.NewPixelWand()) // Transparent background
-	if err != nil {
-		return nil, fmt.Errorf("error setting canvas background color for zoom: %w", err)
-	}
 
 	err = canvas.SetFormat("png")
 	if err != nil {
