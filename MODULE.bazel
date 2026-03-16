@@ -69,4 +69,4 @@ go_deps.gazelle_override(
 )
 
 # All Go deps populated by `bazel mod tidy`
-use_repo(go_deps, "com_github_bwmarrin_discordgo", "com_github_joho_godotenv", "com_github_kelseyhightower_envconfig", "com_github_nint8835_parsley", "com_github_openai_openai_go_v3", "com_github_rs_zerolog", "com_github_spf13_cobra", "in_gopkg_gographics_imagick_v3")
+use_repo(go_deps, "com_github_bwmarrin_discordgo", "com_github_joho_godotenv", "com_github_kelseyhightower_envconfig", "com_github_nint8835_parsley", "com_github_openai_openai_go_v3", "com_github_rs_zerolog", "com_github_spf13_cobra", "in_gopkg_gographics_imagick_v3", "so_nit_pkg_switchboard")
