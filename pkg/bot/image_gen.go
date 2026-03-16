@@ -17,6 +17,8 @@ import (
 	"github.com/fogo-sh/borik/pkg/config"
 )
 
+var AI_EDIT_MAX_DIMENSION uint = 896
+
 type AISessionMetadata struct {
 	Seed      int
 	SessionID string
@@ -91,7 +93,7 @@ func ImageGenSlashCommand(session *discordgo.Session, interaction *discordgo.Int
 	generateImage(NewOperationContextFromInteraction(session, interaction), args)
 }
 
-func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionMetadata) (*imagick.MagickWand, error) {
+func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionMetadata, mask *imagick.MagickWand) (*imagick.MagickWand, error) {
 	err := ShrinkMaintainAspectRatio(wand, 896, 896)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
@@ -103,6 +105,20 @@ func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionM
 	}
 	imageReader := bytes.NewReader(imageBlob)
 
+	var maskReader io.Reader
+	if mask != nil {
+		err = ShrinkMaintainAspectRatio(mask, AI_EDIT_MAX_DIMENSION, AI_EDIT_MAX_DIMENSION)
+		if err != nil {
+			return nil, fmt.Errorf("error resizing mask: %w", err)
+		}
+
+		maskBlob, err := mask.GetImageBlob()
+		if err != nil {
+			return nil, fmt.Errorf("error getting mask blob: %w", err)
+		}
+		maskReader = bytes.NewReader(maskBlob)
+	}
+
 	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, metadata.Seed)
 	finalPrompt := args.Prompt + stableDiffusionOpts
 
@@ -110,6 +126,7 @@ func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionM
 		Image: openai.ImageEditParamsImageUnion{
 			OfFileArray: []io.Reader{imageReader},
 		},
+		Mask:   maskReader,
 		Prompt: finalPrompt,
 		Model:  config.Instance.OpenaiImageEditModel,
 		// OpenAI's models require one of a few specific sizes, but stable-diffusion.cpp is more flexible
@@ -159,7 +176,7 @@ func (args ImageEditArgs) GetImageURL() string {
 }
 
 func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionMetadata) ([]*imagick.MagickWand, error) {
-	editedImage, err := editImage(wand, args, metadata)
+	editedImage, err := editImage(wand, args, metadata, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +203,7 @@ func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, metadata AISessionMet
 		metadata.Seed++ // Increment the seed for each iteration to produce different results
 		currentWand, err = editImage(currentWand, ImageEditArgs{
 			Prompt: args.Prompt,
-		}, metadata)
+		}, metadata, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -218,14 +235,14 @@ func FlipFlop(wand *imagick.MagickWand, args FlipFlopArgs, metadata AISessionMet
 		metadata.Seed++ // Increment the seed for each iteration to produce different results
 		currentWand, err = editImage(currentWand, ImageEditArgs{
 			Prompt: args.Prompt1,
-		}, metadata)
+		}, metadata, nil)
 		if err != nil {
 			return nil, err
 		}
 		editedFrames = append(editedFrames, currentWand)
 		currentWand, err = editImage(currentWand, ImageEditArgs{
 			Prompt: args.Prompt2,
-		}, metadata)
+		}, metadata, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -233,4 +250,74 @@ func FlipFlop(wand *imagick.MagickWand, args FlipFlopArgs, metadata AISessionMet
 	}
 
 	return editedFrames, nil
+}
+
+type AiZoomArgs struct {
+	ImageURL string `default:"" description:"URL of the image to edit."`
+	Prompt   string `default:"Expand the image outwards." description:"Prompt to edit the image with."`
+	Amount   uint   `default:"20" description:"Amount to zoom out, in percent."`
+}
+
+func (args AiZoomArgs) GetImageURL() string {
+	return args.ImageURL
+}
+
+func AiZoom(wand *imagick.MagickWand, args AiZoomArgs, metadata AISessionMetadata) ([]*imagick.MagickWand, error) {
+	originalWidth := wand.GetImageWidth()
+	originalHeight := wand.GetImageHeight()
+
+	sizeMultiplier := 1 - float64(args.Amount)/100.0
+
+	var err error
+
+	// If the image can be used as-is without the target canvas exceeding the max size for resizing, do so to not lose quality
+	// Otherwise, shrink it
+	if originalWidth < uint(float64(AI_EDIT_MAX_DIMENSION)*sizeMultiplier) && originalHeight < uint(float64(AI_EDIT_MAX_DIMENSION)*sizeMultiplier) {
+		originalWidth = uint(float64(originalWidth) / sizeMultiplier)
+		originalHeight = uint(float64(originalHeight) / sizeMultiplier)
+	} else {
+		err = ShrinkMaintainAspectRatio(wand, uint(float64(wand.GetImageWidth())*sizeMultiplier), uint(float64(wand.GetImageHeight())*sizeMultiplier))
+		if err != nil {
+			return nil, fmt.Errorf("error resizing image for zoom: %w", err)
+		}
+	}
+
+	// Place the shrunk image in the center of a transparent canvas of the original size
+	canvas := imagick.NewMagickWand()
+
+	err = canvas.SetFormat("png")
+	if err != nil {
+		return nil, fmt.Errorf("error setting canvas format for zoom: %w", err)
+	}
+
+	err = canvas.NewImage(originalWidth, originalHeight, imagick.NewPixelWand())
+	if err != nil {
+		return nil, fmt.Errorf("error creating canvas for zoom: %w", err)
+	}
+
+	err = canvas.SetImageAlphaChannel(imagick.ALPHA_CHANNEL_ACTIVATE)
+	if err != nil {
+		return nil, fmt.Errorf("error setting canvas alpha channel for zoom: %w", err)
+	}
+
+	err = canvas.CompositeImage(wand, imagick.COMPOSITE_OP_OVER, false, int((originalWidth-wand.GetImageWidth())/2), int((originalHeight-wand.GetImageHeight())/2))
+	if err != nil {
+		return nil, fmt.Errorf("error compositing image onto canvas for zoom: %w", err)
+	}
+
+	// Flip alpha of the canvas to create a mask for outpainting the edges
+	mask := canvas.Clone()
+	err = mask.NegateImage(false)
+	if err != nil {
+		return nil, fmt.Errorf("error negating mask for zoom: %w", err)
+	}
+
+	editedImage, err := editImage(canvas, ImageEditArgs{
+		Prompt: args.Prompt,
+	}, metadata, mask)
+	if err != nil {
+		return nil, err
+	}
+
+	return []*imagick.MagickWand{editedImage}, nil
 }
