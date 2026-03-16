@@ -1,0 +1,55 @@
+diff --git a/imagick/BUILD.bazel b/imagick/BUILD.bazel
+new file mode 100644
+index 0000000..0000001
+--- /dev/null
++++ imagick/BUILD.bazel
+@@ -0,0 +1,35 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "imagick",
++    srcs = glob(
++        ["*.go"],
++        exclude = ["*_test.go"],
++    ),
++    cgo = True,
++    cdeps = ["@@//third_party:imagemagick"],
++    copts = [
++        "-DMAGICKCORE_QUANTUM_DEPTH=16",
++        "-DMAGICKCORE_HDRI_ENABLE=1",
++    ] + select({
++        "@io_bazel_rules_go//go/platform:386": [
++            "-DMAGICKCORE_SIZEOF_FLOAT_T=MAGICKCORE_SIZEOF_DOUBLE",
++        ],
++        "//conditions:default": [],
++    }),
++    clinkopts = [
++        "-L/opt/homebrew/lib",
++        "-lglib-2.0",
++        "-lintl",
++        "-lbz2",
++    ],
++    importpath = "gopkg.in/gographics/imagick.v3/imagick",
++    visibility = ["//visibility:public"],
++    deps = ["//imagick/types"],
++)
++
++go_test(
++    name = "imagick_test",
++    srcs = glob(["*_test.go"]),
++    embed = [":imagick"],
++)
+diff --git a/imagick/types/BUILD.bazel b/imagick/types/BUILD.bazel
+new file mode 100644
+index 0000000..0000002
+--- /dev/null
++++ imagick/types/BUILD.bazel
+@@ -0,0 +1,8 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "types",
++    srcs = glob(["*.go"]),
++    importpath = "gopkg.in/gographics/imagick.v3/imagick/types",
++    visibility = ["//visibility:public"],
++)

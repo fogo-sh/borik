@@ -60,7 +60,7 @@ go_deps.from_file(go_mod = "//:go.mod")
 
 # Imagick needs a hand-crafted BUILD since its CGO deps are our built ImageMagick.
 go_deps.module_override(
-    patches = ["//:patches/imagick.patch"],
+    patches = ["//:third_party/imagick.patch"],
     path = "gopkg.in/gographics/imagick.v3",
 )
 go_deps.gazelle_override(
