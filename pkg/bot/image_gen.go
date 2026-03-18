@@ -94,7 +94,7 @@ func ImageGenSlashCommand(session *discordgo.Session, interaction *discordgo.Int
 }
 
 func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionMetadata, mask *imagick.MagickWand) (*imagick.MagickWand, error) {
-	err := ShrinkMaintainAspectRatio(wand, 896, 896)
+	err := ShrinkMaintainAspectRatio(wand, AI_EDIT_MAX_DIMENSION, AI_EDIT_MAX_DIMENSION)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
 	}
@@ -255,18 +255,18 @@ func FlipFlop(wand *imagick.MagickWand, args FlipFlopArgs, metadata AISessionMet
 type AiZoomArgs struct {
 	ImageURL string `default:"" description:"URL of the image to edit."`
 	Prompt   string `default:"Expand the image outwards." description:"Prompt to edit the image with."`
-	Amount   uint   `default:"20" description:"Amount to zoom out, in percent."`
+	Steps    uint   `default:"20" description:"Number of zoom steps to perform."`
 }
 
 func (args AiZoomArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func AiZoom(wand *imagick.MagickWand, args AiZoomArgs, metadata AISessionMetadata) ([]*imagick.MagickWand, error) {
+func performAiZoomStep(wand *imagick.MagickWand, prompt string, metadata AISessionMetadata) (*imagick.MagickWand, error) {
 	originalWidth := wand.GetImageWidth()
 	originalHeight := wand.GetImageHeight()
 
-	sizeMultiplier := 1 - float64(args.Amount)/100.0
+	sizeMultiplier := 0.8
 
 	var err error
 
@@ -313,11 +313,24 @@ func AiZoom(wand *imagick.MagickWand, args AiZoomArgs, metadata AISessionMetadat
 	}
 
 	editedImage, err := editImage(canvas, ImageEditArgs{
-		Prompt: args.Prompt,
+		Prompt: prompt,
 	}, metadata, mask)
 	if err != nil {
 		return nil, err
 	}
 
-	return []*imagick.MagickWand{editedImage}, nil
+	return editedImage, nil
+}
+
+func AiZoom(wand *imagick.MagickWand, args AiZoomArgs, metadata AISessionMetadata) ([]*imagick.MagickWand, error) {
+	var err error
+
+	for range args.Steps {
+		wand, err = performAiZoomStep(wand, args.Prompt, metadata)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return []*imagick.MagickWand{wand}, nil
 }
