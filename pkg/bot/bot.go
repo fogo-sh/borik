@@ -226,6 +226,13 @@ var commands = []Command{
 		slashHandler: MakeAIImageOpSlashCommand(AiZoom),
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
+	{
+		name:         "aitranslate",
+		description:  "Translate text using AI.",
+		textHandler:  AiTranslateCommand,
+		slashHandler: AiTranslateSlashCommand,
+		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
+	},
 }
 
 // New constructs a new instance of Borik.
