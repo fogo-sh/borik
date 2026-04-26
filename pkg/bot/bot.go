@@ -192,6 +192,12 @@ var commands = []Command{
 		slashHandler: MakeImageOpSlashCommand(Meme),
 	},
 	{
+		name:         "hdr",
+		description:  "Apply aggressive HDR color boosting to an image.",
+		textHandler:  MakeImageOpTextCommand(Hdr),
+		slashHandler: MakeImageOpSlashCommand(Hdr),
+	},
+	{
 		name:         "aigen",
 		description:  "Generate an image from a prompt.",
 		textHandler:  ImageGenTextCommand,
