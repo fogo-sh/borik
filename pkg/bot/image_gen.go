@@ -255,7 +255,7 @@ func FlipFlop(wand *imagick.MagickWand, args FlipFlopArgs, metadata AISessionMet
 type AiZoomArgs struct {
 	ImageURL string `default:"" description:"URL of the image to edit."`
 	Prompt   string `default:"Expand the image outwards." description:"Prompt to edit the image with."`
-	Steps    uint   `default:"3" description:"Number of zoom steps to perform."`
+	Steps    uint   `default:"2" description:"Number of zoom steps to perform."`
 }
 
 func (args AiZoomArgs) GetImageURL() string {
