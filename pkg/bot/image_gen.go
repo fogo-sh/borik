@@ -361,5 +361,23 @@ func AiLoopZoom(wand *imagick.MagickWand, args AiLoopZoomArgs, metadata AISessio
 		editedFrames = append(editedFrames, wand)
 	}
 
+	minWidth := editedFrames[0].GetImageWidth()
+	minHeight := editedFrames[0].GetImageHeight()
+	for _, frame := range editedFrames[1:] {
+		if frame.GetImageWidth() < minWidth {
+			minWidth = frame.GetImageWidth()
+		}
+		if frame.GetImageHeight() < minHeight {
+			minHeight = frame.GetImageHeight()
+		}
+	}
+
+	for _, frame := range editedFrames {
+		err = ShrinkMaintainAspectRatio(frame, minWidth, minHeight)
+		if err != nil {
+			return nil, fmt.Errorf("error resizing frame for loop zoom: %w", err)
+		}
+	}
+
 	return editedFrames, nil
 }
