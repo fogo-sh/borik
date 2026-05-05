@@ -334,3 +334,32 @@ func AiZoom(wand *imagick.MagickWand, args AiZoomArgs, metadata AISessionMetadat
 
 	return []*imagick.MagickWand{wand}, nil
 }
+
+type AiLoopZoomArgs struct {
+	ImageURL string `default:"" description:"URL of the image to edit."`
+	Prompt   string `default:"Expand the image outwards." description:"Prompt to edit the image with."`
+	Steps    uint   `default:"5" description:"Number of zoom steps to perform."`
+}
+
+func (args AiLoopZoomArgs) GetImageURL() string {
+	return args.ImageURL
+}
+
+func AiLoopZoom(wand *imagick.MagickWand, args AiLoopZoomArgs, metadata AISessionMetadata) ([]*imagick.MagickWand, error) {
+	editedFrames := make([]*imagick.MagickWand, 0, args.Steps+1)
+
+	editedFrames = append(editedFrames, wand)
+
+	var err error
+
+	for range args.Steps {
+		wand = wand.Clone()
+		wand, err = performAiZoomStep(wand, args.Prompt, metadata)
+		if err != nil {
+			return nil, err
+		}
+		editedFrames = append(editedFrames, wand)
+	}
+
+	return editedFrames, nil
+}
