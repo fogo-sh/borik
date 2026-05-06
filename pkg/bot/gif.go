@@ -15,8 +15,8 @@ import (
 
 type GifArgs struct {
 	VideoURL string  `default:"" description:"URL to the video to process. Leave blank to automatically attempt to find a video."`
-	FPS      uint    `default:"15" description:"Frames per second for the GIF."`
-	Width    uint    `default:"480" description:"Width of the GIF in pixels. Height is scaled to preserve aspect ratio."`
+	FPS      uint    `default:"10" description:"Frames per second for the GIF."`
+	Width    uint    `default:"320" description:"Width of the GIF in pixels. Height is scaled to preserve aspect ratio."`
 	Duration float64 `default:"10" description:"Maximum video duration to convert, in seconds. Set to 0 to convert the whole video."`
 }
 
