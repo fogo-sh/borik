@@ -1,6 +1,7 @@
-package cmd
+package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,12 +10,13 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/gographics/imagick.v3/imagick"
 
+	"github.com/fogo-sh/borik/pkg/config"
 	"github.com/fogo-sh/borik/pkg/jobs/worker"
 )
 
-var runWorkerCmd = &cobra.Command{
-	Use:   "worker",
-	Short: "Run the Borik worker",
+var rootCmd = &cobra.Command{
+	Use:   "borik-worker",
+	Short: "Run the Borik image processing worker",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		imagick.Initialize()
@@ -23,7 +25,6 @@ var runWorkerCmd = &cobra.Command{
 		workerCount, _ := cmd.Flags().GetUint("concurrency")
 
 		var workers []*worker.Worker
-
 		for range workerCount {
 			w, err := worker.New()
 			if err != nil {
@@ -53,6 +54,20 @@ var runWorkerCmd = &cobra.Command{
 }
 
 func init() {
-	runWorkerCmd.Flags().Uint("concurrency", 1, "Number of concurrent worker processes to run")
-	runCmd.AddCommand(runWorkerCmd)
+	cobra.OnInitialize(loadConfig)
+	rootCmd.Flags().Uint("concurrency", 1, "Number of concurrent worker processes to run")
+}
+
+func loadConfig() {
+	err := config.Load()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error loading config")
+	}
+}
+
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }

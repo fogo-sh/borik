@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/nint8835/parsley"
@@ -262,6 +263,9 @@ var commands = []Command{
 // New constructs a new instance of Borik.
 func New() (*Bot, error) {
 	config := configPkg.Instance
+	if strings.TrimSpace(config.Token) == "" {
+		return nil, fmt.Errorf("Discord bot token must be set")
+	}
 
 	openAiClient := openai.NewClient(
 		option.WithBaseURL(config.OpenaiBaseUrl),
