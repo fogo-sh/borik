@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/contrib/sysinfo"
 	"go.temporal.io/sdk/worker"
 
 	"github.com/fogo-sh/borik/pkg/config"
@@ -42,7 +43,13 @@ func New() (*Worker, error) {
 		return nil, fmt.Errorf("error creating temporal client: %w", err)
 	}
 
-	w := worker.New(c, config.Instance.TemporalQueueName, worker.Options{})
+	w := worker.New(
+		c,
+		config.Instance.TemporalQueueName,
+		worker.Options{
+			SysInfoProvider: sysinfo.SysInfoProvider(),
+		},
+	)
 	workflows.RegisterWorkflows(w)
 	activities.RegisterActivities(w)
 
