@@ -19,6 +19,7 @@
             buildInputs = [
               pkgs.go
               pkgs.gotools
+              pkgs.ffmpeg
               pkgs.imagemagick
               pkgs.pkg-config
             ];
@@ -32,8 +33,13 @@
             inherit version;
             src = ./.;
 
-            nativeBuildInputs = [ pkgs.pkg-config ];
+            nativeBuildInputs = [ pkgs.makeWrapper pkgs.pkg-config ];
             buildInputs = [ pkgs.imagemagick ];
+
+            postInstall = ''
+              wrapProgram $out/bin/borik \
+                --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.ffmpeg ]}
+            '';
 
             vendorSha256 = "sha256-TL+1hALB3iQRkitrBVXz1QuLdYadvwkcKHChrYSPD0I=";
 
