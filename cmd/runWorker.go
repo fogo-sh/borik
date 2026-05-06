@@ -24,7 +24,7 @@ var runWorkerCmd = &cobra.Command{
 
 		var workers []*worker.Worker
 
-		for i := uint(0); i < workerCount; i++ {
+		for range workerCount {
 			w, err := worker.New()
 			if err != nil {
 				log.Fatal().Err(err).Msg("Error creating worker")

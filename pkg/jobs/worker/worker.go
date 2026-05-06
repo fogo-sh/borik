@@ -16,7 +16,7 @@ import (
 type Worker struct {
 	client        client.Client
 	worker        worker.Worker
-	interruptChan chan interface{}
+	interruptChan chan any
 }
 
 func (w *Worker) Start() error {
@@ -56,6 +56,6 @@ func New() (*Worker, error) {
 	return &Worker{
 		client:        c,
 		worker:        w,
-		interruptChan: make(chan interface{}),
+		interruptChan: make(chan any),
 	}, nil
 }
