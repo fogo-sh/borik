@@ -39,13 +39,19 @@ func SplitImage(ctx context.Context, jobWorkspace workspace.Workspace, inputArti
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving image: %w", err)
 	}
+
+	coalesced := input.CoalesceImages()
+	input.Destroy()
+	input = coalesced
 	defer input.Destroy()
 
 	var resultArtifacts []workspace.Artifact
 
 	for i := uint(0); i < input.GetNumberImages(); i++ {
 		input.SetIteratorIndex(int(i))
-		artifact, err := jobWorkspace.PersistWand(input)
+		frame := input.GetImage().Clone()
+		artifact, err := jobWorkspace.PersistWand(frame)
+		frame.Destroy()
 		if err != nil {
 			return nil, fmt.Errorf("error persisting frame: %w", err)
 		}
@@ -65,6 +71,7 @@ func JoinImage(ctx context.Context, jobWorkspace workspace.Workspace, inputArtif
 		if err != nil {
 			return "", fmt.Errorf("error retrieving frame: %w", err)
 		}
+		defer frame.Destroy()
 
 		err = output.AddImage(frame)
 		if err != nil {
@@ -80,9 +87,18 @@ func JoinImage(ctx context.Context, jobWorkspace workspace.Workspace, inputArtif
 			return "", fmt.Errorf("error setting output format: %w", err)
 		}
 
-		err = output.SetImageDelay(10)
-		if err != nil {
-			return "", fmt.Errorf("error setting output framerate: %w", err)
+		for i := uint(0); i < output.GetNumberImages(); i++ {
+			output.SetIteratorIndex(int(i))
+			frame, err := jobWorkspace.RetrieveWand(inputArtifacts[i])
+			if err != nil {
+				return "", fmt.Errorf("error retrieving frame: %w", err)
+			}
+
+			err = output.SetImageDelay(frame.GetImageDelay())
+			frame.Destroy()
+			if err != nil {
+				return "", fmt.Errorf("error setting output framerate: %w", err)
+			}
 		}
 	} else {
 		err := output.SetImageFormat("PNG")
@@ -109,16 +125,6 @@ func JoinImage(ctx context.Context, jobWorkspace workspace.Workspace, inputArtif
 	}
 
 	return outputArtifact, nil
-}
-
-func loadFrame(frameBytes []byte) (*imagick.MagickWand, error) {
-	frame := imagick.NewMagickWand()
-	err := frame.ReadImageBlob(frameBytes)
-	if err != nil {
-		return nil, fmt.Errorf("error reading frame: %w", err)
-	}
-
-	return frame, nil
 }
 
 func saveFrames(jobWorkspace workspace.Workspace, frames ...*imagick.MagickWand) ([]workspace.Artifact, error) {

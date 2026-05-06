@@ -48,6 +48,8 @@ func New() (*Worker, error) {
 		config.Instance.TemporalQueueName,
 		worker.Options{
 			SysInfoProvider: sysinfo.SysInfoProvider(),
+			// TODO: How many should this be? Should this be configurable?
+			MaxConcurrentActivityExecutionSize: 1,
 		},
 	)
 	workflows.RegisterWorkflows(w)

@@ -42,7 +42,7 @@ var runWorkerCmd = &cobra.Command{
 
 		log.Info().Msg("Borik worker is now running, press CTRL-C to exit.")
 		sc := make(chan os.Signal, 1)
-		signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+		signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 		<-sc
 		log.Info().Msg("Quitting Borik worker")
 
