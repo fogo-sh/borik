@@ -180,6 +180,12 @@ var commands = []Command{
 		slashHandler: MakeImageOpSlashCommand(HueCycle),
 	},
 	{
+		name:         "gif",
+		description:  "Convert a video to a GIF.",
+		textHandler:  GifTextCommand,
+		slashHandler: GifSlashCommand,
+	},
+	{
 		name:         "modulate",
 		description:  "Modify the brightness, saturation, and hue of an image.",
 		textHandler:  MakeImageOpTextCommand(Modulate),

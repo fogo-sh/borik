@@ -164,6 +164,14 @@ func (ctx *OperationContext) FindImageURL() (string, error) {
 	return FindImageURLInChannel(ctx.Session, ctx.Interaction.ChannelID, "")
 }
 
+// FindVideoURL attempts to locate a video URL from the context.
+func (ctx *OperationContext) FindVideoURL() (string, error) {
+	if ctx.Message != nil {
+		return FindVideoURLFromMessage(ctx.Message)
+	}
+	return FindVideoURLInChannel(ctx.Session, ctx.Interaction.ChannelID, "")
+}
+
 func TypingIndicatorForContext(ctx *OperationContext) func() {
 	if ctx.Message != nil {
 		return TypingIndicator(ctx.Message)
@@ -256,6 +264,46 @@ func ImageURLFromMessage(m *discordgo.Message) string {
 	return ""
 }
 
+// VideoURLFromMessage attempts to retrieve a video URL from a given message.
+func VideoURLFromMessage(m *discordgo.Message) string {
+	for _, embed := range m.Embeds {
+		if embed.Video != nil && embed.Video.URL != "" {
+			return embed.Video.URL
+		}
+		if (embed.Type == discordgo.EmbedTypeVideo || embed.Type == discordgo.EmbedTypeGifv) && embed.URL != "" {
+			return embed.URL
+		}
+	}
+
+	for _, attachment := range m.Attachments {
+		if IsVideoAttachment(attachment) {
+			return attachment.URL
+		}
+	}
+
+	for _, component := range m.Components {
+		url := ImageURLFromComponent(component)
+		if url != "" {
+			return url
+		}
+	}
+
+	return ""
+}
+
+func IsVideoAttachment(attachment *discordgo.MessageAttachment) bool {
+	if strings.HasPrefix(attachment.ContentType, "video/") {
+		return true
+	}
+
+	switch strings.ToLower(path.Ext(attachment.Filename)) {
+	case ".avi", ".m4v", ".mkv", ".mov", ".mp4", ".webm":
+		return true
+	default:
+		return false
+	}
+}
+
 // FindImageURLFromMessage attempts to find an image in a given message, falling back to scanning message history if one cannot be found.
 func FindImageURLFromMessage(m *discordgo.MessageCreate) (string, error) {
 	if imageUrl := ImageURLFromMessage(m.Message); imageUrl != "" {
@@ -271,6 +319,21 @@ func FindImageURLFromMessage(m *discordgo.MessageCreate) (string, error) {
 	return FindImageURLInChannel(Instance.session, m.ChannelID, m.ID)
 }
 
+// FindVideoURLFromMessage attempts to find a video in a given message, falling back to scanning message history if one cannot be found.
+func FindVideoURLFromMessage(m *discordgo.MessageCreate) (string, error) {
+	if videoUrl := VideoURLFromMessage(m.Message); videoUrl != "" {
+		return videoUrl, nil
+	}
+
+	if m.ReferencedMessage != nil {
+		if videoUrl := VideoURLFromMessage(m.ReferencedMessage); videoUrl != "" {
+			return videoUrl, nil
+		}
+	}
+
+	return FindVideoURLInChannel(Instance.session, m.ChannelID, m.ID)
+}
+
 func FindImageURLInChannel(s *discordgo.Session, channelID string, beforeID string) (string, error) {
 	messages, err := s.ChannelMessages(channelID, 20, beforeID, "", "")
 	if err != nil {
@@ -283,6 +346,20 @@ func FindImageURLInChannel(s *discordgo.Session, channelID string, beforeID stri
 		}
 	}
 	return "", errors.New("unable to locate an image")
+}
+
+func FindVideoURLInChannel(s *discordgo.Session, channelID string, beforeID string) (string, error) {
+	messages, err := s.ChannelMessages(channelID, 20, beforeID, "", "")
+	if err != nil {
+		return "", fmt.Errorf("error retrieving message history: %w", err)
+	}
+
+	for _, message := range messages {
+		if videoUrl := VideoURLFromMessage(message); videoUrl != "" {
+			return videoUrl, nil
+		}
+	}
+	return "", errors.New("unable to locate a video")
 }
 
 // DownloadImage downloads an image from a given URL, returning the resulting bytes.
@@ -724,4 +801,3 @@ func MakeImageOverlayOp(overlayImage []byte, initialOptions OverlayOptions) Imag
 		return []*imagick.MagickWand{wand}, err
 	}
 }
-

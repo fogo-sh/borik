@@ -17,6 +17,7 @@ RUN apt-get update && \
       ghostscript \
       libfreetype6-dev \
       libfontconfig1-dev \
+      ffmpeg \
       --no-install-recommends && \
     wget https://github.com/ImageMagick/ImageMagick/archive/${IMAGEMAGICK_VERSION}.tar.gz && \
 	tar xvzf ${IMAGEMAGICK_VERSION}.tar.gz && \
