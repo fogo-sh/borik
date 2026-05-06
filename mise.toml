@@ -1,0 +1,2 @@
+[env]
+CGO_CFLAGS_ALLOW = '-Xpreprocessor'

@@ -45,7 +45,7 @@ func SplitImage(ctx context.Context, jobWorkspace workspace.Workspace, inputArti
 
 	for i := uint(0); i < input.GetNumberImages(); i++ {
 		input.SetIteratorIndex(int(i))
-		artifact, err := jobWorkspace.Persist(input.GetImageBlob())
+		artifact, err := jobWorkspace.PersistWand(input)
 		if err != nil {
 			return nil, fmt.Errorf("error persisting frame: %w", err)
 		}
@@ -98,7 +98,12 @@ func JoinImage(ctx context.Context, jobWorkspace workspace.Workspace, inputArtif
 
 	output = output.DeconstructImages()
 
-	outputArtifact, err := jobWorkspace.Persist(output.GetImagesBlob())
+	outputBlob, err := output.GetImagesBlob()
+	if err != nil {
+		return "", fmt.Errorf("error getting output image blob: %w", err)
+	}
+
+	outputArtifact, err := jobWorkspace.Persist(outputBlob)
 	if err != nil {
 		return "", fmt.Errorf("error persisting output: %w", err)
 	}

@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -10,11 +11,30 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Prefixes is a custom type for command prefixes, split on "|" to allow
+// commas and other special characters as prefix values.
+// Example: BORIK_PREFIXES="borik!|,"
+type Prefixes []string
+
+func (p *Prefixes) Decode(value string) error {
+	*p = strings.Split(value, "|")
+	return nil
+}
+
 // Config represents the config that Borik will use to run
 type Config struct {
-	Prefix   string `default:"borik!"`
-	Token    string `required:"true"`
-	LogLevel string `default:"info" split_words:"true"`
+	Prefixes Prefixes `default:"borik!"`
+	Token    string   `required:"true"`
+	AppId    string   `default:"" split_words:"true"`
+	GuildId  string   `default:"" split_words:"true"`
+	LogLevel string   `default:"info" split_words:"true"`
+
+	RegisterSlashCommandsGlobally bool `default:"false" split_words:"true"`
+
+	OpenaiBaseUrl        string `default:"https://llm.ops.bootleg.technology/v1" split_words:"true"`
+	OpenaiApiKey         string `default:"" split_words:"true"`
+	OpenaiImageGenModel  string `default:"flux-2-klein-4b" split_words:"true"`
+	OpenaiImageEditModel string `default:"flux-2-klein-4b" split_words:"true"`
 
 	TemporalNamespace string `default:"borik" split_words:"true"`
 	TemporalQueueName string `default:"borik" split_words:"true"`

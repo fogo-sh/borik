@@ -1,7 +1,7 @@
-FROM golang:1.22-bookworm
+FROM golang:1.25-trixie
 
 WORKDIR /deps
-ENV IMAGEMAGICK_VERSION=7.1.0-57
+ENV IMAGEMAGICK_VERSION=7.1.2-3
 
 RUN apt-get update && \
     apt-get -q -y install \
@@ -11,8 +11,13 @@ RUN apt-get update && \
       libgif-dev \
       libwebp-dev \
       libheif-dev \
+      liblcms2-dev \
       liblqr-1-0-dev \
       libglib2.0 \
+      ghostscript \
+      libfreetype6-dev \
+      libfontconfig1-dev \
+      ffmpeg \
       --no-install-recommends && \
     wget https://github.com/ImageMagick/ImageMagick/archive/${IMAGEMAGICK_VERSION}.tar.gz && \
 	tar xvzf ${IMAGEMAGICK_VERSION}.tar.gz && \
@@ -23,9 +28,11 @@ RUN apt-get update && \
     rm -rf /deps
 
 WORKDIR /build
+
+COPY go.mod go.sum ./
+RUN go mod download
+
 COPY . .
-RUN go mod download &&\
-    go mod verify &&\
-    go build
+RUN go build
 
 ENTRYPOINT ["/build/borik", "run"]

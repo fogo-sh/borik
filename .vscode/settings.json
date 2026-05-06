@@ -1,0 +1,8 @@
+{
+    "editor.formatOnSave": true,
+    "gopls": {
+        "formatting.local": "github.com/fogo-sh/borik"
+    },
+    "files.trimFinalNewlines": true,
+    "files.insertFinalNewline": true
+}

@@ -47,7 +47,11 @@ func (w Workspace) Persist(data []byte) (Artifact, error) {
 }
 
 func (w Workspace) PersistWand(wand *imagick.MagickWand) (Artifact, error) {
-	data := wand.GetImageBlob()
+	data, err := wand.GetImageBlob()
+	if err != nil {
+		return "", fmt.Errorf("error getting image blob: %w", err)
+	}
+
 	return w.Persist(data)
 }
 

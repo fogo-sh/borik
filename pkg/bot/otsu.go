@@ -56,13 +56,13 @@ func Otsu(wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error
 	}
 
 	sum := 0
-	for i := 0; i < 256; i++ {
+	for i := range 256 {
 		sum += i * histogram[i]
 	}
 
 	sumBackground, weightBackground, weightForeground, threshold, maxVariance := 0, 0, 0, 0, 0
 
-	for i := 0; i < 256; i++ {
+	for i := range 256 {
 		weightBackground += histogram[i]
 		if weightBackground == 0 {
 			continue

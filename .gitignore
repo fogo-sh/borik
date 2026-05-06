@@ -4,3 +4,5 @@ borik
 result
 *.swp
 /workspace/
+.DS_Store
+tmp

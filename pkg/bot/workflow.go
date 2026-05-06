@@ -23,7 +23,7 @@ type testArgs struct {
 
 func (b *Bot) workflowTestCommand(message *discordgo.MessageCreate, args testArgs) {
 	if args.ImageURL == "" {
-		imageUrl, err := FindImageURL(message)
+		imageUrl, err := FindImageURLFromMessage(message)
 		if err != nil {
 			b.session.ChannelMessageSend(message.ChannelID, "Error finding image URL: "+err.Error())
 			return
