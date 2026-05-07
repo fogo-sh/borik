@@ -162,12 +162,12 @@ var commands = []Command{
 		textHandler:  MakeWorkflowTextCommand[args.Invert](),
 		slashHandler: MakeWorkflowSlashCommand[args.Invert](),
 	},
-	// {
-	// 	name:         "otsu",
-	// 	description:  "Apply a threshold to an image using Otsu's method.",
-	// 	textHandler:  MakeImageOpTextCommand(Otsu),
-	// 	slashHandler: MakeImageOpSlashCommand(Otsu),
-	// },
+	{
+		name:         "otsu",
+		description:  "Apply a threshold to an image using Otsu's method.",
+		textHandler:  MakeWorkflowTextCommand[args.Otsu](),
+		slashHandler: MakeWorkflowSlashCommand[args.Otsu](),
+	},
 	{
 		name:         "rotate",
 		description:  "Rotate an image.",

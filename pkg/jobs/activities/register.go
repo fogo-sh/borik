@@ -22,6 +22,7 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(Woow)
 	worker.RegisterActivity(Hooh)
 	worker.RegisterActivity(Invert)
+	worker.RegisterActivity(Otsu)
 	worker.RegisterActivity(Rotate)
 	worker.RegisterActivity(Resize)
 }

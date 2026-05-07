@@ -1,22 +1,25 @@
-package bot
+package activities
 
 import (
+	"context"
 	"fmt"
 
-	"gopkg.in/gographics/imagick.v3/imagick"
+	"github.com/fogo-sh/borik/pkg/jobs/args"
+	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
 
-type OtsuArgs struct {
-	ImageURL string `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
-	Invert   bool   `default:"false" description:"Invert the colors."`
-}
+func Otsu(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	if err != nil {
+		return nil, err
+	}
 
-func (args OtsuArgs) GetImageURL() string {
-	return args.ImageURL
-}
+	var otsuArgs args.Otsu
+	err = decodeOperationArgs(opArgs, &otsuArgs)
+	if err != nil {
+		return nil, fmt.Errorf("error while decoding operation args: %w", err)
+	}
 
-// Otsu turns the image black and white by applying an adaptive threshold using Otsu's method
-func Otsu(wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error) {
 	numOfPixels := 0
 	histogram := map[int]int{}
 
@@ -93,7 +96,7 @@ func Otsu(wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error
 
 		for _, pixel := range pixels {
 			red := int(pixel.GetRed() * 255)
-			if (args.Invert && red > threshold) || (!args.Invert && red < threshold) {
+			if (otsuArgs.Invert && red > threshold) || (!otsuArgs.Invert && red < threshold) {
 				pixel.SetColor("#000000")
 			} else {
 				pixel.SetColor("#FFFFFF")
@@ -105,5 +108,5 @@ func Otsu(wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error
 		}
 	}
 
-	return []*imagick.MagickWand{wand}, nil
+	return saveFrames(jobWorkspace, wand)
 }
