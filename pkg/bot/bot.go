@@ -210,12 +210,12 @@ var commands = []Command{
 		textHandler:  GifTextCommand,
 		slashHandler: GifSlashCommand,
 	},
-	// {
-	// 	name:         "modulate",
-	// 	description:  "Modify the brightness, saturation, and hue of an image.",
-	// 	textHandler:  MakeImageOpTextCommand(Modulate),
-	// 	slashHandler: MakeImageOpSlashCommand(Modulate),
-	// },
+	{
+		name:         "modulate",
+		description:  "Modify the brightness, saturation, and hue of an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Modulate](),
+		slashHandler: MakeWorkflowSlashCommand[args.Modulate](),
+	},
 	// {
 	// 	name:         "meme",
 	// 	description:  "Add meme text to an image.",
