@@ -27,4 +27,5 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(Resize)
 	worker.RegisterActivity(HueCycle)
 	worker.RegisterActivity(Modulate)
+	worker.RegisterActivity(Hdr)
 }

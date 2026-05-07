@@ -222,12 +222,12 @@ var commands = []Command{
 	// 	textHandler:  MakeImageOpTextCommand(Meme),
 	// 	slashHandler: MakeImageOpSlashCommand(Meme),
 	// },
-	// {
-	// 	name:         "hdr",
-	// 	description:  "Apply aggressive HDR color boosting to an image.",
-	// 	textHandler:  MakeImageOpTextCommand(Hdr),
-	// 	slashHandler: MakeImageOpSlashCommand(Hdr),
-	// },
+	{
+		name:         "hdr",
+		description:  "Apply aggressive HDR color boosting to an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Hdr](),
+		slashHandler: MakeWorkflowSlashCommand[args.Hdr](),
+	},
 	{
 		name:         "aigen",
 		description:  "Generate an image from a prompt.",
