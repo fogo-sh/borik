@@ -65,97 +65,97 @@ type Command struct {
 }
 
 var commands = []Command{
-	{
-		name:         "magik",
-		slashAliases: []string{"borik"},
-		description:  "Magikify an image.",
-		textHandler:  MakeImageOpTextCommand(Magik),
-		slashHandler: MakeImageOpSlashCommand(Magik),
-	},
-	{
-		name:         "lagik",
-		description:  "Lagikify an image.",
-		textHandler:  MakeImageOpTextCommand(Lagik),
-		slashHandler: MakeImageOpSlashCommand(Lagik),
-	},
-	{
-		name:         "gmagik",
-		description:  "Repeatedly magikify an image.",
-		textHandler:  MakeImageOpTextCommand(Gmagik),
-		slashHandler: MakeImageOpSlashCommand(Gmagik),
-	},
-	{
-		name:         "arcweld",
-		description:  "Arc-weld an image.",
-		textHandler:  MakeImageOpTextCommand(Arcweld),
-		slashHandler: MakeImageOpSlashCommand(Arcweld),
-	},
-	{
-		name:         "malt",
-		description:  "Malt an image.",
-		textHandler:  MakeImageOpTextCommand(Malt),
-		slashHandler: MakeImageOpSlashCommand(Malt),
-	},
+	// {
+	// 	name:         "magik",
+	// 	slashAliases: []string{"borik"},
+	// 	description:  "Magikify an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Magik),
+	// 	slashHandler: MakeImageOpSlashCommand(Magik),
+	// },
+	// {
+	// 	name:         "lagik",
+	// 	description:  "Lagikify an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Lagik),
+	// 	slashHandler: MakeImageOpSlashCommand(Lagik),
+	// },
+	// {
+	// 	name:         "gmagik",
+	// 	description:  "Repeatedly magikify an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Gmagik),
+	// 	slashHandler: MakeImageOpSlashCommand(Gmagik),
+	// },
+	// {
+	// 	name:         "arcweld",
+	// 	description:  "Arc-weld an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Arcweld),
+	// 	slashHandler: MakeImageOpSlashCommand(Arcweld),
+	// },
+	// {
+	// 	name:         "malt",
+	// 	description:  "Malt an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Malt),
+	// 	slashHandler: MakeImageOpSlashCommand(Malt),
+	// },
 	{
 		name:         "help",
 		description:  "Get help for available commands.",
 		textHandler:  HelpCommand,
 		slashHandler: HelpSlashCommand,
 	},
-	{
-		name:         "deepfry",
-		description:  "Deep-fry an image.",
-		textHandler:  MakeImageOpTextCommand(Deepfry),
-		slashHandler: MakeImageOpSlashCommand(Deepfry),
-	},
-	{
-		name:         "divine",
-		description:  "Sever the divine light.",
-		textHandler:  MakeImageOpTextCommand(Divine),
-		slashHandler: MakeImageOpSlashCommand(Divine),
-	},
-	{
-		name:         "waaw",
-		description:  "Mirror the right half of an image.",
-		textHandler:  MakeImageOpTextCommand(Waaw),
-		slashHandler: MakeImageOpSlashCommand(Waaw),
-	},
-	{
-		name:         "haah",
-		description:  "Mirror the left half of an image.",
-		textHandler:  MakeImageOpTextCommand(Haah),
-		slashHandler: MakeImageOpSlashCommand(Haah),
-	},
-	{
-		name:         "woow",
-		description:  "Mirror the top half of an image.",
-		textHandler:  MakeImageOpTextCommand(Woow),
-		slashHandler: MakeImageOpSlashCommand(Woow),
-	},
-	{
-		name:         "hooh",
-		description:  "Mirror the bottom half of an image.",
-		textHandler:  MakeImageOpTextCommand(Hooh),
-		slashHandler: MakeImageOpSlashCommand(Hooh),
-	},
-	{
-		name:         "invert",
-		description:  "Invert the colours of an image.",
-		textHandler:  MakeImageOpTextCommand(Invert),
-		slashHandler: MakeImageOpSlashCommand(Invert),
-	},
-	{
-		name:         "otsu",
-		description:  "Apply a threshold to an image using Otsu's method.",
-		textHandler:  MakeImageOpTextCommand(Otsu),
-		slashHandler: MakeImageOpSlashCommand(Otsu),
-	},
-	{
-		name:         "rotate",
-		description:  "Rotate an image.",
-		textHandler:  MakeImageOpTextCommand(Rotate),
-		slashHandler: MakeImageOpSlashCommand(Rotate),
-	},
+	// {
+	// 	name:         "deepfry",
+	// 	description:  "Deep-fry an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Deepfry),
+	// 	slashHandler: MakeImageOpSlashCommand(Deepfry),
+	// },
+	// {
+	// 	name:         "divine",
+	// 	description:  "Sever the divine light.",
+	// 	textHandler:  MakeImageOpTextCommand(Divine),
+	// 	slashHandler: MakeImageOpSlashCommand(Divine),
+	// },
+	// {
+	// 	name:         "waaw",
+	// 	description:  "Mirror the right half of an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Waaw),
+	// 	slashHandler: MakeImageOpSlashCommand(Waaw),
+	// },
+	// {
+	// 	name:         "haah",
+	// 	description:  "Mirror the left half of an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Haah),
+	// 	slashHandler: MakeImageOpSlashCommand(Haah),
+	// },
+	// {
+	// 	name:         "woow",
+	// 	description:  "Mirror the top half of an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Woow),
+	// 	slashHandler: MakeImageOpSlashCommand(Woow),
+	// },
+	// {
+	// 	name:         "hooh",
+	// 	description:  "Mirror the bottom half of an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Hooh),
+	// 	slashHandler: MakeImageOpSlashCommand(Hooh),
+	// },
+	// {
+	// 	name:         "invert",
+	// 	description:  "Invert the colours of an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Invert),
+	// 	slashHandler: MakeImageOpSlashCommand(Invert),
+	// },
+	// {
+	// 	name:         "otsu",
+	// 	description:  "Apply a threshold to an image using Otsu's method.",
+	// 	textHandler:  MakeImageOpTextCommand(Otsu),
+	// 	slashHandler: MakeImageOpSlashCommand(Otsu),
+	// },
+	// {
+	// 	name:         "rotate",
+	// 	description:  "Rotate an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Rotate),
+	// 	slashHandler: MakeImageOpSlashCommand(Rotate),
+	// },
 	{
 		name:         "avatar",
 		description:  "Fetch the avatar for a user.",
@@ -174,42 +174,42 @@ var commands = []Command{
 		textHandler:  Emoji,
 		slashHandler: nil,
 	},
-	{
-		name:         "resize",
-		description:  "Resize an image.",
-		textHandler:  MakeImageOpTextCommand(Resize),
-		slashHandler: MakeImageOpSlashCommand(Resize),
-	},
-	{
-		name:         "huecycle",
-		description:  "Create a GIF cycling the hue of an image.",
-		textHandler:  MakeImageOpTextCommand(HueCycle),
-		slashHandler: MakeImageOpSlashCommand(HueCycle),
-	},
+	// {
+	// 	name:         "resize",
+	// 	description:  "Resize an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Resize),
+	// 	slashHandler: MakeImageOpSlashCommand(Resize),
+	// },
+	// {
+	// 	name:         "huecycle",
+	// 	description:  "Create a GIF cycling the hue of an image.",
+	// 	textHandler:  MakeImageOpTextCommand(HueCycle),
+	// 	slashHandler: MakeImageOpSlashCommand(HueCycle),
+	// },
 	{
 		name:         "gif",
 		description:  "Convert a video to a GIF.",
 		textHandler:  GifTextCommand,
 		slashHandler: GifSlashCommand,
 	},
-	{
-		name:         "modulate",
-		description:  "Modify the brightness, saturation, and hue of an image.",
-		textHandler:  MakeImageOpTextCommand(Modulate),
-		slashHandler: MakeImageOpSlashCommand(Modulate),
-	},
-	{
-		name:         "meme",
-		description:  "Add meme text to an image.",
-		textHandler:  MakeImageOpTextCommand(Meme),
-		slashHandler: MakeImageOpSlashCommand(Meme),
-	},
-	{
-		name:         "hdr",
-		description:  "Apply aggressive HDR color boosting to an image.",
-		textHandler:  MakeImageOpTextCommand(Hdr),
-		slashHandler: MakeImageOpSlashCommand(Hdr),
-	},
+	// {
+	// 	name:         "modulate",
+	// 	description:  "Modify the brightness, saturation, and hue of an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Modulate),
+	// 	slashHandler: MakeImageOpSlashCommand(Modulate),
+	// },
+	// {
+	// 	name:         "meme",
+	// 	description:  "Add meme text to an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Meme),
+	// 	slashHandler: MakeImageOpSlashCommand(Meme),
+	// },
+	// {
+	// 	name:         "hdr",
+	// 	description:  "Apply aggressive HDR color boosting to an image.",
+	// 	textHandler:  MakeImageOpTextCommand(Hdr),
+	// 	slashHandler: MakeImageOpSlashCommand(Hdr),
+	// },
 	{
 		name:         "aigen",
 		description:  "Generate an image from a prompt.",
@@ -253,11 +253,10 @@ var commands = []Command{
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
-		name:        "test",
-		description: "Test workflow.",
-		textHandler: func(message *discordgo.MessageCreate, cmdArgs args.Magik) {
-			Instance.workflowTestCommand(message, cmdArgs)
-		},
+		name:         "test",
+		description:  "Test workflow.",
+		textHandler:  MakeWorkflowTextCommand[args.Magik](),
+		slashHandler: MakeWorkflowSlashCommand[args.Magik](),
 	},
 }
 
@@ -337,7 +336,7 @@ func New() (*Bot, error) {
 		log.Warn().Msg("OpenAI API key not set; skipping registration of OpenAI commands")
 	}
 
-	_ = textParser.NewCommand("", "Magikify an image.", MakeImageOpTextCommand(Magik))
+	// _ = textParser.NewCommand("", "Magikify an image.", MakeImageOpTextCommand(Magik))
 
 	allCommands := slices.Concat(
 		commands,

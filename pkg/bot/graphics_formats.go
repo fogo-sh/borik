@@ -2,7 +2,6 @@ package bot
 
 import (
 	"fmt"
-	"strings"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
 )
@@ -117,14 +116,14 @@ func makeGraphicsFormatOp(format graphicsFormat) ImageOperation[graphicsFormatAr
 
 func generateGraphicsFormatCommands() []Command {
 	var cmds []Command
-	for _, format := range graphicsFormats {
-		op := makeGraphicsFormatOp(format)
-		cmds = append(cmds, Command{
-			name:         strings.ToLower(format.Name),
-			description:  fmt.Sprintf("Convert an image to %s graphics", format.Name),
-			textHandler:  MakeImageOpTextCommand(op),
-			slashHandler: MakeImageOpSlashCommand(op),
-		})
-	}
+	// for _, format := range graphicsFormats {
+	// 	op := makeGraphicsFormatOp(format)
+	// 	cmds = append(cmds, Command{
+	// 		name:         strings.ToLower(format.Name),
+	// 		description:  fmt.Sprintf("Convert an image to %s graphics", format.Name),
+	// 		textHandler:  MakeImageOpTextCommand(op),
+	// 		slashHandler: MakeImageOpSlashCommand(op),
+	// 	})
+	// }
 	return cmds
 }

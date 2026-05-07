@@ -15,16 +15,16 @@ import (
 	"github.com/fogo-sh/borik/pkg/jobs/workflows"
 )
 
-func (b *Bot) triggerJobs(ctx context.Context, job args.JobArgs) (string, io.Reader, error) {
+func (b *Bot) triggerJob(ctx context.Context, workflowID string, imageURL string, job args.JobArgs) (string, io.Reader, error) {
 	we, err := b.temporalClient.ExecuteWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
-			ID:        "test-workflow",
+			ID:        workflowID,
 			TaskQueue: config.Instance.TemporalQueueName,
 		},
 		workflows.ProcessImageWorkflow,
 		workflows.ProcessImageArgs{
-			ImageURL:     job.GetImageURL(),
+			ImageURL:     imageURL,
 			ActivityName: job.ActivityName(),
 			ActivityArgs: job,
 		},

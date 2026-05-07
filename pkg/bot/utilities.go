@@ -381,19 +381,6 @@ func DownloadImage(url string) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-// MakeImageOpTextCommand automatically creates a Parsley command handler for a given ImageOperation
-func MakeImageOpTextCommand[K ImageOperationArgs](operation ImageOperation[K]) func(*discordgo.MessageCreate, K) {
-	return func(message *discordgo.MessageCreate, args K) {
-		PrepareAndInvokeOperation(NewOperationContextFromMessage(Instance.session, message), args, operation)
-	}
-}
-
-func MakeImageOpSlashCommand[K ImageOperationArgs](operation ImageOperation[K]) func(*discordgo.Session, *discordgo.InteractionCreate, K) {
-	return func(session *discordgo.Session, interaction *discordgo.InteractionCreate, args K) {
-		PrepareAndInvokeOperation(NewOperationContextFromInteraction(session, interaction), args, operation)
-	}
-}
-
 // AIImageOperation is like ImageOperation but also receives AISessionMetadata for session tracking and seed management
 type AIImageOperation[K ImageOperationArgs] func(*imagick.MagickWand, K, AISessionMetadata) ([]*imagick.MagickWand, error)
 
