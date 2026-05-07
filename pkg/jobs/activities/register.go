@@ -25,4 +25,5 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(Otsu)
 	worker.RegisterActivity(Rotate)
 	worker.RegisterActivity(Resize)
+	worker.RegisterActivity(HueCycle)
 }

@@ -198,12 +198,12 @@ var commands = []Command{
 		textHandler:  MakeWorkflowTextCommand[args.Resize](),
 		slashHandler: MakeWorkflowSlashCommand[args.Resize](),
 	},
-	// {
-	// 	name:         "huecycle",
-	// 	description:  "Create a GIF cycling the hue of an image.",
-	// 	textHandler:  MakeImageOpTextCommand(HueCycle),
-	// 	slashHandler: MakeImageOpSlashCommand(HueCycle),
-	// },
+	{
+		name:         "huecycle",
+		description:  "Create a GIF cycling the hue of an image.",
+		textHandler:  MakeWorkflowTextCommand[args.HueCycle](),
+		slashHandler: MakeWorkflowSlashCommand[args.HueCycle](),
+	},
 	{
 		name:         "gif",
 		description:  "Convert a video to a GIF.",
