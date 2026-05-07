@@ -156,12 +156,12 @@ var commands = []Command{
 		textHandler:  MakeWorkflowTextCommand[args.Hooh](),
 		slashHandler: MakeWorkflowSlashCommand[args.Hooh](),
 	},
-	// {
-	// 	name:         "invert",
-	// 	description:  "Invert the colours of an image.",
-	// 	textHandler:  MakeImageOpTextCommand(Invert),
-	// 	slashHandler: MakeImageOpSlashCommand(Invert),
-	// },
+	{
+		name:         "invert",
+		description:  "Invert the colours of an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Invert](),
+		slashHandler: MakeWorkflowSlashCommand[args.Invert](),
+	},
 	// {
 	// 	name:         "otsu",
 	// 	description:  "Apply a threshold to an image using Otsu's method.",

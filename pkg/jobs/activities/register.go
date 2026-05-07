@@ -21,4 +21,5 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(Haah)
 	worker.RegisterActivity(Woow)
 	worker.RegisterActivity(Hooh)
+	worker.RegisterActivity(Invert)
 }
