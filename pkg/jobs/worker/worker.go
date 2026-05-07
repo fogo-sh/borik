@@ -49,7 +49,7 @@ func New() (*Worker, error) {
 		worker.Options{
 			SysInfoProvider: sysinfo.SysInfoProvider(),
 			// TODO: How many should this be? Should this be configurable?
-			MaxConcurrentActivityExecutionSize: 1,
+			// MaxConcurrentActivityExecutionSize: 1,
 		},
 	)
 	workflows.RegisterWorkflows(w)

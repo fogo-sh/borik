@@ -84,12 +84,12 @@ var commands = []Command{
 		textHandler:  MakeWorkflowTextCommand[args.Gmagik](),
 		slashHandler: MakeWorkflowSlashCommand[args.Gmagik](),
 	},
-	// {
-	// 	name:         "arcweld",
-	// 	description:  "Arc-weld an image.",
-	// 	textHandler:  MakeImageOpTextCommand(Arcweld),
-	// 	slashHandler: MakeImageOpSlashCommand(Arcweld),
-	// },
+	{
+		name:         "arcweld",
+		description:  "Arc-weld an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Arcweld](),
+		slashHandler: MakeWorkflowSlashCommand[args.Arcweld](),
+	},
 	// {
 	// 	name:         "malt",
 	// 	description:  "Malt an image.",

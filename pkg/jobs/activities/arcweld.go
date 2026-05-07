@@ -1,23 +1,29 @@
-package bot
+package activities
 
 import (
+	"context"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
+
+	"github.com/fogo-sh/borik/pkg/jobs/args"
+	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
 
-type ArcweldArgs struct {
-	ImageURL string `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
-}
+func Arcweld(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	if err != nil {
+		return nil, err
+	}
 
-func (args ArcweldArgs) GetImageURL() string {
-	return args.ImageURL
-}
+	var arcweldArgs args.Arcweld
+	err = decodeOperationArgs(opArgs, &arcweldArgs)
+	if err != nil {
+		return nil, fmt.Errorf("error while decoding operation args: %w", err)
+	}
 
-// Arcweld destroys an image via a combination of operations.
-func Arcweld(wand *imagick.MagickWand, args ArcweldArgs) ([]*imagick.MagickWand, error) {
 	origMask := wand.SetImageChannelMask(imagick.CHANNEL_RED)
-	err := wand.EvaluateImage(imagick.EVAL_OP_LEFT_SHIFT, 1)
+	err = wand.EvaluateImage(imagick.EVAL_OP_LEFT_SHIFT, 1)
 	if err != nil {
 		return nil, fmt.Errorf("error left-shifting red channel: %w", err)
 	}
@@ -66,5 +72,5 @@ func Arcweld(wand *imagick.MagickWand, args ArcweldArgs) ([]*imagick.MagickWand,
 		return nil, fmt.Errorf("error quantizing image: %w", err)
 	}
 
-	return []*imagick.MagickWand{wand}, nil
+	return saveFrames(jobWorkspace, wand)
 }
