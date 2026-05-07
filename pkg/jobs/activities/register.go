@@ -8,4 +8,6 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(JoinImage)
 
 	worker.RegisterActivity(Magik)
+	worker.RegisterActivity(Lagik)
+	worker.RegisterActivity(Gmagik)
 }

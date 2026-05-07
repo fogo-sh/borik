@@ -65,25 +65,25 @@ type Command struct {
 }
 
 var commands = []Command{
-	// {
-	// 	name:         "magik",
-	// 	slashAliases: []string{"borik"},
-	// 	description:  "Magikify an image.",
-	// 	textHandler:  MakeImageOpTextCommand(Magik),
-	// 	slashHandler: MakeImageOpSlashCommand(Magik),
-	// },
-	// {
-	// 	name:         "lagik",
-	// 	description:  "Lagikify an image.",
-	// 	textHandler:  MakeImageOpTextCommand(Lagik),
-	// 	slashHandler: MakeImageOpSlashCommand(Lagik),
-	// },
-	// {
-	// 	name:         "gmagik",
-	// 	description:  "Repeatedly magikify an image.",
-	// 	textHandler:  MakeImageOpTextCommand(Gmagik),
-	// 	slashHandler: MakeImageOpSlashCommand(Gmagik),
-	// },
+	{
+		name:         "magik",
+		slashAliases: []string{"borik"},
+		description:  "Magikify an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Magik](),
+		slashHandler: MakeWorkflowSlashCommand[args.Magik](),
+	},
+	{
+		name:         "lagik",
+		description:  "Lagikify an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Lagik](),
+		slashHandler: MakeWorkflowSlashCommand[args.Lagik](),
+	},
+	{
+		name:         "gmagik",
+		description:  "Repeatedly magikify an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Gmagik](),
+		slashHandler: MakeWorkflowSlashCommand[args.Gmagik](),
+	},
 	// {
 	// 	name:         "arcweld",
 	// 	description:  "Arc-weld an image.",
@@ -252,12 +252,6 @@ var commands = []Command{
 		slashHandler: MakeAIImageOpSlashCommand(AiLoopZoom),
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
-	{
-		name:         "test",
-		description:  "Test workflow.",
-		textHandler:  MakeWorkflowTextCommand[args.Magik](),
-		slashHandler: MakeWorkflowSlashCommand[args.Magik](),
-	},
 }
 
 // New constructs a new instance of Borik.
@@ -336,7 +330,7 @@ func New() (*Bot, error) {
 		log.Warn().Msg("OpenAI API key not set; skipping registration of OpenAI commands")
 	}
 
-	// _ = textParser.NewCommand("", "Magikify an image.", MakeImageOpTextCommand(Magik))
+	_ = textParser.NewCommand("", "Magikify an image.", MakeWorkflowTextCommand[args.Magik]())
 
 	allCommands := slices.Concat(
 		commands,
