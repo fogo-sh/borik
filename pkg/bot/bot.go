@@ -247,6 +247,60 @@ var commands = []Command{
 		slashHandler: MakeWorkflowSlashCommand[args.CGA](),
 	},
 	{
+		name:         "jackpog",
+		description:  "Have Jack Pog an image.",
+		textHandler:  MakeWorkflowTextCommand[args.JackPog](),
+		slashHandler: MakeWorkflowSlashCommand[args.JackPog](),
+	},
+	{
+		name:         "sidekeenan",
+		description:  "Have Keenan on the side of an image.",
+		textHandler:  MakeWorkflowTextCommand[args.SideKeenan](),
+		slashHandler: MakeWorkflowSlashCommand[args.SideKeenan](),
+	},
+	{
+		name:         "keenanthumb",
+		description:  "Have Keenan thumbs-up an image.",
+		textHandler:  MakeWorkflowTextCommand[args.KeenanThumb](),
+		slashHandler: MakeWorkflowSlashCommand[args.KeenanThumb](),
+	},
+	{
+		name:         "mitchpoint",
+		description:  "Have Mitch point at an image.",
+		textHandler:  MakeWorkflowTextCommand[args.MitchPoint](),
+		slashHandler: MakeWorkflowSlashCommand[args.MitchPoint](),
+	},
+	{
+		name:         "stevepoint",
+		description:  "Have Steve point at an image.",
+		textHandler:  MakeWorkflowTextCommand[args.StevePoint](),
+		slashHandler: MakeWorkflowSlashCommand[args.StevePoint](),
+	},
+	{
+		name:         "andrewpog",
+		description:  "Have Andrew Pog an image.",
+		textHandler:  MakeWorkflowTextCommand[args.AndrewPog](),
+		slashHandler: MakeWorkflowSlashCommand[args.AndrewPog](),
+	},
+	{
+		name:         "matlabkid",
+		description:  "Have matlab kid possess an image",
+		textHandler:  MakeWorkflowTextCommand[args.MatlabKid](),
+		slashHandler: MakeWorkflowSlashCommand[args.MatlabKid](),
+	},
+	{
+		name:         "natalieclimb",
+		description:  "Have Natalie climb an image.",
+		textHandler:  MakeWorkflowTextCommand[args.NatalieClimb](),
+		slashHandler: MakeWorkflowSlashCommand[args.NatalieClimb](),
+	},
+	{
+		name:         "dennystanding",
+		description:  "Have Denny standing in an image.",
+		textHandler:  MakeWorkflowTextCommand[args.DennyStanding](),
+		slashHandler: MakeWorkflowSlashCommand[args.DennyStanding](),
+	},
+	{
 		name:         "aigen",
 		description:  "Generate an image from a prompt.",
 		textHandler:  ImageGenTextCommand,
@@ -370,7 +424,6 @@ func New() (*Bot, error) {
 
 	allCommands := slices.Concat(
 		commands,
-		generateOverlayCommands(),
 	)
 
 	for _, command := range allCommands {

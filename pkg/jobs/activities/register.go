@@ -31,4 +31,13 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(EGA)
 	worker.RegisterActivity(TempleOS)
 	worker.RegisterActivity(CGA)
+	worker.RegisterActivity(JackPog)
+	worker.RegisterActivity(SideKeenan)
+	worker.RegisterActivity(KeenanThumb)
+	worker.RegisterActivity(MitchPoint)
+	worker.RegisterActivity(StevePoint)
+	worker.RegisterActivity(AndrewPog)
+	worker.RegisterActivity(MatlabKid)
+	worker.RegisterActivity(NatalieClimb)
+	worker.RegisterActivity(DennyStanding)
 }

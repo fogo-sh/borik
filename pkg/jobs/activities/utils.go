@@ -237,3 +237,100 @@ func mirrorImage(wand *imagick.MagickWand, direction mirrorDirection, flipped bo
 
 	return []*imagick.MagickWand{wand}, nil
 }
+
+type overlayOptions struct {
+	HFlip bool
+	VFlip bool
+
+	OverlayWidthFactor  float64
+	OverlayHeightFactor float64
+
+	RightToLeft bool
+}
+
+type overlayArgs struct {
+	HFlip bool
+	VFlip bool
+}
+
+func applyOverlay(jobWorkspace workspace.Workspace, opArgs OperationArgs, overlayImage []byte, initialOptions overlayOptions) ([]workspace.Artifact, error) {
+	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	if err != nil {
+		return nil, err
+	}
+
+	var args overlayArgs
+	err = decodeOperationArgs(opArgs, &args)
+	if err != nil {
+		return nil, fmt.Errorf("error while decoding operation args: %w", err)
+	}
+
+	options := initialOptions
+	if args.HFlip {
+		options.HFlip = !options.HFlip
+	}
+	if args.VFlip {
+		options.VFlip = !options.VFlip
+	}
+
+	err = overlayImageOnWand(wand, overlayImage, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return saveFrames(jobWorkspace, wand)
+}
+
+func overlayImageOnWand(wand *imagick.MagickWand, overlay []byte, options overlayOptions) error {
+	overlayWand := imagick.NewMagickWand()
+	defer overlayWand.Destroy()
+
+	err := overlayWand.ReadImageBlob(overlay)
+	if err != nil {
+		return fmt.Errorf("error reading overlay: %w", err)
+	}
+
+	if options.HFlip {
+		err = overlayWand.FlopImage()
+		if err != nil {
+			return fmt.Errorf("error flipping overlay horizontally: %w", err)
+		}
+	}
+	if options.VFlip {
+		err = overlayWand.FlipImage()
+		if err != nil {
+			return fmt.Errorf("error flipping overlay vertically: %w", err)
+		}
+	}
+
+	inputWidth := wand.GetImageWidth()
+	inputHeight := wand.GetImageHeight()
+
+	err = resizeMaintainAspectRatio(
+		overlayWand,
+		uint(float64(inputWidth)*options.OverlayWidthFactor),
+		uint(float64(inputHeight)*options.OverlayHeightFactor),
+	)
+	if err != nil {
+		return fmt.Errorf("error resizing overlay: %w", err)
+	}
+
+	overlayWidth := overlayWand.GetImageWidth()
+	overlayHeight := overlayWand.GetImageHeight()
+
+	if options.HFlip {
+		options.RightToLeft = !options.RightToLeft
+	}
+
+	xOffset := 0
+	if options.RightToLeft {
+		xOffset = int(inputWidth - overlayWidth)
+	}
+
+	yOffset := 0
+	if !options.VFlip {
+		yOffset = int(inputHeight - overlayHeight)
+	}
+
+	return wand.CompositeImage(overlayWand, imagick.COMPOSITE_OP_ATOP, true, xOffset, yOffset)
+}
