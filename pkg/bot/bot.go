@@ -108,12 +108,12 @@ var commands = []Command{
 		textHandler:  MakeWorkflowTextCommand[args.Deepfry](),
 		slashHandler: MakeWorkflowSlashCommand[args.Deepfry](),
 	},
-	// {
-	// 	name:         "divine",
-	// 	description:  "Sever the divine light.",
-	// 	textHandler:  MakeImageOpTextCommand(Divine),
-	// 	slashHandler: MakeImageOpSlashCommand(Divine),
-	// },
+	{
+		name:         "divine",
+		description:  "Sever the divine light.",
+		textHandler:  MakeWorkflowTextCommand[args.Divine](),
+		slashHandler: MakeWorkflowSlashCommand[args.Divine](),
+	},
 	// {
 	// 	name:         "waaw",
 	// 	description:  "Mirror the right half of an image.",

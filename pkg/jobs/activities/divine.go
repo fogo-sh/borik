@@ -1,32 +1,35 @@
-package bot
+package activities
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
+
+	"github.com/fogo-sh/borik/pkg/jobs/args"
+	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
 
-//go:embed divine.png
+//go:embed images/overlays/divine.png
 var divineOverlayImage []byte
 
-type DivineArgs struct {
-	ImageURL   string  `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
-	EdgeRadius float64 `default:"5" description:"Edge radius for edge detection."`
-	BlurRadius float64 `default:"4" description:"Gaussian blur radius."`
-	BlurSigma  float64 `default:"2" description:"Sigma value for gaussian blur."`
-	Brightness float64 `default:"100" description:"Relative percentage for the brightness of the final image."`
-	Saturation float64 `default:"50" description:"Relative percentage for the saturation of the final image."`
-	Hue        float64 `default:"100" description:"Relative percentage for the hue of the final image."`
-}
+func Divine(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	if err != nil {
+		return nil, err
+	}
 
-func (args DivineArgs) GetImageURL() string {
-	return args.ImageURL
-}
+	var divineArgs args.Divine
+	err = decodeOperationArgs(opArgs, &divineArgs)
+	if err != nil {
+		return nil, fmt.Errorf("error while decoding operation args: %w", err)
+	}
 
-func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, error) {
 	overlay := imagick.NewMagickWand()
-	err := overlay.ReadImageBlob(divineOverlayImage)
+	defer overlay.Destroy()
+
+	err = overlay.ReadImageBlob(divineOverlayImage)
 	if err != nil {
 		return nil, fmt.Errorf("error reading divine overlay image: %w", err)
 	}
@@ -43,7 +46,7 @@ func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, e
 	}
 
 	wand.SetImageChannelMask(imagick.CHANNEL_RED | imagick.CHANNEL_GREEN | imagick.CHANNEL_BLUE)
-	err = wand.EdgeImage(args.EdgeRadius)
+	err = wand.EdgeImage(divineArgs.EdgeRadius)
 	if err != nil {
 		return nil, fmt.Errorf("error edge detecting: %w", err)
 	}
@@ -55,12 +58,12 @@ func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, e
 		return nil, fmt.Errorf("error clamping image: %w", err)
 	}
 
-	err = wand.ModulateImage(args.Brightness, args.Saturation, args.Hue)
+	err = wand.ModulateImage(divineArgs.Brightness, divineArgs.Saturation, divineArgs.Hue)
 	if err != nil {
 		return nil, fmt.Errorf("error decreasing saturation: %w", err)
 	}
 
-	err = wand.GaussianBlurImage(args.BlurRadius, args.BlurSigma)
+	err = wand.GaussianBlurImage(divineArgs.BlurRadius, divineArgs.BlurSigma)
 	if err != nil {
 		return nil, fmt.Errorf("error blurring image: %w", err)
 	}
@@ -68,7 +71,7 @@ func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, e
 	inputHeight := wand.GetImageHeight()
 	inputWidth := wand.GetImageWidth()
 
-	err = ResizeMaintainAspectRatio(overlay, inputWidth, inputHeight)
+	err = resizeMaintainAspectRatio(overlay, inputWidth, inputHeight)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing overlay: %w", err)
 	}
@@ -87,5 +90,5 @@ func Divine(wand *imagick.MagickWand, args DivineArgs) ([]*imagick.MagickWand, e
 		return nil, fmt.Errorf("error compositing image: %w", err)
 	}
 
-	return []*imagick.MagickWand{wand}, nil
+	return saveFrames(jobWorkspace, wand)
 }
