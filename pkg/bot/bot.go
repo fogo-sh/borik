@@ -90,12 +90,12 @@ var commands = []Command{
 		textHandler:  MakeWorkflowTextCommand[args.Arcweld](),
 		slashHandler: MakeWorkflowSlashCommand[args.Arcweld](),
 	},
-	// {
-	// 	name:         "malt",
-	// 	description:  "Malt an image.",
-	// 	textHandler:  MakeImageOpTextCommand(Malt),
-	// 	slashHandler: MakeImageOpSlashCommand(Malt),
-	// },
+	{
+		name:         "malt",
+		description:  "Malt an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Malt](),
+		slashHandler: MakeWorkflowSlashCommand[args.Malt](),
+	},
 	{
 		name:         "help",
 		description:  "Get help for available commands.",

@@ -11,6 +11,7 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(Lagik)
 	worker.RegisterActivity(Gmagik)
 	worker.RegisterActivity(Arcweld)
+	worker.RegisterActivity(Malt)
 	worker.RegisterActivity(Deepfry)
 	worker.RegisterActivity(Divine)
 }
