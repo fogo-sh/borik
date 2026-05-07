@@ -28,4 +28,7 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(HueCycle)
 	worker.RegisterActivity(Modulate)
 	worker.RegisterActivity(Hdr)
+	worker.RegisterActivity(EGA)
+	worker.RegisterActivity(TempleOS)
+	worker.RegisterActivity(CGA)
 }

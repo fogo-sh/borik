@@ -1,13 +1,16 @@
-package bot
+package activities
 
 import (
+	"context"
 	"fmt"
 
 	"gopkg.in/gographics/imagick.v3/imagick"
+
+	"github.com/fogo-sh/borik/pkg/jobs/args"
+	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
 
 type graphicsFormat struct {
-	Name       string
 	Palette    []string
 	Resolution [2]uint
 }
@@ -31,22 +34,57 @@ var cgaPalette = []string{
 	"#FFFFFF",
 }
 
-var graphicsFormats = []graphicsFormat{
-	{
-		Name:       "EGA",
+func EGA(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+	var egaArgs args.EGA
+	err := decodeOperationArgs(opArgs, &egaArgs)
+	if err != nil {
+		return nil, fmt.Errorf("error while decoding operation args: %w", err)
+	}
+
+	return applyGraphicsFormat(jobWorkspace, opArgs, graphicsFormat{
 		Palette:    cgaPalette,
 		Resolution: [2]uint{640, 350},
-	},
-	{
-		Name:       "TempleOS",
+	}, egaArgs.Dither)
+}
+
+func TempleOS(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+	var templeOSArgs args.TempleOS
+	err := decodeOperationArgs(opArgs, &templeOSArgs)
+	if err != nil {
+		return nil, fmt.Errorf("error while decoding operation args: %w", err)
+	}
+
+	return applyGraphicsFormat(jobWorkspace, opArgs, graphicsFormat{
 		Palette:    cgaPalette,
 		Resolution: [2]uint{640, 480},
-	},
-	{
-		Name:       "CGA",
+	}, templeOSArgs.Dither)
+}
+
+func CGA(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+	var cgaArgs args.CGA
+	err := decodeOperationArgs(opArgs, &cgaArgs)
+	if err != nil {
+		return nil, fmt.Errorf("error while decoding operation args: %w", err)
+	}
+
+	return applyGraphicsFormat(jobWorkspace, opArgs, graphicsFormat{
 		Palette:    cgaPalette,
 		Resolution: [2]uint{160, 100},
-	},
+	}, cgaArgs.Dither)
+}
+
+func applyGraphicsFormat(jobWorkspace workspace.Workspace, opArgs OperationArgs, format graphicsFormat, dither bool) ([]workspace.Artifact, error) {
+	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := convertGraphicsFormat(wand, format, dither)
+	if err != nil {
+		return nil, err
+	}
+
+	return saveFrames(jobWorkspace, result...)
 }
 
 func getPaletteImage(palette []string) (*imagick.MagickWand, error) {
@@ -80,6 +118,7 @@ func convertGraphicsFormat(wand *imagick.MagickWand, format graphicsFormat, dith
 	if err != nil {
 		return nil, fmt.Errorf("error getting format palette: %w", err)
 	}
+	defer paletteWand.Destroy()
 
 	err = wand.ResizeImage(format.Resolution[0], format.Resolution[1], imagick.FILTER_LANCZOS)
 	if err != nil {
@@ -97,33 +136,4 @@ func convertGraphicsFormat(wand *imagick.MagickWand, format graphicsFormat, dith
 	}
 
 	return []*imagick.MagickWand{wand}, nil
-}
-
-type graphicsFormatArgs struct {
-	ImageURL string `default:"" description:"URL to the image to process. Leave blank to automatically attempt to find an image."`
-	Dither   bool   `default:"false" description:"Whether the final image should be dithered."`
-}
-
-func (args graphicsFormatArgs) GetImageURL() string {
-	return args.ImageURL
-}
-
-func makeGraphicsFormatOp(format graphicsFormat) ImageOperation[graphicsFormatArgs] {
-	return func(wand *imagick.MagickWand, args graphicsFormatArgs) ([]*imagick.MagickWand, error) {
-		return convertGraphicsFormat(wand, format, args.Dither)
-	}
-}
-
-func generateGraphicsFormatCommands() []Command {
-	var cmds []Command
-	// for _, format := range graphicsFormats {
-	// 	op := makeGraphicsFormatOp(format)
-	// 	cmds = append(cmds, Command{
-	// 		name:         strings.ToLower(format.Name),
-	// 		description:  fmt.Sprintf("Convert an image to %s graphics", format.Name),
-	// 		textHandler:  MakeImageOpTextCommand(op),
-	// 		slashHandler: MakeImageOpSlashCommand(op),
-	// 	})
-	// }
-	return cmds
 }

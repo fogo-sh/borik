@@ -229,6 +229,24 @@ var commands = []Command{
 		slashHandler: MakeWorkflowSlashCommand[args.Hdr](),
 	},
 	{
+		name:         "ega",
+		description:  "Convert an image to EGA graphics",
+		textHandler:  MakeWorkflowTextCommand[args.EGA](),
+		slashHandler: MakeWorkflowSlashCommand[args.EGA](),
+	},
+	{
+		name:         "templeos",
+		description:  "Convert an image to TempleOS graphics",
+		textHandler:  MakeWorkflowTextCommand[args.TempleOS](),
+		slashHandler: MakeWorkflowSlashCommand[args.TempleOS](),
+	},
+	{
+		name:         "cga",
+		description:  "Convert an image to CGA graphics",
+		textHandler:  MakeWorkflowTextCommand[args.CGA](),
+		slashHandler: MakeWorkflowSlashCommand[args.CGA](),
+	},
+	{
 		name:         "aigen",
 		description:  "Generate an image from a prompt.",
 		textHandler:  ImageGenTextCommand,
@@ -352,7 +370,6 @@ func New() (*Bot, error) {
 
 	allCommands := slices.Concat(
 		commands,
-		generateGraphicsFormatCommands(),
 		generateOverlayCommands(),
 	)
 
