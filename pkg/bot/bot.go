@@ -97,6 +97,24 @@ var commands = []Command{
 		slashHandler: MakeWorkflowSlashCommand[args.Malt](),
 	},
 	{
+		name:         "presidentsframe",
+		description:  "Apply the President's Frame to an image.",
+		textHandler:  MakeWorkflowTextCommand[args.PresidentsFrame](),
+		slashHandler: MakeWorkflowSlashCommand[args.PresidentsFrame](),
+	},
+	{
+		name:         "heritage",
+		description:  "Turn an image into a Canadian Heritage Minute.",
+		textHandler:  MakeWorkflowTextCommand[args.Heritage](),
+		slashHandler: MakeWorkflowSlashCommand[args.Heritage](),
+	},
+	{
+		name:         "shinji",
+		description:  "Have Shinji throw at an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Shinji](),
+		slashHandler: MakeWorkflowSlashCommand[args.Shinji](),
+	},
+	{
 		name:         "help",
 		description:  "Get help for available commands.",
 		textHandler:  HelpCommand,
@@ -335,7 +353,6 @@ func New() (*Bot, error) {
 	allCommands := slices.Concat(
 		commands,
 		generateGraphicsFormatCommands(),
-		generateFrameCommands(),
 		generateOverlayCommands(),
 	)
 

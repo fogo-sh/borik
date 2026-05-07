@@ -14,4 +14,7 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(Malt)
 	worker.RegisterActivity(Deepfry)
 	worker.RegisterActivity(Divine)
+	worker.RegisterActivity(PresidentsFrame)
+	worker.RegisterActivity(Heritage)
+	worker.RegisterActivity(Shinji)
 }
