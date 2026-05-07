@@ -168,12 +168,12 @@ var commands = []Command{
 	// 	textHandler:  MakeImageOpTextCommand(Otsu),
 	// 	slashHandler: MakeImageOpSlashCommand(Otsu),
 	// },
-	// {
-	// 	name:         "rotate",
-	// 	description:  "Rotate an image.",
-	// 	textHandler:  MakeImageOpTextCommand(Rotate),
-	// 	slashHandler: MakeImageOpSlashCommand(Rotate),
-	// },
+	{
+		name:         "rotate",
+		description:  "Rotate an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Rotate](),
+		slashHandler: MakeWorkflowSlashCommand[args.Rotate](),
+	},
 	{
 		name:         "avatar",
 		description:  "Fetch the avatar for a user.",
@@ -192,12 +192,12 @@ var commands = []Command{
 		textHandler:  Emoji,
 		slashHandler: nil,
 	},
-	// {
-	// 	name:         "resize",
-	// 	description:  "Resize an image.",
-	// 	textHandler:  MakeImageOpTextCommand(Resize),
-	// 	slashHandler: MakeImageOpSlashCommand(Resize),
-	// },
+	{
+		name:         "resize",
+		description:  "Resize an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Resize](),
+		slashHandler: MakeWorkflowSlashCommand[args.Resize](),
+	},
 	// {
 	// 	name:         "huecycle",
 	// 	description:  "Create a GIF cycling the hue of an image.",
