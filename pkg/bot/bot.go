@@ -14,6 +14,7 @@ import (
 	"pkg.nit.so/switchboard"
 
 	configPkg "github.com/fogo-sh/borik/pkg/config"
+	"github.com/fogo-sh/borik/pkg/jobs/args"
 	"github.com/fogo-sh/borik/pkg/logging"
 )
 
@@ -254,8 +255,8 @@ var commands = []Command{
 	{
 		name:        "test",
 		description: "Test workflow.",
-		textHandler: func(message *discordgo.MessageCreate, args testArgs) {
-			Instance.workflowTestCommand(message, args)
+		textHandler: func(message *discordgo.MessageCreate, cmdArgs args.Magik) {
+			Instance.workflowTestCommand(message, cmdArgs)
 		},
 	},
 }
