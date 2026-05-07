@@ -102,12 +102,12 @@ var commands = []Command{
 		textHandler:  HelpCommand,
 		slashHandler: HelpSlashCommand,
 	},
-	// {
-	// 	name:         "deepfry",
-	// 	description:  "Deep-fry an image.",
-	// 	textHandler:  MakeImageOpTextCommand(Deepfry),
-	// 	slashHandler: MakeImageOpSlashCommand(Deepfry),
-	// },
+	{
+		name:         "deepfry",
+		description:  "Deep-fry an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Deepfry](),
+		slashHandler: MakeWorkflowSlashCommand[args.Deepfry](),
+	},
 	// {
 	// 	name:         "divine",
 	// 	description:  "Sever the divine light.",
