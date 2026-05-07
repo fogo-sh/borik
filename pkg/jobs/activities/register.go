@@ -17,4 +17,8 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(PresidentsFrame)
 	worker.RegisterActivity(Heritage)
 	worker.RegisterActivity(Shinji)
+	worker.RegisterActivity(Waaw)
+	worker.RegisterActivity(Haah)
+	worker.RegisterActivity(Woow)
+	worker.RegisterActivity(Hooh)
 }

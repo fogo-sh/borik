@@ -143,3 +143,97 @@ func frameImage(wand *imagick.MagickWand, frame *imagick.MagickWand, openX, open
 
 	return []*imagick.MagickWand{frame}, nil
 }
+
+type mirrorDirection string
+
+const (
+	mirrorDirectionVertical   mirrorDirection = "vertical"
+	mirrorDirectionHorizontal mirrorDirection = "horizontal"
+)
+
+func applyMirror(jobWorkspace workspace.Workspace, opArgs OperationArgs, direction mirrorDirection, flipped bool) ([]workspace.Artifact, error) {
+	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := mirrorImage(wand, direction, flipped)
+	if err != nil {
+		return nil, err
+	}
+
+	return saveFrames(jobWorkspace, result...)
+}
+
+func mirrorImage(wand *imagick.MagickWand, direction mirrorDirection, flipped bool) ([]*imagick.MagickWand, error) {
+	var desiredGravity imagick.GravityType
+	if direction == mirrorDirectionHorizontal {
+		if flipped {
+			desiredGravity = imagick.GRAVITY_EAST
+		} else {
+			desiredGravity = imagick.GRAVITY_WEST
+		}
+	} else {
+		if flipped {
+			desiredGravity = imagick.GRAVITY_SOUTH
+		} else {
+			desiredGravity = imagick.GRAVITY_NORTH
+		}
+	}
+
+	err := wand.SetImageGravity(desiredGravity)
+	if err != nil {
+		return nil, fmt.Errorf("error setting gravity: %w", err)
+	}
+
+	var half *imagick.MagickWand
+	var xOffset, yOffset int
+
+	if direction == mirrorDirectionHorizontal {
+		half = wand.Clone()
+		err = half.CropImageToTiles("50%x100%")
+		if err != nil {
+			return nil, fmt.Errorf("error cropping image half: %w", err)
+		}
+
+		err = half.FlopImage()
+		if err != nil {
+			return nil, fmt.Errorf("error flipping image: %w", err)
+		}
+
+		if flipped {
+			xOffset = 0
+			yOffset = 0
+		} else {
+			xOffset = int(half.GetImageWidth())
+			yOffset = 0
+		}
+	} else {
+		half = wand.Clone()
+		err = half.CropImageToTiles("100%x50%")
+		if err != nil {
+			return nil, fmt.Errorf("error cropping image half: %w", err)
+		}
+
+		err = half.FlipImage()
+		if err != nil {
+			return nil, fmt.Errorf("error flipping image: %w", err)
+		}
+
+		if flipped {
+			xOffset = 0
+			yOffset = 0
+		} else {
+			xOffset = 0
+			yOffset = int(half.GetImageHeight())
+		}
+	}
+	defer half.Destroy()
+
+	err = wand.CompositeImage(half, imagick.COMPOSITE_OP_ATOP, true, xOffset, yOffset)
+	if err != nil {
+		return nil, fmt.Errorf("error compositing image: %w", err)
+	}
+
+	return []*imagick.MagickWand{wand}, nil
+}
