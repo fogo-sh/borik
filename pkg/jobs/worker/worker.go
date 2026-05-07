@@ -2,6 +2,7 @@ package worker
 
 import (
 	"fmt"
+	"runtime"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/contrib/sysinfo"
@@ -34,6 +35,15 @@ func (w *Worker) Stop() {
 	w.interruptChan <- struct{}{}
 }
 
+func cgroupAwareCoreCount() int {
+	cores := runtime.GOMAXPROCS(0)
+	if cores < 1 {
+		return 1
+	}
+
+	return cores
+}
+
 func New() (*Worker, error) {
 	c, err := client.Dial(client.Options{
 		Logger:    logging.NewTemporalLogger(),
@@ -47,9 +57,8 @@ func New() (*Worker, error) {
 		c,
 		config.Instance.TemporalQueueName,
 		worker.Options{
-			SysInfoProvider: sysinfo.SysInfoProvider(),
-			// TODO: How many should this be? Should this be configurable?
-			MaxConcurrentActivityExecutionSize: 1,
+			SysInfoProvider:                    sysinfo.SysInfoProvider(),
+			MaxConcurrentActivityExecutionSize: cgroupAwareCoreCount(),
 		},
 	)
 	workflows.RegisterWorkflows(w)
