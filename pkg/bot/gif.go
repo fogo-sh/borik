@@ -1,16 +1,16 @@
 package bot
 
 import (
-	"bytes"
+	"context"
 	"fmt"
 	"net/url"
-	"os"
-	"os/exec"
 	"path"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
+
+	jobArgs "github.com/fogo-sh/borik/pkg/jobs/args"
 )
 
 type GifArgs struct {
@@ -49,62 +49,23 @@ func PrepareAndInvokeGif(ctx *OperationContext, args GifArgs) {
 		}
 	}
 
-	srcBytes, err := DownloadImage(videoURL)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to download video to process")
-		return
-	}
-
 	parsedURL, _ := url.Parse(videoURL)
-	inputFile, err := os.CreateTemp("", "borik-gif-input-*"+path.Ext(parsedURL.Path))
+
+	_, resultReader, err := Instance.triggerGif(
+		context.Background(),
+		ctx.GetSourceID(),
+		jobArgs.Gif{
+			VideoURL: videoURL,
+			FPS:      args.FPS,
+			Width:    args.Width,
+			Duration: args.Duration,
+		},
+	)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create temporary video file")
-		return
-	}
-	inputPath := inputFile.Name()
-	defer func() {
-		if err := os.Remove(inputPath); err != nil {
-			log.Error().Err(err).Msg("Failed to remove temporary video file")
-		}
-	}()
-
-	if _, err := inputFile.Write(srcBytes); err != nil {
-		log.Error().Err(err).Msg("Failed to write temporary video file")
-		_ = inputFile.Close()
-		return
-	}
-	if err := inputFile.Close(); err != nil {
-		log.Error().Err(err).Msg("Failed to close temporary video file")
-		return
-	}
-
-	outputFile, err := os.CreateTemp("", "borik-gif-output-*.gif")
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to create temporary GIF file")
-		return
-	}
-	outputPath := outputFile.Name()
-	if err := outputFile.Close(); err != nil {
-		log.Error().Err(err).Msg("Failed to close temporary GIF file")
-		return
-	}
-	defer func() {
-		if err := os.Remove(outputPath); err != nil {
-			log.Error().Err(err).Msg("Failed to remove temporary GIF file")
-		}
-	}()
-
-	if err := convertVideoToGIF(inputPath, outputPath, args); err != nil {
 		log.Error().Err(err).Msg("Failed to convert video to GIF")
 		if sendErr := ctx.SendText(fmt.Sprintf("Failed to convert video to GIF: `%s`", err.Error())); sendErr != nil {
 			log.Error().Err(sendErr).Msg("Failed to send error message")
 		}
-		return
-	}
-
-	gifBytes, err := os.ReadFile(outputPath)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to read output GIF")
 		return
 	}
 
@@ -120,7 +81,7 @@ func PrepareAndInvokeGif(ctx *OperationContext, args GifArgs) {
 		{
 			Name:        resultFileName,
 			ContentType: "image/gif",
-			Reader:      bytes.NewReader(gifBytes),
+			Reader:      resultReader,
 		},
 	})
 	if err != nil {
@@ -129,45 +90,4 @@ func PrepareAndInvokeGif(ctx *OperationContext, args GifArgs) {
 			log.Error().Err(sendErr).Msg("Failed to send error message")
 		}
 	}
-}
-
-func convertVideoToGIF(inputPath string, outputPath string, args GifArgs) error {
-	if args.FPS == 0 {
-		return fmt.Errorf("fps must be greater than 0")
-	}
-	if args.Width == 0 {
-		return fmt.Errorf("width must be greater than 0")
-	}
-
-	ffmpegArgs := []string{
-		"-hide_banner",
-		"-loglevel", "error",
-	}
-	if args.Duration > 0 {
-		ffmpegArgs = append(ffmpegArgs, "-t", fmt.Sprintf("%.3f", args.Duration))
-	}
-
-	filter := fmt.Sprintf(
-		"fps=%d,scale=%d:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
-		args.FPS,
-		args.Width,
-	)
-	ffmpegArgs = append(ffmpegArgs,
-		"-i", inputPath,
-		"-vf", filter,
-		"-loop", "0",
-		"-y",
-		outputPath,
-	)
-
-	output, err := exec.Command("ffmpeg", ffmpegArgs...).CombinedOutput()
-	if err != nil {
-		message := strings.TrimSpace(string(output))
-		if message == "" {
-			message = err.Error()
-		}
-		return fmt.Errorf("ffmpeg failed: %s", message)
-	}
-
-	return nil
 }

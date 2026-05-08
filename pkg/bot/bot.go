@@ -2,29 +2,32 @@ package bot
 
 import (
 	"fmt"
-	"slices"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/nint8835/parsley"
-	"github.com/openai/openai-go/v3"
-	"github.com/openai/openai-go/v3/option"
 	"github.com/rs/zerolog/log"
+	"go.temporal.io/sdk/client"
 	"pkg.nit.so/switchboard"
 
 	configPkg "github.com/fogo-sh/borik/pkg/config"
+	"github.com/fogo-sh/borik/pkg/jobs/args"
+	"github.com/fogo-sh/borik/pkg/logging"
 )
 
 // Bot represents an individual instance of Borik
 type Bot struct {
-	session      *discordgo.Session
-	openAiClient openai.Client
-	config       *configPkg.Config
-	textParser   *parsley.Parser
-	slashParser  *switchboard.Switchboard
-	quitChan     chan struct{}
+	session        *discordgo.Session
+	config         *configPkg.Config
+	textParser     *parsley.Parser
+	slashParser    *switchboard.Switchboard
+	temporalClient client.Client
+	quitChan       chan struct{}
 }
 
 func (b *Bot) Start() error {
+	defer b.temporalClient.Close()
+
 	err := b.session.Open()
 	if err != nil {
 		return fmt.Errorf("error opening discord session: %w", err)
@@ -62,32 +65,50 @@ var commands = []Command{
 		name:         "magik",
 		slashAliases: []string{"borik"},
 		description:  "Magikify an image.",
-		textHandler:  MakeImageOpTextCommand(Magik),
-		slashHandler: MakeImageOpSlashCommand(Magik),
+		textHandler:  MakeWorkflowTextCommand[args.Magik](),
+		slashHandler: MakeWorkflowSlashCommand[args.Magik](),
 	},
 	{
 		name:         "lagik",
 		description:  "Lagikify an image.",
-		textHandler:  MakeImageOpTextCommand(Lagik),
-		slashHandler: MakeImageOpSlashCommand(Lagik),
+		textHandler:  MakeWorkflowTextCommand[args.Lagik](),
+		slashHandler: MakeWorkflowSlashCommand[args.Lagik](),
 	},
 	{
 		name:         "gmagik",
 		description:  "Repeatedly magikify an image.",
-		textHandler:  MakeImageOpTextCommand(Gmagik),
-		slashHandler: MakeImageOpSlashCommand(Gmagik),
+		textHandler:  MakeWorkflowTextCommand[args.Gmagik](),
+		slashHandler: MakeWorkflowSlashCommand[args.Gmagik](),
 	},
 	{
 		name:         "arcweld",
 		description:  "Arc-weld an image.",
-		textHandler:  MakeImageOpTextCommand(Arcweld),
-		slashHandler: MakeImageOpSlashCommand(Arcweld),
+		textHandler:  MakeWorkflowTextCommand[args.Arcweld](),
+		slashHandler: MakeWorkflowSlashCommand[args.Arcweld](),
 	},
 	{
 		name:         "malt",
 		description:  "Malt an image.",
-		textHandler:  MakeImageOpTextCommand(Malt),
-		slashHandler: MakeImageOpSlashCommand(Malt),
+		textHandler:  MakeWorkflowTextCommand[args.Malt](),
+		slashHandler: MakeWorkflowSlashCommand[args.Malt](),
+	},
+	{
+		name:         "presidentsframe",
+		description:  "Apply the President's Frame to an image.",
+		textHandler:  MakeWorkflowTextCommand[args.PresidentsFrame](),
+		slashHandler: MakeWorkflowSlashCommand[args.PresidentsFrame](),
+	},
+	{
+		name:         "heritage",
+		description:  "Turn an image into a Canadian Heritage Minute.",
+		textHandler:  MakeWorkflowTextCommand[args.Heritage](),
+		slashHandler: MakeWorkflowSlashCommand[args.Heritage](),
+	},
+	{
+		name:         "shinji",
+		description:  "Have Shinji throw at an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Shinji](),
+		slashHandler: MakeWorkflowSlashCommand[args.Shinji](),
 	},
 	{
 		name:         "help",
@@ -98,56 +119,56 @@ var commands = []Command{
 	{
 		name:         "deepfry",
 		description:  "Deep-fry an image.",
-		textHandler:  MakeImageOpTextCommand(Deepfry),
-		slashHandler: MakeImageOpSlashCommand(Deepfry),
+		textHandler:  MakeWorkflowTextCommand[args.Deepfry](),
+		slashHandler: MakeWorkflowSlashCommand[args.Deepfry](),
 	},
 	{
 		name:         "divine",
 		description:  "Sever the divine light.",
-		textHandler:  MakeImageOpTextCommand(Divine),
-		slashHandler: MakeImageOpSlashCommand(Divine),
+		textHandler:  MakeWorkflowTextCommand[args.Divine](),
+		slashHandler: MakeWorkflowSlashCommand[args.Divine](),
 	},
 	{
 		name:         "waaw",
 		description:  "Mirror the right half of an image.",
-		textHandler:  MakeImageOpTextCommand(Waaw),
-		slashHandler: MakeImageOpSlashCommand(Waaw),
+		textHandler:  MakeWorkflowTextCommand[args.Waaw](),
+		slashHandler: MakeWorkflowSlashCommand[args.Waaw](),
 	},
 	{
 		name:         "haah",
 		description:  "Mirror the left half of an image.",
-		textHandler:  MakeImageOpTextCommand(Haah),
-		slashHandler: MakeImageOpSlashCommand(Haah),
+		textHandler:  MakeWorkflowTextCommand[args.Haah](),
+		slashHandler: MakeWorkflowSlashCommand[args.Haah](),
 	},
 	{
 		name:         "woow",
 		description:  "Mirror the top half of an image.",
-		textHandler:  MakeImageOpTextCommand(Woow),
-		slashHandler: MakeImageOpSlashCommand(Woow),
+		textHandler:  MakeWorkflowTextCommand[args.Woow](),
+		slashHandler: MakeWorkflowSlashCommand[args.Woow](),
 	},
 	{
 		name:         "hooh",
 		description:  "Mirror the bottom half of an image.",
-		textHandler:  MakeImageOpTextCommand(Hooh),
-		slashHandler: MakeImageOpSlashCommand(Hooh),
+		textHandler:  MakeWorkflowTextCommand[args.Hooh](),
+		slashHandler: MakeWorkflowSlashCommand[args.Hooh](),
 	},
 	{
 		name:         "invert",
 		description:  "Invert the colours of an image.",
-		textHandler:  MakeImageOpTextCommand(Invert),
-		slashHandler: MakeImageOpSlashCommand(Invert),
+		textHandler:  MakeWorkflowTextCommand[args.Invert](),
+		slashHandler: MakeWorkflowSlashCommand[args.Invert](),
 	},
 	{
 		name:         "otsu",
 		description:  "Apply a threshold to an image using Otsu's method.",
-		textHandler:  MakeImageOpTextCommand(Otsu),
-		slashHandler: MakeImageOpSlashCommand(Otsu),
+		textHandler:  MakeWorkflowTextCommand[args.Otsu](),
+		slashHandler: MakeWorkflowSlashCommand[args.Otsu](),
 	},
 	{
 		name:         "rotate",
 		description:  "Rotate an image.",
-		textHandler:  MakeImageOpTextCommand(Rotate),
-		slashHandler: MakeImageOpSlashCommand(Rotate),
+		textHandler:  MakeWorkflowTextCommand[args.Rotate](),
+		slashHandler: MakeWorkflowSlashCommand[args.Rotate](),
 	},
 	{
 		name:         "avatar",
@@ -170,14 +191,14 @@ var commands = []Command{
 	{
 		name:         "resize",
 		description:  "Resize an image.",
-		textHandler:  MakeImageOpTextCommand(Resize),
-		slashHandler: MakeImageOpSlashCommand(Resize),
+		textHandler:  MakeWorkflowTextCommand[args.Resize](),
+		slashHandler: MakeWorkflowSlashCommand[args.Resize](),
 	},
 	{
 		name:         "huecycle",
 		description:  "Create a GIF cycling the hue of an image.",
-		textHandler:  MakeImageOpTextCommand(HueCycle),
-		slashHandler: MakeImageOpSlashCommand(HueCycle),
+		textHandler:  MakeWorkflowTextCommand[args.HueCycle](),
+		slashHandler: MakeWorkflowSlashCommand[args.HueCycle](),
 	},
 	{
 		name:         "gif",
@@ -188,61 +209,133 @@ var commands = []Command{
 	{
 		name:         "modulate",
 		description:  "Modify the brightness, saturation, and hue of an image.",
-		textHandler:  MakeImageOpTextCommand(Modulate),
-		slashHandler: MakeImageOpSlashCommand(Modulate),
+		textHandler:  MakeWorkflowTextCommand[args.Modulate](),
+		slashHandler: MakeWorkflowSlashCommand[args.Modulate](),
 	},
 	{
 		name:         "meme",
 		description:  "Add meme text to an image.",
-		textHandler:  MakeImageOpTextCommand(Meme),
-		slashHandler: MakeImageOpSlashCommand(Meme),
+		textHandler:  MakeWorkflowTextCommand[args.Meme](),
+		slashHandler: MakeWorkflowSlashCommand[args.Meme](),
 	},
 	{
 		name:         "hdr",
 		description:  "Apply aggressive HDR color boosting to an image.",
-		textHandler:  MakeImageOpTextCommand(Hdr),
-		slashHandler: MakeImageOpSlashCommand(Hdr),
+		textHandler:  MakeWorkflowTextCommand[args.Hdr](),
+		slashHandler: MakeWorkflowSlashCommand[args.Hdr](),
+	},
+	{
+		name:         "ega",
+		description:  "Convert an image to EGA graphics",
+		textHandler:  MakeWorkflowTextCommand[args.EGA](),
+		slashHandler: MakeWorkflowSlashCommand[args.EGA](),
+	},
+	{
+		name:         "templeos",
+		description:  "Convert an image to TempleOS graphics",
+		textHandler:  MakeWorkflowTextCommand[args.TempleOS](),
+		slashHandler: MakeWorkflowSlashCommand[args.TempleOS](),
+	},
+	{
+		name:         "cga",
+		description:  "Convert an image to CGA graphics",
+		textHandler:  MakeWorkflowTextCommand[args.CGA](),
+		slashHandler: MakeWorkflowSlashCommand[args.CGA](),
+	},
+	{
+		name:         "jackpog",
+		description:  "Have Jack Pog an image.",
+		textHandler:  MakeWorkflowTextCommand[args.JackPog](),
+		slashHandler: MakeWorkflowSlashCommand[args.JackPog](),
+	},
+	{
+		name:         "sidekeenan",
+		description:  "Have Keenan on the side of an image.",
+		textHandler:  MakeWorkflowTextCommand[args.SideKeenan](),
+		slashHandler: MakeWorkflowSlashCommand[args.SideKeenan](),
+	},
+	{
+		name:         "keenanthumb",
+		description:  "Have Keenan thumbs-up an image.",
+		textHandler:  MakeWorkflowTextCommand[args.KeenanThumb](),
+		slashHandler: MakeWorkflowSlashCommand[args.KeenanThumb](),
+	},
+	{
+		name:         "mitchpoint",
+		description:  "Have Mitch point at an image.",
+		textHandler:  MakeWorkflowTextCommand[args.MitchPoint](),
+		slashHandler: MakeWorkflowSlashCommand[args.MitchPoint](),
+	},
+	{
+		name:         "stevepoint",
+		description:  "Have Steve point at an image.",
+		textHandler:  MakeWorkflowTextCommand[args.StevePoint](),
+		slashHandler: MakeWorkflowSlashCommand[args.StevePoint](),
+	},
+	{
+		name:         "andrewpog",
+		description:  "Have Andrew Pog an image.",
+		textHandler:  MakeWorkflowTextCommand[args.AndrewPog](),
+		slashHandler: MakeWorkflowSlashCommand[args.AndrewPog](),
+	},
+	{
+		name:         "matlabkid",
+		description:  "Have matlab kid possess an image",
+		textHandler:  MakeWorkflowTextCommand[args.MatlabKid](),
+		slashHandler: MakeWorkflowSlashCommand[args.MatlabKid](),
+	},
+	{
+		name:         "natalieclimb",
+		description:  "Have Natalie climb an image.",
+		textHandler:  MakeWorkflowTextCommand[args.NatalieClimb](),
+		slashHandler: MakeWorkflowSlashCommand[args.NatalieClimb](),
+	},
+	{
+		name:         "dennystanding",
+		description:  "Have Denny standing in an image.",
+		textHandler:  MakeWorkflowTextCommand[args.DennyStanding](),
+		slashHandler: MakeWorkflowSlashCommand[args.DennyStanding](),
 	},
 	{
 		name:         "aigen",
 		description:  "Generate an image from a prompt.",
-		textHandler:  ImageGenTextCommand,
-		slashHandler: ImageGenSlashCommand,
+		textHandler:  ImageGenWorkflowTextCommand,
+		slashHandler: ImageGenWorkflowSlashCommand,
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
 		name:         "aiedit",
 		description:  "Edit an image based on a prompt.",
-		textHandler:  MakeAIImageOpTextCommand(ImageEdit),
-		slashHandler: MakeAIImageOpSlashCommand(ImageEdit),
+		textHandler:  ImageEditWorkflowTextCommand,
+		slashHandler: ImageEditWorkflowSlashCommand,
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
 		name:         "ailoopedit",
 		description:  "Repeatedly edit an image based on a prompt.",
-		textHandler:  MakeAIImageOpTextCommand(LoopEdit),
-		slashHandler: MakeAIImageOpSlashCommand(LoopEdit),
+		textHandler:  LoopEditWorkflowTextCommand,
+		slashHandler: LoopEditWorkflowSlashCommand,
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
 		name:         "aiflipflop",
 		description:  "Flip-flop between two images, editing each based on a prompt.",
-		textHandler:  MakeAIImageOpTextCommand(FlipFlop),
-		slashHandler: MakeAIImageOpSlashCommand(FlipFlop),
+		textHandler:  FlipFlopWorkflowTextCommand,
+		slashHandler: FlipFlopWorkflowSlashCommand,
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
 		name:         "aizoom",
 		description:  "Zoom out from an image.",
-		textHandler:  MakeAIImageOpTextCommand(AiZoom),
-		slashHandler: MakeAIImageOpSlashCommand(AiZoom),
+		textHandler:  AiZoomWorkflowTextCommand,
+		slashHandler: AiZoomWorkflowSlashCommand,
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
 		name:         "ailoopzoom",
 		description:  "Repeatedly zoom out from an image.",
-		textHandler:  MakeAIImageOpTextCommand(AiLoopZoom),
-		slashHandler: MakeAIImageOpSlashCommand(AiLoopZoom),
+		textHandler:  AiLoopZoomWorkflowTextCommand,
+		slashHandler: AiLoopZoomWorkflowSlashCommand,
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 }
@@ -250,11 +343,9 @@ var commands = []Command{
 // New constructs a new instance of Borik.
 func New() (*Bot, error) {
 	config := configPkg.Instance
-
-	openAiClient := openai.NewClient(
-		option.WithBaseURL(config.OpenaiBaseUrl),
-		option.WithAPIKey(config.OpenaiApiKey),
-	)
+	if strings.TrimSpace(config.Token) == "" {
+		return nil, fmt.Errorf("Discord bot token must be set")
+	}
 
 	log.Debug().Msg("Creating Discord session")
 	session, err := discordgo.New("Bot " + config.Token)
@@ -291,6 +382,23 @@ func New() (*Bot, error) {
 		log.Warn().Msg("Guild ID not set and global registration disabled; skipping registration of slash commands")
 	}
 
+	c, err := client.Dial(client.Options{
+		Namespace: config.TemporalNamespace,
+		Logger:    logging.NewTemporalLogger(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating temporal client: %w", err)
+	}
+
+	Instance = &Bot{
+		session:        session,
+		config:         config,
+		textParser:     textParser,
+		slashParser:    slashParser,
+		temporalClient: c,
+		quitChan:       make(chan struct{}),
+	}
+
 	slashGuildId := config.GuildId
 	if config.RegisterSlashCommandsGlobally {
 		slashGuildId = ""
@@ -302,16 +410,9 @@ func New() (*Bot, error) {
 		log.Warn().Msg("OpenAI API key not set; skipping registration of OpenAI commands")
 	}
 
-	_ = textParser.NewCommand("", "Magikify an image.", MakeImageOpTextCommand(Magik))
+	_ = textParser.NewCommand("", "Magikify an image.", MakeWorkflowTextCommand[args.Magik]())
 
-	allCommands := slices.Concat(
-		commands,
-		generateGraphicsFormatCommands(),
-		generateFrameCommands(),
-		generateOverlayCommands(),
-	)
-
-	for _, command := range allCommands {
+	for _, command := range commands {
 		if command.enabled != nil && !command.enabled(config) {
 			log.Debug().Str("command", command.name).Msg("Skipping disabled command")
 			continue
@@ -369,15 +470,6 @@ func New() (*Bot, error) {
 	}
 
 	log.Debug().Msg("Commands registered")
-
-	Instance = &Bot{
-		session,
-		openAiClient,
-		config,
-		textParser,
-		slashParser,
-		make(chan struct{}),
-	}
 
 	return Instance, nil
 }

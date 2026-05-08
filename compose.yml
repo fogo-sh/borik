@@ -1,7 +1,18 @@
 services:
-  borik:
-    image: ghcr.io/fogo-sh/borik
+  bot:
+    image: ghcr.io/fogo-sh/borik:bot
     restart: always
-    build: .
+    build:
+      context: .
+      target: bot
+    env_file:
+      - .env
+
+  worker:
+    image: ghcr.io/fogo-sh/borik:worker
+    restart: always
+    build:
+      context: .
+      target: worker
     env_file:
       - .env

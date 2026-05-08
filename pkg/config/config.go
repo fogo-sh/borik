@@ -24,10 +24,10 @@ func (p *Prefixes) Decode(value string) error {
 // Config represents the config that Borik will use to run
 type Config struct {
 	Prefixes Prefixes `default:"borik!"`
-	Token    string   `required:"true"`
-	AppId    string   `default:"" split_words:"true"`
-	GuildId  string   `default:"" split_words:"true"`
-	LogLevel string   `default:"info" split_words:"true"`
+	Token    string
+	AppId    string `default:"" split_words:"true"`
+	GuildId  string `default:"" split_words:"true"`
+	LogLevel string `default:"info" split_words:"true"`
 
 	RegisterSlashCommandsGlobally bool `default:"false" split_words:"true"`
 
@@ -35,6 +35,11 @@ type Config struct {
 	OpenaiApiKey         string `default:"" split_words:"true"`
 	OpenaiImageGenModel  string `default:"flux-2-klein-4b" split_words:"true"`
 	OpenaiImageEditModel string `default:"flux-2-klein-4b" split_words:"true"`
+
+	TemporalNamespace string `default:"borik" split_words:"true"`
+	TemporalQueueName string `default:"borik" split_words:"true"`
+
+	WorkspacePath string `default:"workspace" split_words:"true"`
 }
 
 var Instance *Config
