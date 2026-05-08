@@ -41,4 +41,10 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(MatlabKid)
 	worker.RegisterActivity(NatalieClimb)
 	worker.RegisterActivity(DennyStanding)
+	worker.RegisterActivity(GenerateImage)
+	worker.RegisterActivity(ImageEdit)
+	worker.RegisterActivity(LoopEdit)
+	worker.RegisterActivity(FlipFlop)
+	worker.RegisterActivity(AiZoom)
+	worker.RegisterActivity(AiLoopZoom)
 }

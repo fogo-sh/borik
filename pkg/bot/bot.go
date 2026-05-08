@@ -7,8 +7,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/nint8835/parsley"
-	"github.com/openai/openai-go/v3"
-	"github.com/openai/openai-go/v3/option"
 	"github.com/rs/zerolog/log"
 	"go.temporal.io/sdk/client"
 	"pkg.nit.so/switchboard"
@@ -21,7 +19,6 @@ import (
 // Bot represents an individual instance of Borik
 type Bot struct {
 	session        *discordgo.Session
-	openAiClient   openai.Client
 	config         *configPkg.Config
 	textParser     *parsley.Parser
 	slashParser    *switchboard.Switchboard
@@ -303,43 +300,43 @@ var commands = []Command{
 	{
 		name:         "aigen",
 		description:  "Generate an image from a prompt.",
-		textHandler:  ImageGenTextCommand,
-		slashHandler: ImageGenSlashCommand,
+		textHandler:  ImageGenWorkflowTextCommand,
+		slashHandler: ImageGenWorkflowSlashCommand,
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
 		name:         "aiedit",
 		description:  "Edit an image based on a prompt.",
-		textHandler:  MakeAIImageOpTextCommand(ImageEdit),
-		slashHandler: MakeAIImageOpSlashCommand(ImageEdit),
+		textHandler:  ImageEditWorkflowTextCommand,
+		slashHandler: ImageEditWorkflowSlashCommand,
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
 		name:         "ailoopedit",
 		description:  "Repeatedly edit an image based on a prompt.",
-		textHandler:  MakeAIImageOpTextCommand(LoopEdit),
-		slashHandler: MakeAIImageOpSlashCommand(LoopEdit),
+		textHandler:  LoopEditWorkflowTextCommand,
+		slashHandler: LoopEditWorkflowSlashCommand,
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
 		name:         "aiflipflop",
 		description:  "Flip-flop between two images, editing each based on a prompt.",
-		textHandler:  MakeAIImageOpTextCommand(FlipFlop),
-		slashHandler: MakeAIImageOpSlashCommand(FlipFlop),
+		textHandler:  FlipFlopWorkflowTextCommand,
+		slashHandler: FlipFlopWorkflowSlashCommand,
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
 		name:         "aizoom",
 		description:  "Zoom out from an image.",
-		textHandler:  MakeAIImageOpTextCommand(AiZoom),
-		slashHandler: MakeAIImageOpSlashCommand(AiZoom),
+		textHandler:  AiZoomWorkflowTextCommand,
+		slashHandler: AiZoomWorkflowSlashCommand,
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 	{
 		name:         "ailoopzoom",
 		description:  "Repeatedly zoom out from an image.",
-		textHandler:  MakeAIImageOpTextCommand(AiLoopZoom),
-		slashHandler: MakeAIImageOpSlashCommand(AiLoopZoom),
+		textHandler:  AiLoopZoomWorkflowTextCommand,
+		slashHandler: AiLoopZoomWorkflowSlashCommand,
 		enabled:      func(c *configPkg.Config) bool { return c.OpenaiApiKey != "" },
 	},
 }
@@ -350,11 +347,6 @@ func New() (*Bot, error) {
 	if strings.TrimSpace(config.Token) == "" {
 		return nil, fmt.Errorf("Discord bot token must be set")
 	}
-
-	openAiClient := openai.NewClient(
-		option.WithBaseURL(config.OpenaiBaseUrl),
-		option.WithAPIKey(config.OpenaiApiKey),
-	)
 
 	log.Debug().Msg("Creating Discord session")
 	session, err := discordgo.New("Bot " + config.Token)
@@ -401,7 +393,6 @@ func New() (*Bot, error) {
 
 	Instance = &Bot{
 		session:        session,
-		openAiClient:   openAiClient,
 		config:         config,
 		textParser:     textParser,
 		slashParser:    slashParser,

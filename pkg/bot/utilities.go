@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"path"
@@ -379,41 +378,6 @@ func DownloadImage(url string) ([]byte, error) {
 	}
 
 	return buffer.Bytes(), nil
-}
-
-// AIImageOperation is like ImageOperation but also receives AISessionMetadata for session tracking and seed management
-type AIImageOperation[K ImageOperationArgs] func(*imagick.MagickWand, K, AISessionMetadata) ([]*imagick.MagickWand, error)
-
-// MakeAIImageOpTextCommand creates a Parsley command handler for an AIImageOperation,
-// building full AISessionMetadata (with seed, session ID, user ID) from the OperationContext
-func MakeAIImageOpTextCommand[K ImageOperationArgs](operation AIImageOperation[K]) func(*discordgo.MessageCreate, K) {
-	return func(message *discordgo.MessageCreate, args K) {
-		ctx := NewOperationContextFromMessage(Instance.session, message)
-		metadata := AISessionMetadata{
-			Seed:      rand.Int(),
-			SessionID: ctx.GetSourceID(),
-			UserID:    ctx.GetUserID(),
-		}
-		PrepareAndInvokeOperation(ctx, args, func(wand *imagick.MagickWand, args K) ([]*imagick.MagickWand, error) {
-			return operation(wand, args, metadata)
-		})
-	}
-}
-
-// MakeAIImageOpSlashCommand creates a slash command handler for an AIImageOperation,
-// building full AISessionMetadata (with seed, session ID, user ID) from the OperationContext
-func MakeAIImageOpSlashCommand[K ImageOperationArgs](operation AIImageOperation[K]) func(*discordgo.Session, *discordgo.InteractionCreate, K) {
-	return func(session *discordgo.Session, interaction *discordgo.InteractionCreate, args K) {
-		ctx := NewOperationContextFromInteraction(session, interaction)
-		metadata := AISessionMetadata{
-			Seed:      rand.Int(),
-			SessionID: ctx.GetSourceID(),
-			UserID:    ctx.GetUserID(),
-		}
-		PrepareAndInvokeOperation(ctx, args, func(wand *imagick.MagickWand, args K) ([]*imagick.MagickWand, error) {
-			return operation(wand, args, metadata)
-		})
-	}
 }
 
 // PrepareAndInvokeOperation automatically handles invoking a given ImageOperation and returning the finished results

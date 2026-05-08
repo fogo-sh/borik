@@ -31,6 +31,17 @@ func resizeMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint
 	return wand.ScaleImage(uint(targetWidth), uint(targetHeight))
 }
 
+func shrinkMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint) error {
+	inputHeight := float64(wand.GetImageHeight())
+	inputWidth := float64(wand.GetImageWidth())
+
+	if inputWidth <= float64(width) && inputHeight <= float64(height) {
+		return nil
+	}
+
+	return resizeMaintainAspectRatio(wand, width, height)
+}
+
 type fitMode int
 
 const (
