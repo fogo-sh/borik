@@ -27,6 +27,7 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(Resize)
 	worker.RegisterActivity(HueCycle)
 	worker.RegisterActivity(Modulate)
+	worker.RegisterActivity(Meme)
 	worker.RegisterActivity(Hdr)
 	worker.RegisterActivity(EGA)
 	worker.RegisterActivity(TempleOS)

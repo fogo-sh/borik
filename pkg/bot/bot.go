@@ -216,12 +216,12 @@ var commands = []Command{
 		textHandler:  MakeWorkflowTextCommand[args.Modulate](),
 		slashHandler: MakeWorkflowSlashCommand[args.Modulate](),
 	},
-	// {
-	// 	name:         "meme",
-	// 	description:  "Add meme text to an image.",
-	// 	textHandler:  MakeImageOpTextCommand(Meme),
-	// 	slashHandler: MakeImageOpSlashCommand(Meme),
-	// },
+	{
+		name:         "meme",
+		description:  "Add meme text to an image.",
+		textHandler:  MakeWorkflowTextCommand[args.Meme](),
+		slashHandler: MakeWorkflowSlashCommand[args.Meme](),
+	},
 	{
 		name:         "hdr",
 		description:  "Apply aggressive HDR color boosting to an image.",
