@@ -2,7 +2,6 @@ package bot
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -413,11 +412,7 @@ func New() (*Bot, error) {
 
 	_ = textParser.NewCommand("", "Magikify an image.", MakeWorkflowTextCommand[args.Magik]())
 
-	allCommands := slices.Concat(
-		commands,
-	)
-
-	for _, command := range allCommands {
+	for _, command := range commands {
 		if command.enabled != nil && !command.enabled(config) {
 			log.Debug().Str("command", command.name).Msg("Skipping disabled command")
 			continue
