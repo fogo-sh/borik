@@ -7,9 +7,11 @@ import (
 	"io"
 	"math"
 	"math/rand/v2"
+	"mime"
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
@@ -21,6 +23,8 @@ import (
 type ImageOperationArgs interface {
 	GetImageURL() string
 }
+
+var messageURLRegex = regexp.MustCompile(`(?i)https?://[^\s<>"']+`)
 
 type ImageOperation[K ImageOperationArgs] func(*imagick.MagickWand, K) ([]*imagick.MagickWand, error)
 
@@ -238,6 +242,23 @@ func ImageURLFromComponent(component discordgo.MessageComponent) string {
 	}
 }
 
+func mediaURLFromContent(content string, contentTypePrefix string) string {
+	for _, candidate := range messageURLRegex.FindAllString(content, -1) {
+		candidate = strings.TrimRight(candidate, ".,!?;:)]}")
+		parsedURL, err := url.Parse(candidate)
+		if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
+			continue
+		}
+
+		contentType := mime.TypeByExtension(strings.ToLower(path.Ext(parsedURL.Path)))
+		if strings.HasPrefix(contentType, contentTypePrefix) {
+			return candidate
+		}
+	}
+
+	return ""
+}
+
 // ImageURLFromMessage attempts to retrieve an image URL from a given message.
 func ImageURLFromMessage(m *discordgo.Message) string {
 	for _, embed := range m.Embeds {
@@ -259,6 +280,10 @@ func ImageURLFromMessage(m *discordgo.Message) string {
 		if url != "" {
 			return url
 		}
+	}
+
+	if url := mediaURLFromContent(m.Content, "image/"); url != "" {
+		return url
 	}
 
 	return ""
@@ -288,6 +313,10 @@ func VideoURLFromMessage(m *discordgo.Message) string {
 		}
 	}
 
+	if url := mediaURLFromContent(m.Content, "video/"); url != "" {
+		return url
+	}
+
 	return ""
 }
 
@@ -296,12 +325,8 @@ func IsVideoAttachment(attachment *discordgo.MessageAttachment) bool {
 		return true
 	}
 
-	switch strings.ToLower(path.Ext(attachment.Filename)) {
-	case ".avi", ".m4v", ".mkv", ".mov", ".mp4", ".webm":
-		return true
-	default:
-		return false
-	}
+	contentType := mime.TypeByExtension(strings.ToLower(path.Ext(attachment.Filename)))
+	return strings.HasPrefix(contentType, "video/")
 }
 
 // FindImageURLFromMessage attempts to find an image in a given message, falling back to scanning message history if one cannot be found.
