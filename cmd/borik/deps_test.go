@@ -12,7 +12,7 @@ func TestBorikDoesNotDependOnImagick(t *testing.T) {
 		t.Fatalf("listing cmd/borik dependencies: %v\n%s", err, output)
 	}
 
-	for _, dep := range strings.Fields(string(output)) {
+	for dep := range strings.FieldsSeq(string(output)) {
 		if strings.Contains(dep, "gopkg.in/gographics/imagick") {
 			t.Fatalf("cmd/borik must not depend on imagick, found %q", dep)
 		}
