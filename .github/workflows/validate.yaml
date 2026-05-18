@@ -11,7 +11,6 @@ permissions:
 
 env:
   IMAGEMAGICK_PREFIX: ${{ github.workspace }}/.cache/imagemagick
-  IMAGEMAGICK_VERSION: 7.1.2-3
 
 jobs:
   golangci-lint:
@@ -33,11 +32,11 @@ jobs:
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: .cache/imagemagick
-          key: imagemagick-${{ runner.os }}-${{ runner.arch }}-${{ env.IMAGEMAGICK_VERSION }}-${{ hashFiles('scripts/install-imagemagick.sh') }}
+          key: imagemagick-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/install-imagemagick.sh') }}
 
       - name: Install ImageMagick 7 development headers
         run: |
-          sudo --preserve-env=IMAGEMAGICK_PREFIX,IMAGEMAGICK_VERSION ./scripts/install-imagemagick.sh
+          sudo --preserve-env=IMAGEMAGICK_PREFIX ./scripts/install-imagemagick.sh
           echo "${IMAGEMAGICK_PREFIX}/bin" >> "$GITHUB_PATH"
           echo "PKG_CONFIG_PATH=${IMAGEMAGICK_PREFIX}/lib/pkgconfig" >> "$GITHUB_ENV"
           echo "LD_LIBRARY_PATH=${IMAGEMAGICK_PREFIX}/lib" >> "$GITHUB_ENV"
