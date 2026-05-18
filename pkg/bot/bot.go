@@ -344,7 +344,7 @@ var commands = []Command{
 func New() (*Bot, error) {
 	config := configPkg.Instance
 	if strings.TrimSpace(config.Token) == "" {
-		return nil, fmt.Errorf("Discord bot token must be set")
+		return nil, fmt.Errorf("discord bot token must be set")
 	}
 
 	log.Debug().Msg("Creating Discord session")

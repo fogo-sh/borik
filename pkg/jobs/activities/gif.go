@@ -15,7 +15,11 @@ import (
 	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
 
-func ConvertVideoToGIF(ctx context.Context, jobWorkspace workspace.Workspace, args args.Gif) (workspace.Artifact, error) {
+func ConvertVideoToGIF(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	args args.Gif,
+) (workspace.Artifact, error) {
 	inputPath, err := downloadVideo(ctx, jobWorkspace, args.VideoURL)
 	if err != nil {
 		return "", err

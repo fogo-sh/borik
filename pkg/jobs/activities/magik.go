@@ -58,7 +58,13 @@ func Gmagik(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Operat
 	for i := uint(0); i < gmagikArgs.Iterations; i++ {
 		newFrame := lastFrame.Clone()
 
-		frames, err := magikHelper(jobWorkspace, newFrame, gmagikArgs.Scale, gmagikArgs.WidthMultiplier, gmagikArgs.HeightMultiplier)
+		frames, err := magikHelper(
+			jobWorkspace,
+			newFrame,
+			gmagikArgs.Scale,
+			gmagikArgs.WidthMultiplier,
+			gmagikArgs.HeightMultiplier,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("error running magik: %w", err)
 		}
@@ -70,7 +76,11 @@ func Gmagik(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Operat
 	return results, nil
 }
 
-func magikHelper(jobWorkspace workspace.Workspace, wand *imagick.MagickWand, scale, widthMultiplier, heightMultiplier float64) ([]workspace.Artifact, error) {
+func magikHelper(
+	jobWorkspace workspace.Workspace,
+	wand *imagick.MagickWand,
+	scale, widthMultiplier, heightMultiplier float64,
+) ([]workspace.Artifact, error) {
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 

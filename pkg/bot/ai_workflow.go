@@ -62,7 +62,11 @@ func ImageGenWorkflowTextCommand(message *discordgo.MessageCreate, imageGenArgs 
 	})
 }
 
-func ImageGenWorkflowSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, imageGenArgs ImageGenArgs) {
+func ImageGenWorkflowSlashCommand(
+	session *discordgo.Session,
+	interaction *discordgo.InteractionCreate,
+	imageGenArgs ImageGenArgs,
+) {
 	ctx := NewOperationContextFromInteraction(session, interaction)
 	PrepareAndInvokeGenerateImage(ctx, args.ImageGen{
 		Prompt:   imageGenArgs.Prompt,
@@ -79,7 +83,11 @@ func ImageEditWorkflowTextCommand(message *discordgo.MessageCreate, imageEditArg
 	})
 }
 
-func ImageEditWorkflowSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, imageEditArgs ImageEditArgs) {
+func ImageEditWorkflowSlashCommand(
+	session *discordgo.Session,
+	interaction *discordgo.InteractionCreate,
+	imageEditArgs ImageEditArgs,
+) {
 	ctx := NewOperationContextFromInteraction(session, interaction)
 	PrepareAndInvokeWorkflow(ctx, args.ImageEdit{
 		Prompt:   imageEditArgs.Prompt,
@@ -98,7 +106,11 @@ func LoopEditWorkflowTextCommand(message *discordgo.MessageCreate, loopEditArgs 
 	})
 }
 
-func LoopEditWorkflowSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, loopEditArgs LoopEditArgs) {
+func LoopEditWorkflowSlashCommand(
+	session *discordgo.Session,
+	interaction *discordgo.InteractionCreate,
+	loopEditArgs LoopEditArgs,
+) {
 	ctx := NewOperationContextFromInteraction(session, interaction)
 	PrepareAndInvokeWorkflow(ctx, args.LoopEdit{
 		Prompt:   loopEditArgs.Prompt,
@@ -119,7 +131,11 @@ func FlipFlopWorkflowTextCommand(message *discordgo.MessageCreate, flipFlopArgs 
 	})
 }
 
-func FlipFlopWorkflowSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, flipFlopArgs FlipFlopArgs) {
+func FlipFlopWorkflowSlashCommand(
+	session *discordgo.Session,
+	interaction *discordgo.InteractionCreate,
+	flipFlopArgs FlipFlopArgs,
+) {
 	ctx := NewOperationContextFromInteraction(session, interaction)
 	PrepareAndInvokeWorkflow(ctx, args.FlipFlop{
 		Prompt1:  flipFlopArgs.Prompt1,
@@ -140,7 +156,11 @@ func AiZoomWorkflowTextCommand(message *discordgo.MessageCreate, aiZoomArgs AiZo
 	})
 }
 
-func AiZoomWorkflowSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, aiZoomArgs AiZoomArgs) {
+func AiZoomWorkflowSlashCommand(
+	session *discordgo.Session,
+	interaction *discordgo.InteractionCreate,
+	aiZoomArgs AiZoomArgs,
+) {
 	ctx := NewOperationContextFromInteraction(session, interaction)
 	PrepareAndInvokeWorkflow(ctx, args.AiZoom{
 		ImageURL: aiZoomArgs.ImageURL,
@@ -160,7 +180,11 @@ func AiLoopZoomWorkflowTextCommand(message *discordgo.MessageCreate, aiLoopZoomA
 	})
 }
 
-func AiLoopZoomWorkflowSlashCommand(session *discordgo.Session, interaction *discordgo.InteractionCreate, aiLoopZoomArgs AiLoopZoomArgs) {
+func AiLoopZoomWorkflowSlashCommand(
+	session *discordgo.Session,
+	interaction *discordgo.InteractionCreate,
+	aiLoopZoomArgs AiLoopZoomArgs,
+) {
 	ctx := NewOperationContextFromInteraction(session, interaction)
 	PrepareAndInvokeWorkflow(ctx, args.AiLoopZoom{
 		ImageURL: aiLoopZoomArgs.ImageURL,

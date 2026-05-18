@@ -80,7 +80,8 @@ func Otsu(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Operatio
 
 		meanBackground := sumBackground / weightBackground
 		meanForeground := (sum - sumBackground) / weightForeground
-		betweenVariance := weightBackground * weightForeground * (meanBackground - meanForeground) * (meanBackground - meanForeground)
+		meanDelta := meanBackground - meanForeground
+		betweenVariance := weightBackground * weightForeground * meanDelta * meanDelta
 		if betweenVariance > maxVariance {
 			maxVariance = betweenVariance
 			threshold = i

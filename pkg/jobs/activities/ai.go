@@ -36,7 +36,11 @@ func openAIClient() openai.Client {
 	)
 }
 
-func GenerateImage(ctx context.Context, jobWorkspace workspace.Workspace, imageGenArgs args.ImageGen) (workspace.Artifact, error) {
+func GenerateImage(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	imageGenArgs args.ImageGen,
+) (workspace.Artifact, error) {
 	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, imageGenArgs.Metadata.Seed)
 	finalPrompt := imageGenArgs.Prompt + stableDiffusionOpts
 
@@ -71,7 +75,12 @@ func GenerateImage(ctx context.Context, jobWorkspace workspace.Workspace, imageG
 	return artifact, nil
 }
 
-func editImage(ctx context.Context, wand *imagick.MagickWand, imageEditArgs args.ImageEdit, mask *imagick.MagickWand) (*imagick.MagickWand, error) {
+func editImage(
+	ctx context.Context,
+	wand *imagick.MagickWand,
+	imageEditArgs args.ImageEdit,
+	mask *imagick.MagickWand,
+) (*imagick.MagickWand, error) {
 	err := shrinkMaintainAspectRatio(wand, aiEditMaxDimension, aiEditMaxDimension)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
@@ -140,7 +149,11 @@ func editImage(ctx context.Context, wand *imagick.MagickWand, imageEditArgs args
 	return newWand, nil
 }
 
-func ImageEdit(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func ImageEdit(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
 	if err != nil {
 		return nil, err
@@ -160,7 +173,11 @@ func ImageEdit(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Ope
 	return saveFrames(jobWorkspace, editedImage)
 }
 
-func LoopEdit(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func LoopEdit(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
 	if err != nil {
 		return nil, err
@@ -190,7 +207,11 @@ func LoopEdit(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Oper
 	return saveFrames(jobWorkspace, editedFrames...)
 }
 
-func FlipFlop(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func FlipFlop(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
 	if err != nil {
 		return nil, err
@@ -230,17 +251,25 @@ func FlipFlop(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Oper
 	return saveFrames(jobWorkspace, editedFrames...)
 }
 
-func performAiZoomStep(ctx context.Context, wand *imagick.MagickWand, prompt string, metadata args.AIMetadata) (*imagick.MagickWand, error) {
+func performAiZoomStep(
+	ctx context.Context,
+	wand *imagick.MagickWand,
+	prompt string,
+	metadata args.AIMetadata,
+) (*imagick.MagickWand, error) {
 	originalWidth := wand.GetImageWidth()
 	originalHeight := wand.GetImageHeight()
 
 	sizeMultiplier := 0.8
 
-	if originalWidth < uint(float64(aiEditMaxDimension)*sizeMultiplier) && originalHeight < uint(float64(aiEditMaxDimension)*sizeMultiplier) {
+	maxZoomDimension := uint(float64(aiEditMaxDimension) * sizeMultiplier)
+	if originalWidth < maxZoomDimension && originalHeight < maxZoomDimension {
 		originalWidth = uint(float64(originalWidth) / sizeMultiplier)
 		originalHeight = uint(float64(originalHeight) / sizeMultiplier)
 	} else {
-		err := shrinkMaintainAspectRatio(wand, uint(float64(wand.GetImageWidth())*sizeMultiplier), uint(float64(wand.GetImageHeight())*sizeMultiplier))
+		targetWidth := uint(float64(wand.GetImageWidth()) * sizeMultiplier)
+		targetHeight := uint(float64(wand.GetImageHeight()) * sizeMultiplier)
+		err := shrinkMaintainAspectRatio(wand, targetWidth, targetHeight)
 		if err != nil {
 			return nil, fmt.Errorf("error resizing image for zoom: %w", err)
 		}
@@ -263,7 +292,9 @@ func performAiZoomStep(ctx context.Context, wand *imagick.MagickWand, prompt str
 		return nil, fmt.Errorf("error setting canvas alpha channel for zoom: %w", err)
 	}
 
-	err = canvas.CompositeImage(wand, imagick.COMPOSITE_OP_OVER, false, int((originalWidth-wand.GetImageWidth())/2), int((originalHeight-wand.GetImageHeight())/2))
+	xOffset := int((originalWidth - wand.GetImageWidth()) / 2)
+	yOffset := int((originalHeight - wand.GetImageHeight()) / 2)
+	err = canvas.CompositeImage(wand, imagick.COMPOSITE_OP_OVER, false, xOffset, yOffset)
 	if err != nil {
 		return nil, fmt.Errorf("error compositing image onto canvas for zoom: %w", err)
 	}
@@ -307,7 +338,11 @@ func AiZoom(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Operat
 	return saveFrames(jobWorkspace, wand)
 }
 
-func AiLoopZoom(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func AiLoopZoom(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
 	if err != nil {
 		return nil, err

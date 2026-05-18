@@ -8,7 +8,11 @@ import (
 	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
 
-func Modulate(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func Modulate(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
 	if err != nil {
 		return nil, err

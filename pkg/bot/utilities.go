@@ -2,7 +2,6 @@ package bot
 
 import (
 	"fmt"
-	"io"
 	"mime"
 	"net/url"
 	"path"
@@ -40,7 +39,10 @@ func NewOperationContextFromMessage(session *discordgo.Session, message *discord
 	}
 }
 
-func NewOperationContextFromInteraction(session *discordgo.Session, interaction *discordgo.InteractionCreate) *OperationContext {
+func NewOperationContextFromInteraction(
+	session *discordgo.Session,
+	interaction *discordgo.InteractionCreate,
+) *OperationContext {
 	return &OperationContext{
 		Session:     session,
 		Interaction: interaction,
@@ -173,7 +175,7 @@ func TypingIndicatorForContext(ctx *OperationContext) func() {
 	return func() {}
 }
 
-// TypingIndicator invokes a typing indicator in the channel of a message
+// TypingIndicator invokes a typing indicator in the channel of a message.
 func TypingIndicator(message *discordgo.MessageCreate) func() {
 	stopTyping := Schedule(
 		func() {
@@ -191,7 +193,7 @@ func TypingIndicator(message *discordgo.MessageCreate) func() {
 	}
 }
 
-// Schedule some func to be run in a cancelable goroutine on an interval
+// Schedule some func to be run in a cancelable goroutine on an interval.
 func Schedule(what func(), delay time.Duration) chan bool {
 	stop := make(chan bool)
 
@@ -335,10 +337,4 @@ func findMediaURLInChannel(s *discordgo.Session, channelID string, beforeID stri
 		}
 	}
 	return "", fmt.Errorf("unable to locate a %s", kind.name)
-}
-
-func closeBody(body io.Closer, message string) {
-	if err := body.Close(); err != nil {
-		log.Error().Err(err).Msg(message)
-	}
 }

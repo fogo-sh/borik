@@ -22,7 +22,7 @@ var antonFontData []byte
 var (
 	antonFontPath string
 	antonFontOnce sync.Once
-	antonFontErr  error
+	errAntonFont  error
 )
 
 const (
@@ -65,11 +65,11 @@ func Meme(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Operatio
 func getMemeFontPath() (string, error) {
 	antonFontOnce.Do(func() {
 		fontPath := filepath.Join(os.TempDir(), "borik-anton.ttf")
-		antonFontErr = os.WriteFile(fontPath, antonFontData, 0644)
+		errAntonFont = os.WriteFile(fontPath, antonFontData, 0644)
 		antonFontPath = fontPath
 	})
-	if antonFontErr != nil {
-		return "", fmt.Errorf("error writing embedded Anton font to temp file: %w", antonFontErr)
+	if errAntonFont != nil {
+		return "", fmt.Errorf("error writing embedded Anton font to temp file: %w", errAntonFont)
 	}
 
 	return antonFontPath, nil
@@ -105,7 +105,11 @@ func memeWrapText(wand *imagick.MagickWand, dw *imagick.DrawingWand, text string
 	return append(lines, currentLine)
 }
 
-func memeFitText(wand *imagick.MagickWand, text string, zoneWidth, zoneHeight, imgHeight float64) (float64, string, error) {
+func memeFitText(
+	wand *imagick.MagickWand,
+	text string,
+	zoneWidth, zoneHeight, imgHeight float64,
+) (float64, string, error) {
 	if text == "" {
 		return 0, "", nil
 	}

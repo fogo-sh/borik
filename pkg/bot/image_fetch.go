@@ -11,6 +11,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/gographics/imagick.v3/imagick"
+
+	"github.com/fogo-sh/borik/pkg/utils"
 )
 
 type AvatarArgs struct {
@@ -49,7 +51,7 @@ func fetchAvatar(ctx *OperationContext, targetUser *discordgo.User, guildID stri
 		log.Error().Err(err).Msg("Error downloading avatar")
 		return
 	}
-	defer closeBody(resp.Body, "Error closing avatar response body")
+	defer utils.CloseBody(resp.Body, "Error closing avatar response body")
 
 	file := &discordgo.File{
 		Name:        path.Base(resp.Request.URL.Path),
@@ -234,7 +236,7 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 		log.Error().Err(err).Msg("Error downloading sticker")
 		return
 	}
-	defer closeBody(resp.Body, "Error closing sticker response body")
+	defer utils.CloseBody(resp.Body, "Error closing sticker response body")
 
 	var file io.Reader
 	var filename string
@@ -327,7 +329,7 @@ func Emoji(message *discordgo.MessageCreate, args EmojiArgs) {
 		log.Error().Err(err).Msg("Error downloading emoji")
 		return
 	}
-	defer closeBody(resp.Body, "Error closing emoji response body")
+	defer utils.CloseBody(resp.Body, "Error closing emoji response body")
 
 	_, err = Instance.session.ChannelMessageSendComplex(
 		message.ChannelID,

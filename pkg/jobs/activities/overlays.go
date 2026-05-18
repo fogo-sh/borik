@@ -34,14 +34,22 @@ var natalieClimbImage []byte
 //go:embed images/overlays/denny_standing.png
 var dennyStandingImage []byte
 
-func JackPog(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func JackPog(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	return applyOverlay(jobWorkspace, opArgs, jackPogImage, overlayOptions{
 		OverlayWidthFactor:  1,
 		OverlayHeightFactor: 0.5,
 	})
 }
 
-func SideKeenan(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func SideKeenan(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	return applyOverlay(jobWorkspace, opArgs, sideKeenanImage, overlayOptions{
 		OverlayWidthFactor:  1,
 		OverlayHeightFactor: 0.5,
@@ -49,21 +57,33 @@ func SideKeenan(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Op
 	})
 }
 
-func KeenanThumb(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func KeenanThumb(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	return applyOverlay(jobWorkspace, opArgs, keenanThumbImage, overlayOptions{
 		OverlayWidthFactor:  1,
 		OverlayHeightFactor: 0.5,
 	})
 }
 
-func MitchPoint(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func MitchPoint(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	return applyOverlay(jobWorkspace, opArgs, mitchPointImage, overlayOptions{
 		OverlayWidthFactor:  1,
 		OverlayHeightFactor: 1,
 	})
 }
 
-func StevePoint(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func StevePoint(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	return applyOverlay(jobWorkspace, opArgs, stevePointImage, overlayOptions{
 		OverlayWidthFactor:  1,
 		OverlayHeightFactor: 1,
@@ -71,7 +91,11 @@ func StevePoint(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Op
 	})
 }
 
-func AndrewPog(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func AndrewPog(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	return applyOverlay(jobWorkspace, opArgs, andrewPogImage, overlayOptions{
 		OverlayWidthFactor:  1,
 		OverlayHeightFactor: 0.75,
@@ -79,7 +103,11 @@ func AndrewPog(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Ope
 	})
 }
 
-func MatlabKid(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func MatlabKid(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	return applyOverlay(jobWorkspace, opArgs, matlabKidImage, overlayOptions{
 		VFlip:               true,
 		OverlayWidthFactor:  1.2,
@@ -88,14 +116,22 @@ func MatlabKid(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Ope
 	})
 }
 
-func NatalieClimb(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func NatalieClimb(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	return applyOverlay(jobWorkspace, opArgs, natalieClimbImage, overlayOptions{
 		OverlayWidthFactor:  1,
 		OverlayHeightFactor: 1,
 	})
 }
 
-func DennyStanding(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func DennyStanding(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	return applyOverlay(jobWorkspace, opArgs, dennyStandingImage, overlayOptions{
 		OverlayWidthFactor:  0.4,
 		OverlayHeightFactor: 0.6,

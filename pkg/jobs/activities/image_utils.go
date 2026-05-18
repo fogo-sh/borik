@@ -10,6 +10,7 @@ import (
 	"gopkg.in/gographics/imagick.v3/imagick"
 
 	"github.com/fogo-sh/borik/pkg/jobs/workspace"
+	"github.com/fogo-sh/borik/pkg/utils"
 )
 
 func LoadImage(ctx context.Context, jobWorkspace workspace.Workspace, imageUrl string) (workspace.Artifact, error) {
@@ -17,7 +18,7 @@ func LoadImage(ctx context.Context, jobWorkspace workspace.Workspace, imageUrl s
 	if err != nil {
 		return "", fmt.Errorf("error downloading image: %w", err)
 	}
-	defer resp.Body.Close()
+	defer utils.CloseBody(resp.Body, "error closing image response body")
 
 	buffer := new(bytes.Buffer)
 
@@ -34,7 +35,11 @@ func LoadImage(ctx context.Context, jobWorkspace workspace.Workspace, imageUrl s
 	return artifact, nil
 }
 
-func SplitImage(ctx context.Context, jobWorkspace workspace.Workspace, inputArtifact workspace.Artifact) ([]workspace.Artifact, error) {
+func SplitImage(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	inputArtifact workspace.Artifact,
+) ([]workspace.Artifact, error) {
 	input, err := jobWorkspace.RetrieveWand(inputArtifact)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving image: %w", err)
@@ -62,7 +67,11 @@ func SplitImage(ctx context.Context, jobWorkspace workspace.Workspace, inputArti
 	return resultArtifacts, nil
 }
 
-func JoinImage(ctx context.Context, jobWorkspace workspace.Workspace, inputArtifacts []workspace.Artifact) (workspace.Artifact, error) {
+func JoinImage(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	inputArtifacts []workspace.Artifact,
+) (workspace.Artifact, error) {
 	output := imagick.NewMagickWand()
 	defer output.Destroy()
 

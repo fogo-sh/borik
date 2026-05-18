@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/gographics/imagick.v3/imagick"
+
+	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
 
 func decodeOperationArgs(args OperationArgs, targetPtr any) error {
@@ -62,7 +63,12 @@ type frameOptions struct {
 	PositionMode positionMode
 }
 
-func applyFrame(jobWorkspace workspace.Workspace, opArgs OperationArgs, frameBytes []byte, options frameOptions) ([]workspace.Artifact, error) {
+func applyFrame(
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+	frameBytes []byte,
+	options frameOptions,
+) ([]workspace.Artifact, error) {
 	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
 	if err != nil {
 		return nil, err
@@ -110,7 +116,12 @@ func findTransparentOpeningRect(frame *imagick.MagickWand) (x, y, width, height 
 	return ox, oy, int(analysis.GetImageWidth()), int(analysis.GetImageHeight()), nil
 }
 
-func frameImage(wand *imagick.MagickWand, frame *imagick.MagickWand, openX, openY, openW, openH int, options frameOptions) ([]*imagick.MagickWand, error) {
+func frameImage(
+	wand *imagick.MagickWand,
+	frame *imagick.MagickWand,
+	openX, openY, openW, openH int,
+	options frameOptions,
+) ([]*imagick.MagickWand, error) {
 	switch options.FitMode {
 	case fitModeStretch:
 		if err := wand.ResizeImage(uint(openW), uint(openH), imagick.FILTER_LANCZOS); err != nil {
@@ -162,7 +173,12 @@ const (
 	mirrorDirectionHorizontal mirrorDirection = "horizontal"
 )
 
-func applyMirror(jobWorkspace workspace.Workspace, opArgs OperationArgs, direction mirrorDirection, flipped bool) ([]workspace.Artifact, error) {
+func applyMirror(
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+	direction mirrorDirection,
+	flipped bool,
+) ([]workspace.Artifact, error) {
 	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
 	if err != nil {
 		return nil, err
@@ -264,7 +280,12 @@ type overlayArgs struct {
 	VFlip bool
 }
 
-func applyOverlay(jobWorkspace workspace.Workspace, opArgs OperationArgs, overlayImage []byte, initialOptions overlayOptions) ([]workspace.Artifact, error) {
+func applyOverlay(
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+	overlayImage []byte,
+	initialOptions overlayOptions,
+) ([]workspace.Artifact, error) {
 	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
 	if err != nil {
 		return nil, err

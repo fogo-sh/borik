@@ -15,7 +15,12 @@ import (
 	"github.com/fogo-sh/borik/pkg/jobs/workflows"
 )
 
-func (b *Bot) triggerJob(ctx context.Context, workflowID string, imageURL string, job args.JobArgs) (string, io.Reader, error) {
+func (b *Bot) triggerJob(
+	ctx context.Context,
+	workflowID string,
+	imageURL string,
+	job args.JobArgs,
+) (string, io.Reader, error) {
 	we, err := b.temporalClient.ExecuteWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
@@ -52,7 +57,11 @@ func (b *Bot) triggerJob(ctx context.Context, workflowID string, imageURL string
 	return result.Format, bytes.NewBuffer(image), nil
 }
 
-func (b *Bot) triggerGenerateImage(ctx context.Context, workflowID string, imageGenArgs args.ImageGen) (string, io.Reader, error) {
+func (b *Bot) triggerGenerateImage(
+	ctx context.Context,
+	workflowID string,
+	imageGenArgs args.ImageGen,
+) (string, io.Reader, error) {
 	we, err := b.temporalClient.ExecuteWorkflow(
 		ctx,
 		client.StartWorkflowOptions{

@@ -47,7 +47,11 @@ func EGA(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Operation
 	}, egaArgs.Dither)
 }
 
-func TempleOS(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func TempleOS(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	var templeOSArgs args.TempleOS
 	err := decodeOperationArgs(opArgs, &templeOSArgs)
 	if err != nil {
@@ -73,7 +77,12 @@ func CGA(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Operation
 	}, cgaArgs.Dither)
 }
 
-func applyGraphicsFormat(jobWorkspace workspace.Workspace, opArgs OperationArgs, format graphicsFormat, dither bool) ([]workspace.Artifact, error) {
+func applyGraphicsFormat(
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+	format graphicsFormat,
+	dither bool,
+) ([]workspace.Artifact, error) {
 	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
 	if err != nil {
 		return nil, err

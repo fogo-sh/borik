@@ -10,7 +10,11 @@ import (
 	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
 
-func Deepfry(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
+func Deepfry(
+	ctx context.Context,
+	jobWorkspace workspace.Workspace,
+	opArgs OperationArgs,
+) ([]workspace.Artifact, error) {
 	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
 	if err != nil {
 		return nil, err
@@ -22,12 +26,20 @@ func Deepfry(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Opera
 		return nil, fmt.Errorf("error while decoding operation args: %w", err)
 	}
 
-	err = wand.ResizeImage(wand.GetImageWidth()/deepfryArgs.DownscaleFactor, wand.GetImageHeight()/deepfryArgs.DownscaleFactor, imagick.FILTER_POINT)
+	err = wand.ResizeImage(
+		wand.GetImageWidth()/deepfryArgs.DownscaleFactor,
+		wand.GetImageHeight()/deepfryArgs.DownscaleFactor,
+		imagick.FILTER_POINT,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
 	}
 
-	err = wand.ResizeImage(wand.GetImageWidth()*deepfryArgs.DownscaleFactor, wand.GetImageHeight()*deepfryArgs.DownscaleFactor, imagick.FILTER_POINT)
+	err = wand.ResizeImage(
+		wand.GetImageWidth()*deepfryArgs.DownscaleFactor,
+		wand.GetImageHeight()*deepfryArgs.DownscaleFactor,
+		imagick.FILTER_POINT,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
 	}
