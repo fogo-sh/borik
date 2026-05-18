@@ -7,7 +7,6 @@ import (
 	"path"
 
 	"github.com/google/uuid"
-	"gopkg.in/gographics/imagick.v3/imagick"
 
 	"github.com/fogo-sh/borik/pkg/config"
 )
@@ -46,15 +45,6 @@ func (w Workspace) Persist(data []byte) (Artifact, error) {
 	return Artifact(artifactIdentifier), nil
 }
 
-func (w Workspace) PersistWand(wand *imagick.MagickWand) (Artifact, error) {
-	data, err := wand.GetImageBlob()
-	if err != nil {
-		return "", fmt.Errorf("error getting image blob: %w", err)
-	}
-
-	return w.Persist(data)
-}
-
 func (w Workspace) Retrieve(artifact Artifact) ([]byte, error) {
 	artifactPath := path.Join(w.Path, string(artifact))
 
@@ -69,21 +59,6 @@ func (w Workspace) Retrieve(artifact Artifact) ([]byte, error) {
 	}
 
 	return data, nil
-}
-
-func (w Workspace) RetrieveWand(artifact Artifact) (*imagick.MagickWand, error) {
-	data, err := w.Retrieve(artifact)
-	if err != nil {
-		return nil, err
-	}
-
-	wand := imagick.NewMagickWand()
-	err = wand.ReadImageBlob(data)
-	if err != nil {
-		return nil, fmt.Errorf("error reading image blob: %w", err)
-	}
-
-	return wand, nil
 }
 
 func (w Workspace) Cleanup() error {

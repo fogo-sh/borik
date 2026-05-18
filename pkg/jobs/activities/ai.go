@@ -154,7 +154,7 @@ func ImageEdit(
 	jobWorkspace workspace.Workspace,
 	opArgs OperationArgs,
 ) ([]workspace.Artifact, error) {
-	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	wand, err := RetrieveWand(jobWorkspace, opArgs.Frame)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +178,7 @@ func LoopEdit(
 	jobWorkspace workspace.Workspace,
 	opArgs OperationArgs,
 ) ([]workspace.Artifact, error) {
-	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	wand, err := RetrieveWand(jobWorkspace, opArgs.Frame)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func FlipFlop(
 	jobWorkspace workspace.Workspace,
 	opArgs OperationArgs,
 ) ([]workspace.Artifact, error) {
-	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	wand, err := RetrieveWand(jobWorkspace, opArgs.Frame)
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +317,7 @@ func performAiZoomStep(
 }
 
 func AiZoom(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
-	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	wand, err := RetrieveWand(jobWorkspace, opArgs.Frame)
 	if err != nil {
 		return nil, err
 	}
@@ -343,7 +343,7 @@ func AiLoopZoom(
 	jobWorkspace workspace.Workspace,
 	opArgs OperationArgs,
 ) ([]workspace.Artifact, error) {
-	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	wand, err := RetrieveWand(jobWorkspace, opArgs.Frame)
 	if err != nil {
 		return nil, err
 	}

@@ -17,6 +17,30 @@ func decodeOperationArgs(args OperationArgs, targetPtr any) error {
 	return mapstructure.Decode(mapStruct, targetPtr)
 }
 
+func PersistWand(jobWorkspace workspace.Workspace, wand *imagick.MagickWand) (workspace.Artifact, error) {
+	data, err := wand.GetImageBlob()
+	if err != nil {
+		return "", fmt.Errorf("error getting image blob: %w", err)
+	}
+
+	return jobWorkspace.Persist(data)
+}
+
+func RetrieveWand(jobWorkspace workspace.Workspace, artifact workspace.Artifact) (*imagick.MagickWand, error) {
+	data, err := jobWorkspace.Retrieve(artifact)
+	if err != nil {
+		return nil, err
+	}
+
+	wand := imagick.NewMagickWand()
+	err = wand.ReadImageBlob(data)
+	if err != nil {
+		return nil, fmt.Errorf("error reading image blob: %w", err)
+	}
+
+	return wand, nil
+}
+
 func resizeMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint) error {
 	inputHeight := float64(wand.GetImageHeight())
 	inputWidth := float64(wand.GetImageWidth())
@@ -69,7 +93,7 @@ func applyFrame(
 	frameBytes []byte,
 	options frameOptions,
 ) ([]workspace.Artifact, error) {
-	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	wand, err := RetrieveWand(jobWorkspace, opArgs.Frame)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +203,7 @@ func applyMirror(
 	direction mirrorDirection,
 	flipped bool,
 ) ([]workspace.Artifact, error) {
-	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	wand, err := RetrieveWand(jobWorkspace, opArgs.Frame)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +310,7 @@ func applyOverlay(
 	overlayImage []byte,
 	initialOptions overlayOptions,
 ) ([]workspace.Artifact, error) {
-	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	wand, err := RetrieveWand(jobWorkspace, opArgs.Frame)
 	if err != nil {
 		return nil, err
 	}

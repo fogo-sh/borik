@@ -83,7 +83,7 @@ func applyGraphicsFormat(
 	format graphicsFormat,
 	dither bool,
 ) ([]workspace.Artifact, error) {
-	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	wand, err := RetrieveWand(jobWorkspace, opArgs.Frame)
 	if err != nil {
 		return nil, err
 	}

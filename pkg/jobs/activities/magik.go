@@ -11,7 +11,7 @@ import (
 )
 
 func Magik(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
-	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	wand, err := RetrieveWand(jobWorkspace, opArgs.Frame)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +26,7 @@ func Magik(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Operati
 }
 
 func Lagik(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
-	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	wand, err := RetrieveWand(jobWorkspace, opArgs.Frame)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func Lagik(ctx context.Context, jobWorkspace workspace.Workspace, opArgs Operati
 }
 
 func Gmagik(ctx context.Context, jobWorkspace workspace.Workspace, opArgs OperationArgs) ([]workspace.Artifact, error) {
-	wand, err := jobWorkspace.RetrieveWand(opArgs.Frame)
+	wand, err := RetrieveWand(jobWorkspace, opArgs.Frame)
 	if err != nil {
 		return nil, err
 	}

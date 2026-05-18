@@ -40,7 +40,7 @@ func SplitImage(
 	jobWorkspace workspace.Workspace,
 	inputArtifact workspace.Artifact,
 ) ([]workspace.Artifact, error) {
-	input, err := jobWorkspace.RetrieveWand(inputArtifact)
+	input, err := RetrieveWand(jobWorkspace, inputArtifact)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving image: %w", err)
 	}
@@ -55,7 +55,7 @@ func SplitImage(
 	for i := uint(0); i < input.GetNumberImages(); i++ {
 		input.SetIteratorIndex(int(i))
 		frame := input.GetImage().Clone()
-		artifact, err := jobWorkspace.PersistWand(frame)
+		artifact, err := PersistWand(jobWorkspace, frame)
 		frame.Destroy()
 		if err != nil {
 			return nil, fmt.Errorf("error persisting frame: %w", err)
@@ -76,7 +76,7 @@ func JoinImage(
 	defer output.Destroy()
 
 	for _, artifact := range inputArtifacts {
-		frame, err := jobWorkspace.RetrieveWand(artifact)
+		frame, err := RetrieveWand(jobWorkspace, artifact)
 		if err != nil {
 			return "", fmt.Errorf("error retrieving frame: %w", err)
 		}
@@ -98,7 +98,7 @@ func JoinImage(
 
 		for i := uint(0); i < output.GetNumberImages(); i++ {
 			output.SetIteratorIndex(int(i))
-			frame, err := jobWorkspace.RetrieveWand(inputArtifacts[i])
+			frame, err := RetrieveWand(jobWorkspace, inputArtifacts[i])
 			if err != nil {
 				return "", fmt.Errorf("error retrieving frame: %w", err)
 			}
@@ -140,7 +140,7 @@ func saveFrames(jobWorkspace workspace.Workspace, frames ...*imagick.MagickWand)
 	var resultArtifacts []workspace.Artifact
 
 	for _, frame := range frames {
-		artifact, err := jobWorkspace.PersistWand(frame)
+		artifact, err := PersistWand(jobWorkspace, frame)
 		if err != nil {
 			return nil, fmt.Errorf("error persisting frame: %w", err)
 		}

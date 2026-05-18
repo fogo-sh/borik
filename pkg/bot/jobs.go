@@ -12,8 +12,28 @@ import (
 
 	"github.com/fogo-sh/borik/pkg/config"
 	"github.com/fogo-sh/borik/pkg/jobs/args"
-	"github.com/fogo-sh/borik/pkg/jobs/workflows"
+	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
+
+type processedImageResult struct {
+	Image     workspace.Artifact
+	Format    string
+	Workspace workspace.Workspace
+}
+
+func retrieveJobResult(result processedImageResult) ([]byte, error) {
+	image, err := result.Workspace.Retrieve(result.Image)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving image: %w", err)
+	}
+
+	err = result.Workspace.Cleanup()
+	if err != nil {
+		log.Error().Err(err).Msg("Error cleaning up workspace")
+	}
+
+	return image, nil
+}
 
 func (b *Bot) triggerJob(
 	ctx context.Context,
@@ -27,8 +47,12 @@ func (b *Bot) triggerJob(
 			ID:        workflowID,
 			TaskQueue: config.Instance.TemporalQueueName,
 		},
-		workflows.ProcessImageWorkflow,
-		workflows.ProcessImageArgs{
+		"ProcessImageWorkflow",
+		struct {
+			ImageURL     string
+			ActivityName string
+			ActivityArgs any
+		}{
 			ImageURL:     imageURL,
 			ActivityName: job.ActivityName(),
 			ActivityArgs: job,
@@ -38,20 +62,15 @@ func (b *Bot) triggerJob(
 		return "", nil, fmt.Errorf("error executing workflow: %w", err)
 	}
 
-	var result workflows.ProcessedImageResult
+	var result processedImageResult
 	err = we.Get(ctx, &result)
 	if err != nil {
 		return "", nil, fmt.Errorf("error getting workflow result: %w", err)
 	}
 
-	image, err := result.Workspace.Retrieve(result.Image)
+	image, err := retrieveJobResult(result)
 	if err != nil {
-		return "", nil, fmt.Errorf("error retrieving image: %w", err)
-	}
-
-	err = result.Workspace.Cleanup()
-	if err != nil {
-		log.Error().Err(err).Msg("Error cleaning up workspace")
+		return "", nil, err
 	}
 
 	return result.Format, bytes.NewBuffer(image), nil
@@ -68,27 +87,22 @@ func (b *Bot) triggerGenerateImage(
 			ID:        workflowID,
 			TaskQueue: config.Instance.TemporalQueueName,
 		},
-		workflows.GenerateImageWorkflow,
+		"GenerateImageWorkflow",
 		imageGenArgs,
 	)
 	if err != nil {
 		return "", nil, fmt.Errorf("error executing workflow: %w", err)
 	}
 
-	var result workflows.ProcessedImageResult
+	var result processedImageResult
 	err = we.Get(ctx, &result)
 	if err != nil {
 		return "", nil, fmt.Errorf("error getting workflow result: %w", err)
 	}
 
-	image, err := result.Workspace.Retrieve(result.Image)
+	image, err := retrieveJobResult(result)
 	if err != nil {
-		return "", nil, fmt.Errorf("error retrieving image: %w", err)
-	}
-
-	err = result.Workspace.Cleanup()
-	if err != nil {
-		log.Error().Err(err).Msg("Error cleaning up workspace")
+		return "", nil, err
 	}
 
 	return result.Format, bytes.NewBuffer(image), nil
@@ -101,27 +115,22 @@ func (b *Bot) triggerGif(ctx context.Context, workflowID string, gifArgs args.Gi
 			ID:        workflowID,
 			TaskQueue: config.Instance.TemporalQueueName,
 		},
-		workflows.ConvertVideoToGIFWorkflow,
+		"ConvertVideoToGIFWorkflow",
 		gifArgs,
 	)
 	if err != nil {
 		return "", nil, fmt.Errorf("error executing workflow: %w", err)
 	}
 
-	var result workflows.ProcessedImageResult
+	var result processedImageResult
 	err = we.Get(ctx, &result)
 	if err != nil {
 		return "", nil, fmt.Errorf("error getting workflow result: %w", err)
 	}
 
-	image, err := result.Workspace.Retrieve(result.Image)
+	image, err := retrieveJobResult(result)
 	if err != nil {
-		return "", nil, fmt.Errorf("error retrieving GIF: %w", err)
-	}
-
-	err = result.Workspace.Cleanup()
-	if err != nil {
-		log.Error().Err(err).Msg("Error cleaning up workspace")
+		return "", nil, err
 	}
 
 	return result.Format, bytes.NewBuffer(image), nil
@@ -138,27 +147,22 @@ func (b *Bot) triggerAPNGToGIF(
 			ID:        workflowID,
 			TaskQueue: config.Instance.TemporalQueueName,
 		},
-		workflows.ConvertAPNGToGIFWorkflow,
+		"ConvertAPNGToGIFWorkflow",
 		apngToGIFArgs,
 	)
 	if err != nil {
 		return "", nil, fmt.Errorf("error executing workflow: %w", err)
 	}
 
-	var result workflows.ProcessedImageResult
+	var result processedImageResult
 	err = we.Get(ctx, &result)
 	if err != nil {
 		return "", nil, fmt.Errorf("error getting workflow result: %w", err)
 	}
 
-	image, err := result.Workspace.Retrieve(result.Image)
+	image, err := retrieveJobResult(result)
 	if err != nil {
-		return "", nil, fmt.Errorf("error retrieving GIF: %w", err)
-	}
-
-	err = result.Workspace.Cleanup()
-	if err != nil {
-		log.Error().Err(err).Msg("Error cleaning up workspace")
+		return "", nil, err
 	}
 
 	return result.Format, bytes.NewBuffer(image), nil
