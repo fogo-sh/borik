@@ -17,7 +17,7 @@ func (args ModulateArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-// Modulate allows modifying of the brightness, saturation, and hue of an image
+// Modulate allows modifying of the brightness, saturation, and hue of an image.
 func Modulate(wand *imagick.MagickWand, args ModulateArgs) ([]*imagick.MagickWand, error) {
 	err := wand.ModulateImage(args.Brightness, args.Saturation, args.Hue)
 	if err != nil {

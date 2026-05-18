@@ -18,12 +18,20 @@ func (args DeepfryArgs) GetImageURL() string {
 
 // Deepfry destroys an image via a combination of operations.
 func Deepfry(wand *imagick.MagickWand, args DeepfryArgs) ([]*imagick.MagickWand, error) {
-	err := wand.ResizeImage(wand.GetImageWidth()/args.DownscaleFactor, wand.GetImageHeight()/args.DownscaleFactor, imagick.FILTER_POINT)
+	err := wand.ResizeImage(
+		wand.GetImageWidth()/args.DownscaleFactor,
+		wand.GetImageHeight()/args.DownscaleFactor,
+		imagick.FILTER_POINT,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
 	}
 
-	err = wand.ResizeImage(wand.GetImageWidth()*args.DownscaleFactor, wand.GetImageHeight()*args.DownscaleFactor, imagick.FILTER_POINT)
+	err = wand.ResizeImage(
+		wand.GetImageWidth()*args.DownscaleFactor,
+		wand.GetImageHeight()*args.DownscaleFactor,
+		imagick.FILTER_POINT,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
 	}

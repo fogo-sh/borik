@@ -93,7 +93,12 @@ func ImageGenSlashCommand(session *discordgo.Session, interaction *discordgo.Int
 	generateImage(NewOperationContextFromInteraction(session, interaction), args)
 }
 
-func editImage(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionMetadata, mask *imagick.MagickWand) (*imagick.MagickWand, error) {
+func editImage(
+	wand *imagick.MagickWand,
+	args ImageEditArgs,
+	metadata AISessionMetadata,
+	mask *imagick.MagickWand,
+) (*imagick.MagickWand, error) {
 	err := ShrinkMaintainAspectRatio(wand, AI_EDIT_MAX_DIMENSION, AI_EDIT_MAX_DIMENSION)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing image: %w", err)
@@ -175,7 +180,11 @@ func (args ImageEditArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func ImageEdit(wand *imagick.MagickWand, args ImageEditArgs, metadata AISessionMetadata) ([]*imagick.MagickWand, error) {
+func ImageEdit(
+	wand *imagick.MagickWand,
+	args ImageEditArgs,
+	metadata AISessionMetadata,
+) ([]*imagick.MagickWand, error) {
 	editedImage, err := editImage(wand, args, metadata, nil)
 	if err != nil {
 		return nil, err
@@ -262,7 +271,11 @@ func (args AiZoomArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func performAiZoomStep(wand *imagick.MagickWand, prompt string, metadata AISessionMetadata) (*imagick.MagickWand, error) {
+func performAiZoomStep(
+	wand *imagick.MagickWand,
+	prompt string,
+	metadata AISessionMetadata,
+) (*imagick.MagickWand, error) {
 	originalWidth := wand.GetImageWidth()
 	originalHeight := wand.GetImageHeight()
 
@@ -270,13 +283,18 @@ func performAiZoomStep(wand *imagick.MagickWand, prompt string, metadata AISessi
 
 	var err error
 
-	// If the image can be used as-is without the target canvas exceeding the max size for resizing, do so to not lose quality
-	// Otherwise, shrink it
-	if originalWidth < uint(float64(AI_EDIT_MAX_DIMENSION)*sizeMultiplier) && originalHeight < uint(float64(AI_EDIT_MAX_DIMENSION)*sizeMultiplier) {
+	// If the image can be used as-is without the target canvas exceeding the max size for resizing, use it as-is.
+	// Otherwise, shrink it.
+	maxOriginalDimension := uint(float64(AI_EDIT_MAX_DIMENSION) * sizeMultiplier)
+	if originalWidth < maxOriginalDimension && originalHeight < maxOriginalDimension {
 		originalWidth = uint(float64(originalWidth) / sizeMultiplier)
 		originalHeight = uint(float64(originalHeight) / sizeMultiplier)
 	} else {
-		err = ShrinkMaintainAspectRatio(wand, uint(float64(wand.GetImageWidth())*sizeMultiplier), uint(float64(wand.GetImageHeight())*sizeMultiplier))
+		err = ShrinkMaintainAspectRatio(
+			wand,
+			uint(float64(wand.GetImageWidth())*sizeMultiplier),
+			uint(float64(wand.GetImageHeight())*sizeMultiplier),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("error resizing image for zoom: %w", err)
 		}
@@ -300,7 +318,13 @@ func performAiZoomStep(wand *imagick.MagickWand, prompt string, metadata AISessi
 		return nil, fmt.Errorf("error setting canvas alpha channel for zoom: %w", err)
 	}
 
-	err = canvas.CompositeImage(wand, imagick.COMPOSITE_OP_OVER, false, int((originalWidth-wand.GetImageWidth())/2), int((originalHeight-wand.GetImageHeight())/2))
+	err = canvas.CompositeImage(
+		wand,
+		imagick.COMPOSITE_OP_OVER,
+		false,
+		int((originalWidth-wand.GetImageWidth())/2),
+		int((originalHeight-wand.GetImageHeight())/2),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error compositing image onto canvas for zoom: %w", err)
 	}
@@ -345,7 +369,11 @@ func (args AiLoopZoomArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-func AiLoopZoom(wand *imagick.MagickWand, args AiLoopZoomArgs, metadata AISessionMetadata) ([]*imagick.MagickWand, error) {
+func AiLoopZoom(
+	wand *imagick.MagickWand,
+	args AiLoopZoomArgs,
+	metadata AISessionMetadata,
+) ([]*imagick.MagickWand, error) {
 	editedFrames := make([]*imagick.MagickWand, 0, args.Steps+1)
 
 	editedFrames = append(editedFrames, wand)

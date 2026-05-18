@@ -15,7 +15,7 @@ func (args OtsuArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-// Otsu turns the image black and white by applying an adaptive threshold using Otsu's method
+// Otsu turns the image black and white by applying an adaptive threshold using Otsu's method.
 func Otsu(wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error) {
 	numOfPixels := 0
 	histogram := map[int]int{}
@@ -77,7 +77,8 @@ func Otsu(wand *imagick.MagickWand, args OtsuArgs) ([]*imagick.MagickWand, error
 
 		meanBackground := sumBackground / weightBackground
 		meanForeground := (sum - sumBackground) / weightForeground
-		betweenVariance := weightBackground * weightForeground * (meanBackground - meanForeground) * (meanBackground - meanForeground)
+		meanDelta := meanBackground - meanForeground
+		betweenVariance := weightBackground * weightForeground * meanDelta * meanDelta
 		if betweenVariance > maxVariance {
 			maxVariance = betweenVariance
 			threshold = i

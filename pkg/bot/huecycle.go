@@ -15,7 +15,7 @@ func (args HueCycleArgs) GetImageURL() string {
 	return args.ImageURL
 }
 
-// HueCycle cycles the hue on an image
+// HueCycle cycles the hue on an image.
 func HueCycle(wand *imagick.MagickWand, args HueCycleArgs) ([]*imagick.MagickWand, error) {
 	wands := []*imagick.MagickWand{wand}
 

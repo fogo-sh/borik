@@ -83,7 +83,6 @@ func mirrorImage(wand *imagick.MagickWand, direction mirrorDirection, flipped bo
 	}
 
 	return []*imagick.MagickWand{wand}, nil
-
 }
 
 type WaawArgs struct {

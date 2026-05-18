@@ -13,7 +13,7 @@ import (
 
 // Prefixes is a custom type for command prefixes, split on "|" to allow
 // commas and other special characters as prefix values.
-// Example: BORIK_PREFIXES="borik!|,"
+// Example: BORIK_PREFIXES="borik!|,".
 type Prefixes []string
 
 func (p *Prefixes) Decode(value string) error {
@@ -21,7 +21,7 @@ func (p *Prefixes) Decode(value string) error {
 	return nil
 }
 
-// Config represents the config that Borik will use to run
+// Config represents the config that Borik will use to run.
 type Config struct {
 	Prefixes Prefixes `default:"borik!"`
 	Token    string   `required:"true"`

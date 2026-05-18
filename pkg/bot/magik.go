@@ -21,7 +21,12 @@ func magikHelper(wand *imagick.MagickWand, args MagikArgs) ([]*imagick.MagickWan
 	width := wand.GetImageWidth()
 	height := wand.GetImageHeight()
 
-	err := wand.LiquidRescaleImage(uint(float64(width)*args.WidthMultiplier), uint(float64(height)*args.HeightMultiplier), args.Scale, 0)
+	err := wand.LiquidRescaleImage(
+		uint(float64(width)*args.WidthMultiplier),
+		uint(float64(height)*args.HeightMultiplier),
+		args.Scale,
+		0,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error while attempting to liquid rescale: %w", err)
 	}

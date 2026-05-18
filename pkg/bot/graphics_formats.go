@@ -76,7 +76,11 @@ func getPaletteImage(palette []string) (*imagick.MagickWand, error) {
 	return paletteWand, nil
 }
 
-func convertGraphicsFormat(wand *imagick.MagickWand, format graphicsFormat, dither bool) ([]*imagick.MagickWand, error) {
+func convertGraphicsFormat(
+	wand *imagick.MagickWand,
+	format graphicsFormat,
+	dither bool,
+) ([]*imagick.MagickWand, error) {
 	paletteWand, err := getPaletteImage(format.Palette)
 	if err != nil {
 		return nil, fmt.Errorf("error getting format palette: %w", err)
