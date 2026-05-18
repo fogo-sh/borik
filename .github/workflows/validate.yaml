@@ -25,10 +25,11 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Install ImageMagick development headers
+      - name: Install ImageMagick 7 development headers
         run: |
-          sudo apt-get update
-          sudo apt-get install --yes libmagickwand-dev pkg-config
+          sudo ./scripts/install-imagemagick.sh
+          echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0

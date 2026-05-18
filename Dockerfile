@@ -3,29 +3,9 @@ FROM golang:1.25-trixie
 WORKDIR /deps
 ENV IMAGEMAGICK_VERSION=7.1.2-3
 
-RUN apt-get update && \
-    apt-get -q -y install \
-      libjpeg-dev \
-      libpng-dev \
-      libtiff-dev \
-      libgif-dev \
-      libwebp-dev \
-      libheif-dev \
-      liblcms2-dev \
-      liblqr-1-0-dev \
-      libglib2.0 \
-      ghostscript \
-      libfreetype6-dev \
-      libfontconfig1-dev \
-      ffmpeg \
-      --no-install-recommends && \
-    wget https://github.com/ImageMagick/ImageMagick/archive/${IMAGEMAGICK_VERSION}.tar.gz && \
-	tar xvzf ${IMAGEMAGICK_VERSION}.tar.gz && \
-	cd ImageMagick* && \
-	./configure && \
-	make -j$(nproc) && make install && \
-	ldconfig /usr/local/lib && \
-    rm -rf /deps
+COPY scripts/install-imagemagick.sh /usr/local/bin/install-imagemagick
+RUN install-imagemagick && \
+    apt-get install --yes --no-install-recommends ffmpeg
 
 WORKDIR /build
 
