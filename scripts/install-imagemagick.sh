@@ -5,6 +5,26 @@ IMAGEMAGICK_VERSION="${IMAGEMAGICK_VERSION:-7.1.2-3}"
 PREFIX="${IMAGEMAGICK_PREFIX:-/usr/local}"
 WORKDIR="${IMAGEMAGICK_BUILD_DIR:-/tmp/borik-imagemagick-build}"
 
+os_id() {
+  if [ -r /etc/os-release ]; then
+    (
+      . /etc/os-release
+      printf '%s\n' "${ID:-}"
+    )
+  fi
+}
+
+jpeg_runtime_package() {
+  case "$(os_id)" in
+    ubuntu)
+      echo libjpeg-turbo8
+      ;;
+    *)
+      echo libjpeg62-turbo
+      ;;
+  esac
+}
+
 imagemagick_runtime_packages() {
   echo \
   ghostscript \
@@ -13,7 +33,7 @@ imagemagick_runtime_packages() {
   libgif7 \
   libglib2.0-0 \
   libheif1 \
-  libjpeg62-turbo \
+  "$(jpeg_runtime_package)" \
   liblcms2-2 \
   liblqr-1-0 \
   libpng16-16 \
