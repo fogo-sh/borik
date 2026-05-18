@@ -51,7 +51,10 @@ func NewOperationContextFromMessage(session *discordgo.Session, message *discord
 	}
 }
 
-func NewOperationContextFromInteraction(session *discordgo.Session, interaction *discordgo.InteractionCreate) *OperationContext {
+func NewOperationContextFromInteraction(
+	session *discordgo.Session,
+	interaction *discordgo.InteractionCreate,
+) *OperationContext {
 	return &OperationContext{
 		Session:     session,
 		Interaction: interaction,
@@ -183,7 +186,7 @@ func TypingIndicatorForContext(ctx *OperationContext) func() {
 	return func() {}
 }
 
-// TypingIndicator invokes a typing indicator in the channel of a message
+// TypingIndicator invokes a typing indicator in the channel of a message.
 func TypingIndicator(message *discordgo.MessageCreate) func() {
 	stopTyping := Schedule(
 		func() {
@@ -201,7 +204,7 @@ func TypingIndicator(message *discordgo.MessageCreate) func() {
 	}
 }
 
-// Schedule some func to be run in a cancelable goroutine on an interval
+// Schedule some func to be run in a cancelable goroutine on an interval.
 func Schedule(what func(), delay time.Duration) chan bool {
 	stop := make(chan bool)
 
@@ -347,6 +350,12 @@ func findMediaURLInChannel(s *discordgo.Session, channelID string, beforeID stri
 	return "", fmt.Errorf("unable to locate a %s", kind.name)
 }
 
+func closeBody(body io.Closer, message string) {
+	if err := body.Close(); err != nil {
+		log.Error().Err(err).Msg(message)
+	}
+}
+
 // DownloadImage downloads an image from a given URL, returning the resulting bytes.
 func DownloadImage(url string) ([]byte, error) {
 	log.Debug().Str("url", url).Msg("Downloading image")
@@ -354,7 +363,7 @@ func DownloadImage(url string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error downloading image: %w", err)
 	}
-	defer resp.Body.Close()
+	defer closeBody(resp.Body, "Error closing image response body")
 
 	buffer := new(bytes.Buffer)
 
@@ -366,24 +375,30 @@ func DownloadImage(url string) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-// MakeImageOpTextCommand automatically creates a Parsley command handler for a given ImageOperation
+// MakeImageOpTextCommand automatically creates a Parsley command handler for a given ImageOperation.
 func MakeImageOpTextCommand[K ImageOperationArgs](operation ImageOperation[K]) func(*discordgo.MessageCreate, K) {
 	return func(message *discordgo.MessageCreate, args K) {
 		PrepareAndInvokeOperation(NewOperationContextFromMessage(Instance.session, message), args, operation)
 	}
 }
 
-func MakeImageOpSlashCommand[K ImageOperationArgs](operation ImageOperation[K]) func(*discordgo.Session, *discordgo.InteractionCreate, K) {
+func MakeImageOpSlashCommand[K ImageOperationArgs](
+	operation ImageOperation[K],
+) func(*discordgo.Session, *discordgo.InteractionCreate, K) {
 	return func(session *discordgo.Session, interaction *discordgo.InteractionCreate, args K) {
 		PrepareAndInvokeOperation(NewOperationContextFromInteraction(session, interaction), args, operation)
 	}
 }
 
-// AIImageOperation is like ImageOperation but also receives AISessionMetadata for session tracking and seed management
-type AIImageOperation[K ImageOperationArgs] func(*imagick.MagickWand, K, AISessionMetadata) ([]*imagick.MagickWand, error)
+// AIImageOperation is like ImageOperation but also receives AISessionMetadata for session tracking and seed management.
+type AIImageOperation[K ImageOperationArgs] func(
+	*imagick.MagickWand,
+	K,
+	AISessionMetadata,
+) ([]*imagick.MagickWand, error)
 
 // MakeAIImageOpTextCommand creates a Parsley command handler for an AIImageOperation,
-// building full AISessionMetadata (with seed, session ID, user ID) from the OperationContext
+// building full AISessionMetadata (with seed, session ID, user ID) from the OperationContext.
 func MakeAIImageOpTextCommand[K ImageOperationArgs](operation AIImageOperation[K]) func(*discordgo.MessageCreate, K) {
 	return func(message *discordgo.MessageCreate, args K) {
 		ctx := NewOperationContextFromMessage(Instance.session, message)
@@ -399,8 +414,10 @@ func MakeAIImageOpTextCommand[K ImageOperationArgs](operation AIImageOperation[K
 }
 
 // MakeAIImageOpSlashCommand creates a slash command handler for an AIImageOperation,
-// building full AISessionMetadata (with seed, session ID, user ID) from the OperationContext
-func MakeAIImageOpSlashCommand[K ImageOperationArgs](operation AIImageOperation[K]) func(*discordgo.Session, *discordgo.InteractionCreate, K) {
+// building full AISessionMetadata (with seed, session ID, user ID) from the OperationContext.
+func MakeAIImageOpSlashCommand[K ImageOperationArgs](
+	operation AIImageOperation[K],
+) func(*discordgo.Session, *discordgo.InteractionCreate, K) {
 	return func(session *discordgo.Session, interaction *discordgo.InteractionCreate, args K) {
 		ctx := NewOperationContextFromInteraction(session, interaction)
 		metadata := AISessionMetadata{
@@ -414,7 +431,7 @@ func MakeAIImageOpSlashCommand[K ImageOperationArgs](operation AIImageOperation[
 	}
 }
 
-// PrepareAndInvokeOperation automatically handles invoking a given ImageOperation and returning the finished results
+// PrepareAndInvokeOperation automatically handles invoking a given ImageOperation and returning the finished results.
 func PrepareAndInvokeOperation[K ImageOperationArgs](ctx *OperationContext, args K, operation ImageOperation[K]) {
 	defer TypingIndicatorForContext(ctx)()
 
@@ -543,7 +560,7 @@ func PrepareAndInvokeOperation[K ImageOperationArgs](ctx *OperationContext, args
 	}
 }
 
-// FindTransparentOpeningRect finds the bounding rectangle of the transparent region in an image
+// FindTransparentOpeningRect finds the bounding rectangle of the transparent region in an image.
 func FindTransparentOpeningRect(frame *imagick.MagickWand) (x, y, width, height int, err error) {
 	analysis := frame.Clone()
 	defer analysis.Destroy()
@@ -566,7 +583,7 @@ func FindTransparentOpeningRect(frame *imagick.MagickWand) (x, y, width, height 
 	return ox, oy, int(analysis.GetImageWidth()), int(analysis.GetImageHeight()), nil
 }
 
-// ResizeMaintainAspectRatio resizes an input wand to fit within a box of given width and height, maintaining aspect ratio
+// ResizeMaintainAspectRatio resizes an input wand to fit within a box while maintaining aspect ratio.
 func ResizeMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint) error {
 	inputHeight := float64(wand.GetImageHeight())
 	inputWidth := float64(wand.GetImageWidth())
@@ -582,7 +599,7 @@ func ResizeMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint
 	return wand.ScaleImage(uint(targetWidth), uint(targetHeight))
 }
 
-// ShrinkMaintainAspectRatio shrinks an input wand to fit within a box of given width and height if it exceeds those dimensions, maintaining aspect ratio
+// ShrinkMaintainAspectRatio shrinks an input wand to fit within a box if it exceeds those dimensions.
 func ShrinkMaintainAspectRatio(wand *imagick.MagickWand, width uint, height uint) error {
 	inputHeight := float64(wand.GetImageHeight())
 	inputWidth := float64(wand.GetImageWidth())
@@ -644,7 +661,12 @@ type FrameOptions struct {
 
 // FrameImage places wand into the given opening of a frame, resizing according to options,
 // centering on a white background, and compositing behind the frame.
-func FrameImage(wand *imagick.MagickWand, frame *imagick.MagickWand, openX, openY, openW, openH int, options FrameOptions) ([]*imagick.MagickWand, error) {
+func FrameImage(
+	wand *imagick.MagickWand,
+	frame *imagick.MagickWand,
+	openX, openY, openW, openH int,
+	options FrameOptions,
+) ([]*imagick.MagickWand, error) {
 	switch options.FitMode {
 	case FitModeStretch:
 		if err := wand.ResizeImage(uint(openW), uint(openH), imagick.FILTER_LANCZOS); err != nil {
@@ -703,7 +725,7 @@ func MakeImageFrameOp(frameBytes []byte, options FrameOptions) ImageOperation[Fr
 	}
 }
 
-// OverlayImage overlays an image onto another image
+// OverlayImage overlays an image onto another image.
 func OverlayImage(wand *imagick.MagickWand, overlay []byte, options OverlayOptions) error {
 	overlayWand := imagick.NewMagickWand()
 	err := overlayWand.ReadImageBlob(overlay)

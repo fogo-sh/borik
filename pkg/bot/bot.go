@@ -14,7 +14,7 @@ import (
 	configPkg "github.com/fogo-sh/borik/pkg/config"
 )
 
-// Bot represents an individual instance of Borik
+// Bot represents an individual instance of Borik.
 type Bot struct {
 	session      *discordgo.Session
 	openAiClient openai.Client
@@ -44,7 +44,7 @@ func (b *Bot) Stop() {
 	b.quitChan <- struct{}{}
 }
 
-// Instance is the current instance of Borik
+// Instance is the current instance of Borik.
 var Instance *Bot
 
 type Command struct {

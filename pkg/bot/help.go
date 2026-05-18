@@ -17,7 +17,13 @@ func generateCommandList() string {
 	commandCodeBlock.WriteString("```")
 
 	for _, details := range Instance.textParser.GetCommands() {
-		commandCodeBlock.WriteString(fmt.Sprintf("%s%s: %s\n", Instance.config.Prefixes[0], details.Name, details.Description))
+		_, _ = fmt.Fprintf(
+			&commandCodeBlock,
+			"%s%s: %s\n",
+			Instance.config.Prefixes[0],
+			details.Name,
+			details.Description,
+		)
 	}
 
 	return commandCodeBlock.String() + "```"

@@ -1,0 +1,29 @@
+version: "2"
+
+linters:
+  enable:
+    - errcheck
+    - errname
+    - exhaustive
+    - godot
+    - govet
+    - ineffassign
+    - lll
+    - staticcheck
+    - testpackage
+    - unused
+    - usestdlibvars
+    - whitespace
+  exclusions:
+    rules:
+      - linters:
+          - lll
+        source: '^\s*\w+\s+[^`]+`[^`]+`$'
+
+formatters:
+  enable:
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/fogo-sh/borik
