@@ -384,6 +384,7 @@ func New() (*Bot, error) {
 
 	c, err := client.Dial(client.Options{
 		Namespace: config.TemporalNamespace,
+		HostPort:  config.TemporalHostPort,
 		Logger:    logging.NewTemporalLogger(),
 	})
 	if err != nil {

@@ -11,6 +11,8 @@ A discord bot, written using [discordgo](https://github.com/bwmarrin/discordgo),
 - Copy `.env.dist` to `.env`, and populate it with a token and a prefix
 - Run the bot with `go run ./cmd/borik`
 - Run the worker with `go run ./cmd/borik-worker`
+- For local development, run the bot, worker, and an embedded Temporal dev server with `go run ./cmd/borik-dev`
+  - To use an already-running Temporal server instead, set `BORIK_TEMPORAL_HOST_PORT` and run `go run ./cmd/borik-dev --temporal-dev-server=false`
 
 ### Nix
 
@@ -28,4 +30,5 @@ If you plan on working on Borik, run the below commands to prepare a dev shell a
 
 - Run `nix develop`
   - This will drop you into a shell with Go & all required dependencies ready to go.
-- Run `go run ./cmd/borik` or `go run ./cmd/borik-worker`
+- Run `go run ./cmd/borik-dev` to start the bot, worker, and embedded Temporal dev server together
+  - You can still run `go run ./cmd/borik` or `go run ./cmd/borik-worker` individually when working on one component

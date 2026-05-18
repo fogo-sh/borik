@@ -48,6 +48,7 @@ func New() (*Worker, error) {
 	c, err := client.Dial(client.Options{
 		Logger:    logging.NewTemporalLogger(),
 		Namespace: config.Instance.TemporalNamespace,
+		HostPort:  config.Instance.TemporalHostPort,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating temporal client: %w", err)
