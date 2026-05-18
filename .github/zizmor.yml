@@ -1,0 +1,4 @@
+rules:
+  unpinned-uses:
+    ignore:
+      - docker-image.yml:16

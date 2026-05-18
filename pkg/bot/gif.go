@@ -42,7 +42,7 @@ func PrepareAndInvokeGif(ctx *OperationContext, args GifArgs) {
 	videoURL := args.VideoURL
 	if videoURL == "" {
 		var err error
-		videoURL, err = ctx.FindVideoURL()
+		videoURL, err = ctx.findMediaURL(videoMediaType)
 		if err != nil {
 			log.Error().Err(err).Msg("Error while attempting to find video to process")
 			return

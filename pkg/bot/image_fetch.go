@@ -49,7 +49,7 @@ func fetchAvatar(ctx *OperationContext, targetUser *discordgo.User, guildID stri
 		log.Error().Err(err).Msg("Error downloading avatar")
 		return
 	}
-	defer resp.Body.Close()
+	defer closeBody(resp.Body, "Error closing avatar response body")
 
 	file := &discordgo.File{
 		Name:        path.Base(resp.Request.URL.Path),
@@ -65,11 +65,14 @@ func fetchAvatar(ctx *OperationContext, targetUser *discordgo.User, guildID stri
 // Avatar fetches a user's avatar.
 func Avatar(message *discordgo.MessageCreate, args AvatarArgs) {
 	if len(message.Mentions) != 1 {
-		Instance.session.ChannelMessageSendReply(
+		_, err := Instance.session.ChannelMessageSendReply(
 			message.ChannelID,
 			"You must provide a single user to fetch an avatar for, as a Discord mention.",
 			message.Reference(),
 		)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send avatar usage error")
+		}
 		return
 	}
 
@@ -113,6 +116,11 @@ func getStickerUrl(sticker *discordgo.StickerItem) (string, string, error) {
 	case discordgo.StickerFormatTypeAPNG:
 		return fmt.Sprintf(
 			"https://media.discordapp.net/stickers/%s.png?size=1024",
+			sticker.ID,
+		), "image/gif", nil
+	case discordgo.StickerFormatTypeGIF:
+		return fmt.Sprintf(
+			"https://media.discordapp.net/stickers/%s.gif?size=1024",
 			sticker.ID,
 		), "image/gif", nil
 	case discordgo.StickerFormatTypeLottie:
@@ -196,21 +204,28 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 	}
 
 	if targetSticker == nil {
-		Instance.session.ChannelMessageSendReply(
+		_, err := Instance.session.ChannelMessageSendReply(
 			message.ChannelID,
-			"No sticker found! Please post the sticker you are looking for and try again, or retry this command as a reply on the target message.",
+			"No sticker found! Please post the sticker you are looking for and try again, "+
+				"or retry this command as a reply on the target message.",
 			message.Reference(),
 		)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send missing sticker error")
+		}
 		return
 	}
 
 	stickerUrl, contentType, err := getStickerUrl(targetSticker)
 	if err != nil {
-		Instance.session.ChannelMessageSendReply(
+		_, err := Instance.session.ChannelMessageSendReply(
 			message.ChannelID,
 			fmt.Sprintf("Unable to fetch sticker: %s", err),
 			message.Reference(),
 		)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send sticker fetch error")
+		}
 		return
 	}
 
@@ -219,18 +234,21 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 		log.Error().Err(err).Msg("Error downloading sticker")
 		return
 	}
-	defer resp.Body.Close()
+	defer closeBody(resp.Body, "Error closing sticker response body")
 
 	var file io.Reader
 	var filename string
 	if targetSticker.FormatType == discordgo.StickerFormatTypeAPNG {
 		file, err = apngToGif(resp.Body)
 		if err != nil {
-			Instance.session.ChannelMessageSendReply(
+			_, sendErr := Instance.session.ChannelMessageSendReply(
 				message.ChannelID,
 				fmt.Sprintf("Error converting APNG sticker to GIF:\n```%s```", err),
 				message.Reference(),
 			)
+			if sendErr != nil {
+				log.Error().Err(sendErr).Msg("Failed to send sticker conversion error")
+			}
 			log.Error().Err(err).Msg("Error converting APNG sticker to GIF")
 			return
 		}
@@ -240,7 +258,7 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 		filename = path.Base(resp.Request.URL.Path)
 	}
 
-	Instance.session.ChannelMessageSendComplex(
+	_, err = Instance.session.ChannelMessageSendComplex(
 		message.ChannelID,
 		&discordgo.MessageSend{
 			Reference: message.Reference(),
@@ -251,6 +269,9 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 			},
 		},
 	)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to send sticker")
+	}
 }
 
 func getEmojiUrl(emoji *discordgo.Emoji) string {
@@ -287,11 +308,15 @@ func Emoji(message *discordgo.MessageCreate, args EmojiArgs) {
 	}
 
 	if targetEmoji == nil {
-		Instance.session.ChannelMessageSendReply(
+		_, err := Instance.session.ChannelMessageSendReply(
 			message.ChannelID,
-			"No emoji found! Please post the emoji you are looking for and try again, or retry this command as a reply on the target message.",
+			"No emoji found! Please post the emoji you are looking for and try again, "+
+				"or retry this command as a reply on the target message.",
 			message.Reference(),
 		)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send missing emoji error")
+		}
 		return
 	}
 
@@ -302,9 +327,9 @@ func Emoji(message *discordgo.MessageCreate, args EmojiArgs) {
 		log.Error().Err(err).Msg("Error downloading emoji")
 		return
 	}
-	defer resp.Body.Close()
+	defer closeBody(resp.Body, "Error closing emoji response body")
 
-	Instance.session.ChannelMessageSendComplex(
+	_, err = Instance.session.ChannelMessageSendComplex(
 		message.ChannelID,
 		&discordgo.MessageSend{
 			Reference: message.Reference(),
@@ -315,4 +340,7 @@ func Emoji(message *discordgo.MessageCreate, args EmojiArgs) {
 			},
 		},
 	)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to send emoji")
+	}
 }
