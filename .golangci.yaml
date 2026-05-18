@@ -19,6 +19,9 @@ linters:
       - linters:
           - lll
         source: '^\s*\w+\s+[^`]+`[^`]+`$'
+      - linters:
+          - typecheck
+        text: "could not import gopkg.in/gographics/imagick.v3/imagick"
 
 formatters:
   enable:
