@@ -1,17 +1,18 @@
 package bot
 
 import (
-	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/gographics/imagick.v3/imagick"
 
+	jobArgs "github.com/fogo-sh/borik/pkg/jobs/args"
 	"github.com/fogo-sh/borik/pkg/utils"
 )
 
@@ -132,58 +133,6 @@ func getStickerUrl(sticker *discordgo.StickerItem) (string, string, error) {
 	}
 }
 
-func apngToGif(apngInput io.Reader) (io.Reader, error) {
-	input, err := io.ReadAll(apngInput)
-	if err != nil {
-		return nil, fmt.Errorf("error copying input: %w", err)
-	}
-
-	wand := imagick.NewMagickWand()
-
-	err = wand.SetFilename("APNG:profile.png")
-	if err != nil {
-		return nil, fmt.Errorf("error setting format: %w", err)
-	}
-
-	err = wand.ReadImageBlob(input)
-	if err != nil {
-		return nil, fmt.Errorf("error reading input image: %w", err)
-	}
-
-	for i := uint(0); i < wand.GetNumberImages(); i++ {
-		wand.SetIteratorIndex(int(i))
-		err = wand.SetImageDispose(imagick.DISPOSE_BACKGROUND)
-		if err != nil {
-			return nil, fmt.Errorf("error configuring disposal: %w", err)
-		}
-	}
-
-	wand.ResetIterator()
-	wand.CoalesceImages()
-
-	err = wand.SetFilename("profile.gif")
-	if err != nil {
-		return nil, fmt.Errorf("error setting format: %w", err)
-	}
-
-	imageBlob, err := wand.GetImagesBlob()
-	if err != nil {
-		return nil, fmt.Errorf("error generating output image: %w", err)
-	}
-
-	outBuffer := new(bytes.Buffer)
-	_, err = outBuffer.Write(imageBlob)
-	if err != nil {
-		return nil, fmt.Errorf("error outputting image: %w", err)
-	}
-
-	if outBuffer.Len() == 0 {
-		return nil, fmt.Errorf("got an empty output image - your provided sticker may be one of the currently broken ones")
-	}
-
-	return outBuffer, nil
-}
-
 func Sticker(message *discordgo.MessageCreate, args struct{}) {
 	var targetSticker *discordgo.StickerItem
 	if len(message.StickerItems) >= 1 {
@@ -231,17 +180,14 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 		return
 	}
 
-	resp, err := http.Get(stickerUrl)
-	if err != nil {
-		log.Error().Err(err).Msg("Error downloading sticker")
-		return
-	}
-	defer utils.CloseBody(resp.Body, "Error closing sticker response body")
-
 	var file io.Reader
 	var filename string
 	if targetSticker.FormatType == discordgo.StickerFormatTypeAPNG {
-		file, err = apngToGif(resp.Body)
+		_, file, err = Instance.triggerAPNGToGIF(
+			context.Background(),
+			message.ID+"-apng-to-gif",
+			jobArgs.APNGToGIF{ImageURL: stickerUrl},
+		)
 		if err != nil {
 			_, sendErr := Instance.session.ChannelMessageSendReply(
 				message.ChannelID,
@@ -254,8 +200,17 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 			log.Error().Err(err).Msg("Error converting APNG sticker to GIF")
 			return
 		}
-		filename = path.Base(resp.Request.URL.Path) + ".gif"
+
+		parsedURL, _ := url.Parse(stickerUrl)
+		filename = path.Base(parsedURL.Path) + ".gif"
 	} else {
+		resp, err := http.Get(stickerUrl)
+		if err != nil {
+			log.Error().Err(err).Msg("Error downloading sticker")
+			return
+		}
+		defer utils.CloseBody(resp.Body, "Error closing sticker response body")
+
 		file = resp.Body
 		filename = path.Base(resp.Request.URL.Path)
 	}

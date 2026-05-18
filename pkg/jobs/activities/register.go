@@ -48,4 +48,5 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(AiZoom)
 	worker.RegisterActivity(AiLoopZoom)
 	worker.RegisterActivity(ConvertVideoToGIF)
+	worker.RegisterActivity(APNGToGIF)
 }
