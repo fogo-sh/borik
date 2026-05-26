@@ -1,8 +1,12 @@
 package activities
 
-import "go.temporal.io/sdk/worker"
+import (
+	"github.com/bwmarrin/discordgo"
+	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/worker"
+)
 
-func RegisterActivities(worker worker.Worker) {
+func RegisterActivities(worker worker.Worker, discordSession *discordgo.Session) {
 	worker.RegisterActivity(LoadImage)
 	worker.RegisterActivity(SplitImage)
 	worker.RegisterActivity(JoinImage)
@@ -49,4 +53,16 @@ func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(AiLoopZoom)
 	worker.RegisterActivity(ConvertVideoToGIF)
 	worker.RegisterActivity(APNGToGIF)
+	worker.RegisterActivity(CleanupWorkspace)
+
+	deliveryActivities := DiscordDeliveryActivities{Session: discordSession}
+	worker.RegisterActivityWithOptions(deliveryActivities.SendDiscordResult, activity.RegisterOptions{
+		Name: SendDiscordResultActivityName,
+	})
+	worker.RegisterActivityWithOptions(deliveryActivities.SendDiscordFailure, activity.RegisterOptions{
+		Name: SendDiscordFailureActivityName,
+	})
+	worker.RegisterActivityWithOptions(deliveryActivities.SendDiscordTyping, activity.RegisterOptions{
+		Name: SendDiscordTypingActivityName,
+	})
 }

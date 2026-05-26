@@ -32,8 +32,6 @@ func GifSlashCommand(session *discordgo.Session, interaction *discordgo.Interact
 
 // PrepareAndInvokeGif locates a video, converts it to a GIF, and uploads the result.
 func PrepareAndInvokeGif(ctx *OperationContext, args GifArgs) {
-	defer TypingIndicatorForContext(ctx)()
-
 	if err := ctx.DeferResponse(); err != nil {
 		log.Error().Err(err).Msg("Failed to defer response")
 		return
@@ -50,8 +48,18 @@ func PrepareAndInvokeGif(ctx *OperationContext, args GifArgs) {
 	}
 
 	parsedURL, _ := url.Parse(videoURL)
+	originalFileName := path.Base(parsedURL.Path)
+	if originalFileName == "." || originalFileName == "/" {
+		originalFileName = "video"
+	}
+	originalFileNameNoExt := strings.TrimSuffix(originalFileName, path.Ext(originalFileName))
+	resultFileName := fmt.Sprintf("%s.gif", originalFileNameNoExt)
 
-	_, resultReader, err := Instance.triggerGif(
+	target := ctx.DeliveryTarget("Failed to convert video to GIF")
+	target.Filename = resultFileName
+	target.ContentType = "image/gif"
+
+	err := Instance.triggerGif(
 		context.Background(),
 		ctx.GetSourceID(),
 		jobArgs.Gif{
@@ -60,34 +68,13 @@ func PrepareAndInvokeGif(ctx *OperationContext, args GifArgs) {
 			Width:    args.Width,
 			Duration: args.Duration,
 		},
+		target,
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to convert video to GIF")
-		if sendErr := ctx.SendText(fmt.Sprintf("Failed to convert video to GIF: `%s`", err.Error())); sendErr != nil {
+		log.Error().Err(err).Msg("Failed to start GIF conversion")
+		if sendErr := ctx.SendText(fmt.Sprintf("Failed to start GIF conversion: `%s`", err.Error())); sendErr != nil {
 			log.Error().Err(sendErr).Msg("Failed to send error message")
 		}
 		return
-	}
-
-	originalFileName := path.Base(parsedURL.Path)
-	if originalFileName == "." || originalFileName == "/" {
-		originalFileName = "video"
-	}
-	originalFileNameNoExt := strings.TrimSuffix(originalFileName, path.Ext(originalFileName))
-	resultFileName := fmt.Sprintf("%s.gif", originalFileNameNoExt)
-
-	log.Debug().Msg("GIF processed, uploading result")
-	err = ctx.SendFiles([]*discordgo.File{
-		{
-			Name:        resultFileName,
-			ContentType: "image/gif",
-			Reader:      resultReader,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to send GIF")
-		if sendErr := ctx.SendText(fmt.Sprintf("Failed to send resulting GIF: `%s`", err.Error())); sendErr != nil {
-			log.Error().Err(sendErr).Msg("Failed to send error message")
-		}
 	}
 }

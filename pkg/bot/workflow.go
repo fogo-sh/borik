@@ -2,7 +2,6 @@ package bot
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -24,8 +23,6 @@ func MakeWorkflowSlashCommand[K args.JobArgs]() func(*discordgo.Session, *discor
 }
 
 func PrepareAndInvokeWorkflow[K args.JobArgs](ctx *OperationContext, cmdArgs K) {
-	defer TypingIndicatorForContext(ctx)()
-
 	if err := ctx.DeferResponse(); err != nil {
 		log.Error().Err(err).Msg("Failed to defer response")
 		return
@@ -43,22 +40,12 @@ func PrepareAndInvokeWorkflow[K args.JobArgs](ctx *OperationContext, cmdArgs K) 
 		}
 	}
 
-	resultFormat, resultReader, err := Instance.triggerJob(context.Background(), ctx.GetSourceID(), imageURL, cmdArgs)
+	target := ctx.DeliveryTarget("Error processing image")
+	target.FilenameBase = strings.ToLower(cmdArgs.ActivityName())
+
+	err := Instance.triggerJob(context.Background(), ctx.GetSourceID(), imageURL, cmdArgs, target)
 	if err != nil {
 		if sendErr := ctx.SendText("Error triggering jobs: " + err.Error()); sendErr != nil {
-			log.Error().Err(sendErr).Msg("Failed to send error message")
-		}
-		return
-	}
-
-	err = ctx.SendFiles([]*discordgo.File{
-		{
-			Name:   fmt.Sprintf("%s.%s", strings.ToLower(cmdArgs.ActivityName()), resultFormat),
-			Reader: resultReader,
-		},
-	})
-	if err != nil {
-		if sendErr := ctx.SendText("Error sending result: " + err.Error()); sendErr != nil {
 			log.Error().Err(sendErr).Msg("Failed to send error message")
 		}
 		return

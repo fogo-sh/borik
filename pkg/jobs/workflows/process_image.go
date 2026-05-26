@@ -8,6 +8,7 @@ import (
 	"go.temporal.io/sdk/workflow"
 
 	"github.com/fogo-sh/borik/pkg/jobs/activities"
+	"github.com/fogo-sh/borik/pkg/jobs/delivery"
 	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
 
@@ -15,6 +16,7 @@ type ProcessImageArgs struct {
 	ImageURL     string
 	ActivityName string
 	ActivityArgs any
+	Delivery     delivery.Target
 }
 
 type ProcessedImageResult struct {
@@ -30,21 +32,30 @@ func ProcessImageWorkflow(ctx workflow.Context, args ProcessImageArgs) (Processe
 			MaximumAttempts: 1,
 		},
 	})
+	cancelTyping := startTypingPulse(ctx, args.Delivery)
 
 	jobWorkspace, err := workspace.InitJobWorkspace(workflow.GetInfo(ctx).WorkflowExecution.ID)
 	if err != nil {
+		cancelTyping()
+		notifyFailure(ctx, args.Delivery, fmt.Errorf("error initializing job workspace: %w", err))
 		return ProcessedImageResult{}, fmt.Errorf("error initializing job workspace: %w", err)
 	}
 
 	var inputArtifact workspace.Artifact
 	err = workflow.ExecuteActivity(ctx, activities.LoadImage, jobWorkspace, args.ImageURL).Get(ctx, &inputArtifact)
 	if err != nil {
+		cancelTyping()
+		notifyFailure(ctx, args.Delivery, fmt.Errorf("error loading image: %w", err))
+		cleanupWorkspace(ctx, jobWorkspace)
 		return ProcessedImageResult{}, fmt.Errorf("error loading image: %w", err)
 	}
 
 	var inputFrames []workspace.Artifact
 	err = workflow.ExecuteActivity(ctx, activities.SplitImage, jobWorkspace, inputArtifact).Get(ctx, &inputFrames)
 	if err != nil {
+		cancelTyping()
+		notifyFailure(ctx, args.Delivery, fmt.Errorf("error splitting image: %w", err))
+		cleanupWorkspace(ctx, jobWorkspace)
 		return ProcessedImageResult{}, fmt.Errorf("error splitting image: %w", err)
 	}
 
@@ -61,6 +72,9 @@ func ProcessImageWorkflow(ctx workflow.Context, args ProcessImageArgs) (Processe
 		var result []workspace.Artifact
 		err := future.Get(ctx, &result)
 		if err != nil {
+			cancelTyping()
+			notifyFailure(ctx, args.Delivery, fmt.Errorf("error executing activity: %w", err))
+			cleanupWorkspace(ctx, jobWorkspace)
 			return ProcessedImageResult{}, fmt.Errorf("error executing activity: %w", err)
 		}
 		results = append(results, result...)
@@ -69,12 +83,22 @@ func ProcessImageWorkflow(ctx workflow.Context, args ProcessImageArgs) (Processe
 	var outputArtifact workspace.Artifact
 	err = workflow.ExecuteActivity(ctx, activities.JoinImage, jobWorkspace, results).Get(ctx, &outputArtifact)
 	if err != nil {
+		cancelTyping()
+		notifyFailure(ctx, args.Delivery, fmt.Errorf("error joining image: %w", err))
+		cleanupWorkspace(ctx, jobWorkspace)
 		return ProcessedImageResult{}, fmt.Errorf("error joining image: %w", err)
 	}
 
 	imageFormat := "png"
 	if len(results) > 1 {
 		imageFormat = "gif"
+	}
+	resultDelivery := args.Delivery.WithFormat(imageFormat)
+
+	cancelTyping()
+	if err := sendResult(ctx, jobWorkspace, outputArtifact, resultDelivery); err != nil {
+		notifyFailure(ctx, args.Delivery, err)
+		return ProcessedImageResult{}, err
 	}
 
 	return ProcessedImageResult{

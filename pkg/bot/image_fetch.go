@@ -183,26 +183,30 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 	var file io.Reader
 	var filename string
 	if targetSticker.FormatType == discordgo.StickerFormatTypeAPNG {
-		_, file, err = Instance.triggerAPNGToGIF(
+		parsedURL, _ := url.Parse(stickerUrl)
+		target := NewOperationContextFromMessage(Instance.session, message).DeliveryTarget("Error converting APNG sticker to GIF")
+		target.Filename = path.Base(parsedURL.Path) + ".gif"
+		target.ContentType = contentType
+
+		err = Instance.triggerAPNGToGIF(
 			context.Background(),
 			message.ID+"-apng-to-gif",
 			jobArgs.APNGToGIF{ImageURL: stickerUrl},
+			target,
 		)
 		if err != nil {
 			_, sendErr := Instance.session.ChannelMessageSendReply(
 				message.ChannelID,
-				fmt.Sprintf("Error converting APNG sticker to GIF:\n```%s```", err),
+				fmt.Sprintf("Error starting APNG sticker conversion:\n```%s```", err),
 				message.Reference(),
 			)
 			if sendErr != nil {
 				log.Error().Err(sendErr).Msg("Failed to send sticker conversion error")
 			}
-			log.Error().Err(err).Msg("Error converting APNG sticker to GIF")
+			log.Error().Err(err).Msg("Error starting APNG sticker conversion")
 			return
 		}
-
-		parsedURL, _ := url.Parse(stickerUrl)
-		filename = path.Base(parsedURL.Path) + ".gif"
+		return
 	} else {
 		resp, err := http.Get(stickerUrl)
 		if err != nil {

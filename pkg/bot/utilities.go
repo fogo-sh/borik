@@ -11,6 +11,8 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
+
+	"github.com/fogo-sh/borik/pkg/jobs/delivery"
 )
 
 var messageURLRegex = regexp.MustCompile(`(?i)https?://[^\s<>"']+`)
@@ -70,6 +72,30 @@ func (ctx *OperationContext) GetUserID() string {
 		}
 	}
 	return ""
+}
+
+func (ctx *OperationContext) DeliveryTarget(failureMessagePrefix string) delivery.Target {
+	if ctx.Message != nil {
+		return delivery.Target{
+			Type:                 delivery.TargetTypeMessage,
+			ChannelID:            ctx.Message.ChannelID,
+			GuildID:              ctx.Message.GuildID,
+			MessageID:            ctx.Message.ID,
+			FailureMessagePrefix: failureMessagePrefix,
+		}
+	}
+	if ctx.Interaction != nil {
+		return delivery.Target{
+			Type:                 delivery.TargetTypeInteraction,
+			ChannelID:            ctx.Interaction.ChannelID,
+			GuildID:              ctx.Interaction.GuildID,
+			InteractionID:        ctx.Interaction.ID,
+			AppID:                ctx.Interaction.AppID,
+			InteractionToken:     ctx.Interaction.Token,
+			FailureMessagePrefix: failureMessagePrefix,
+		}
+	}
+	return delivery.Target{}
 }
 
 // DeferResponse defers the interaction response for long-running operations.

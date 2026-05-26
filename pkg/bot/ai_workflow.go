@@ -2,9 +2,7 @@ package bot
 
 import (
 	"context"
-	"fmt"
 	"math/rand/v2"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
@@ -195,29 +193,18 @@ func AiLoopZoomWorkflowSlashCommand(
 }
 
 func PrepareAndInvokeGenerateImage(ctx *OperationContext, imageGenArgs args.ImageGen) {
-	defer TypingIndicatorForContext(ctx)()
-
 	if err := ctx.DeferResponse(); err != nil {
 		log.Error().Err(err).Msg("Failed to defer response")
 		return
 	}
 
-	resultFormat, resultReader, err := Instance.triggerGenerateImage(context.Background(), ctx.GetSourceID(), imageGenArgs)
+	target := ctx.DeliveryTarget("Error generating image")
+	target.Filename = "generated.png"
+	target.ContentType = "image/png"
+
+	err := Instance.triggerGenerateImage(context.Background(), ctx.GetSourceID(), imageGenArgs, target)
 	if err != nil {
 		if sendErr := ctx.SendText("Error triggering jobs: " + err.Error()); sendErr != nil {
-			log.Error().Err(sendErr).Msg("Failed to send error message")
-		}
-		return
-	}
-
-	err = ctx.SendFiles([]*discordgo.File{
-		{
-			Name:   fmt.Sprintf("generated.%s", strings.ToLower(resultFormat)),
-			Reader: resultReader,
-		},
-	})
-	if err != nil {
-		if sendErr := ctx.SendText("Error sending result: " + err.Error()); sendErr != nil {
 			log.Error().Err(sendErr).Msg("Failed to send error message")
 		}
 		return

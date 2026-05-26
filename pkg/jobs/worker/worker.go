@@ -3,7 +3,9 @@ package worker
 import (
 	"fmt"
 	"runtime"
+	"strings"
 
+	"github.com/bwmarrin/discordgo"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/contrib/sysinfo"
 	"go.temporal.io/sdk/worker"
@@ -15,9 +17,10 @@ import (
 )
 
 type Worker struct {
-	client        client.Client
-	worker        worker.Worker
-	interruptChan chan any
+	client         client.Client
+	worker         worker.Worker
+	discordSession *discordgo.Session
+	interruptChan  chan any
 }
 
 func (w *Worker) Start() error {
@@ -45,6 +48,16 @@ func cgroupAwareCoreCount() int {
 }
 
 func New() (*Worker, error) {
+	token := strings.TrimSpace(config.Instance.Token)
+	if token == "" {
+		return nil, fmt.Errorf("discord bot token must be set")
+	}
+
+	discordSession, err := discordgo.New("Bot " + token)
+	if err != nil {
+		return nil, fmt.Errorf("error creating discord session: %w", err)
+	}
+
 	c, err := client.Dial(client.Options{
 		Logger:    logging.NewTemporalLogger(),
 		Namespace: config.Instance.TemporalNamespace,
@@ -63,11 +76,12 @@ func New() (*Worker, error) {
 		},
 	)
 	workflows.RegisterWorkflows(w)
-	activities.RegisterActivities(w)
+	activities.RegisterActivities(w, discordSession)
 
 	return &Worker{
-		client:        c,
-		worker:        w,
-		interruptChan: make(chan any),
+		client:         c,
+		worker:         w,
+		discordSession: discordSession,
+		interruptChan:  make(chan any),
 	}, nil
 }
