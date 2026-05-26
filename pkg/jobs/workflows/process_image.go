@@ -45,13 +45,13 @@ func ProcessImageWorkflow(ctx workflow.Context, args ProcessImageArgs) (Processe
 		notifyFailure(ctx, args.Delivery, fmt.Errorf("error initializing job workspace: %w", err))
 		return ProcessedImageResult{}, fmt.Errorf("error initializing job workspace: %w", err)
 	}
+	defer cleanupWorkspace(ctx, jobWorkspace)
 
 	var inputArtifact workspace.Artifact
 	err = workflow.ExecuteActivity(ctx, activities.LoadImage, jobWorkspace, args.ImageURL).Get(ctx, &inputArtifact)
 	if err != nil {
 		cancelTyping()
 		notifyFailure(ctx, args.Delivery, fmt.Errorf("error loading image: %w", err))
-		cleanupWorkspace(ctx, jobWorkspace)
 		return ProcessedImageResult{}, fmt.Errorf("error loading image: %w", err)
 	}
 
@@ -60,7 +60,6 @@ func ProcessImageWorkflow(ctx workflow.Context, args ProcessImageArgs) (Processe
 	if err != nil {
 		cancelTyping()
 		notifyFailure(ctx, args.Delivery, fmt.Errorf("error splitting image: %w", err))
-		cleanupWorkspace(ctx, jobWorkspace)
 		return ProcessedImageResult{}, fmt.Errorf("error splitting image: %w", err)
 	}
 
@@ -79,7 +78,6 @@ func ProcessImageWorkflow(ctx workflow.Context, args ProcessImageArgs) (Processe
 		if err != nil {
 			cancelTyping()
 			notifyFailure(ctx, args.Delivery, fmt.Errorf("error executing activity: %w", err))
-			cleanupWorkspace(ctx, jobWorkspace)
 			return ProcessedImageResult{}, fmt.Errorf("error executing activity: %w", err)
 		}
 		results = append(results, result...)
@@ -90,7 +88,6 @@ func ProcessImageWorkflow(ctx workflow.Context, args ProcessImageArgs) (Processe
 	if err != nil {
 		cancelTyping()
 		notifyFailure(ctx, args.Delivery, fmt.Errorf("error joining image: %w", err))
-		cleanupWorkspace(ctx, jobWorkspace)
 		return ProcessedImageResult{}, fmt.Errorf("error joining image: %w", err)
 	}
 

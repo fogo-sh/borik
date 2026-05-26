@@ -39,13 +39,13 @@ func ConvertVideoToGIFWorkflow(ctx workflow.Context, args ConvertVideoToGIFArgs)
 		notifyFailure(ctx, args.Delivery, fmt.Errorf("error initializing job workspace: %w", err))
 		return ProcessedImageResult{}, fmt.Errorf("error initializing job workspace: %w", err)
 	}
+	defer cleanupWorkspace(ctx, jobWorkspace)
 
 	var outputArtifact workspace.Artifact
 	err = workflow.ExecuteActivity(ctx, activities.ConvertVideoToGIF, jobWorkspace, args.Gif).Get(ctx, &outputArtifact)
 	if err != nil {
 		cancelTyping()
 		notifyFailure(ctx, args.Delivery, fmt.Errorf("error converting video to GIF: %w", err))
-		cleanupWorkspace(ctx, jobWorkspace)
 		return ProcessedImageResult{}, fmt.Errorf("error converting video to GIF: %w", err)
 	}
 	resultDelivery := args.Delivery.WithFormat("gif")

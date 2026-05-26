@@ -18,15 +18,6 @@ Bot code starts workflows by string name with anonymous argument structs. This b
 - Update `triggerJob`, `triggerGenerateImage`, `triggerGif`, and `triggerAPNGToGIF`.
 - Keep workflow registration names stable unless an intentional compatibility plan is in place.
 
-## T-004 Make workspace cleanup an explicit workflow responsibility
-
-`SendDiscordResult` currently deletes the workspace inside the Discord delivery activity. That makes the activity non-idempotent: if the Discord send fails after the artifact is read, a retry cannot send the result because the workspace has already been removed. It also returns workflow results containing workspace/artifact references that no longer exist.
-
-- Remove `jobWorkspace.Cleanup()` from `SendDiscordResult`.
-- Have workflows call `cleanupWorkspace` after successful delivery as an explicit final step.
-- Prefer a deferred cleanup helper in each workflow so success, failure, and cancellation paths are handled consistently.
-- Use a disconnected workflow context for cleanup that must happen even after cancellation.
-
 ## T-005 Move Discord typing pulses out of workflow history
 
 The typing indicator loop currently schedules a Discord activity and workflow timer every five seconds while work is running. Long jobs can add hundreds of low-value events to workflow history before any real processing history is counted.

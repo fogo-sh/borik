@@ -38,13 +38,13 @@ func GenerateImageWorkflow(ctx workflow.Context, args GenerateImageArgs) (Proces
 		notifyFailure(ctx, args.Delivery, fmt.Errorf("error initializing job workspace: %w", err))
 		return ProcessedImageResult{}, fmt.Errorf("error initializing job workspace: %w", err)
 	}
+	defer cleanupWorkspace(ctx, jobWorkspace)
 
 	var outputArtifact workspace.Artifact
 	err = workflow.ExecuteActivity(ctx, activities.GenerateImage, jobWorkspace, args.ImageGen).Get(ctx, &outputArtifact)
 	if err != nil {
 		cancelTyping()
 		notifyFailure(ctx, args.Delivery, fmt.Errorf("error generating image: %w", err))
-		cleanupWorkspace(ctx, jobWorkspace)
 		return ProcessedImageResult{}, fmt.Errorf("error generating image: %w", err)
 	}
 	resultDelivery := args.Delivery.WithFormat("png")

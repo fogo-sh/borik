@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/rs/zerolog/log"
 
 	"github.com/fogo-sh/borik/pkg/jobs/delivery"
 	"github.com/fogo-sh/borik/pkg/jobs/workspace"
@@ -79,12 +78,6 @@ func (a DiscordDeliveryActivities) SendDiscordResult(
 	if err != nil {
 		return fmt.Errorf("error retrieving result artifact: %w", err)
 	}
-
-	defer func() {
-		if err := jobWorkspace.Cleanup(); err != nil {
-			log.Error().Err(err).Msg("Error cleaning up workspace")
-		}
-	}()
 
 	file := &discordgo.File{
 		Name:        target.Filename,
