@@ -2,6 +2,7 @@ package worker
 
 import (
 	"fmt"
+	"math"
 	"runtime"
 	"strings"
 
@@ -19,6 +20,7 @@ import (
 type Worker struct {
 	client         client.Client
 	worker         worker.Worker
+	discordWorker  worker.Worker
 	discordSession *discordgo.Session
 	interruptChan  chan any
 }
@@ -26,10 +28,17 @@ type Worker struct {
 func (w *Worker) Start() error {
 	defer w.client.Close()
 
-	err := w.worker.Run(w.interruptChan)
-	if err != nil {
+	if err := w.worker.Start(); err != nil {
 		return fmt.Errorf("error starting temporal worker: %w", err)
 	}
+	defer w.worker.Stop()
+
+	if err := w.discordWorker.Start(); err != nil {
+		return fmt.Errorf("error starting temporal discord worker: %w", err)
+	}
+	defer w.discordWorker.Stop()
+
+	<-w.interruptChan
 
 	return nil
 }
@@ -76,11 +85,22 @@ func New() (*Worker, error) {
 		},
 	)
 	workflows.RegisterWorkflows(w)
-	activities.RegisterActivities(w, discordSession)
+	activities.RegisterActivities(w)
+
+	discordWorker := worker.New(
+		c,
+		config.Instance.TemporalDiscordQueueName,
+		worker.Options{
+			SysInfoProvider:                    sysinfo.SysInfoProvider(),
+			MaxConcurrentActivityExecutionSize: int(math.Max(float64(cgroupAwareCoreCount()*8), 16)),
+		},
+	)
+	activities.RegisterDiscordActivities(discordWorker, discordSession)
 
 	return &Worker{
 		client:         c,
 		worker:         w,
+		discordWorker:  discordWorker,
 		discordSession: discordSession,
 		interruptChan:  make(chan any),
 	}, nil

@@ -36,9 +36,10 @@ type Config struct {
 	OpenaiImageGenModel  string `default:"flux-2-klein-4b" split_words:"true"`
 	OpenaiImageEditModel string `default:"flux-2-klein-4b" split_words:"true"`
 
-	TemporalNamespace string `default:"borik" split_words:"true"`
-	TemporalQueueName string `default:"borik" split_words:"true"`
-	TemporalHostPort  string `default:"" split_words:"true"`
+	TemporalNamespace        string `default:"borik" split_words:"true"`
+	TemporalQueueName        string `default:"borik" split_words:"true"`
+	TemporalDiscordQueueName string `default:"borik-discord" split_words:"true"`
+	TemporalHostPort         string `default:"" split_words:"true"`
 
 	WorkspacePath string `default:"workspace" split_words:"true"`
 }

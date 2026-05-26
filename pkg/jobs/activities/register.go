@@ -6,7 +6,7 @@ import (
 	"go.temporal.io/sdk/worker"
 )
 
-func RegisterActivities(worker worker.Worker, discordSession *discordgo.Session) {
+func RegisterActivities(worker worker.Worker) {
 	worker.RegisterActivity(LoadImage)
 	worker.RegisterActivity(SplitImage)
 	worker.RegisterActivity(JoinImage)
@@ -54,7 +54,9 @@ func RegisterActivities(worker worker.Worker, discordSession *discordgo.Session)
 	worker.RegisterActivity(ConvertVideoToGIF)
 	worker.RegisterActivity(APNGToGIF)
 	worker.RegisterActivity(CleanupWorkspace)
+}
 
+func RegisterDiscordActivities(worker worker.Worker, discordSession *discordgo.Session) {
 	deliveryActivities := DiscordDeliveryActivities{Session: discordSession}
 	worker.RegisterActivityWithOptions(deliveryActivities.SendDiscordResult, activity.RegisterOptions{
 		Name: SendDiscordResultActivityName,

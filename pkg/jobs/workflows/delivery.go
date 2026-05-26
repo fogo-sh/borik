@@ -4,12 +4,23 @@ import (
 	"fmt"
 	"time"
 
+	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 
 	"github.com/fogo-sh/borik/pkg/jobs/activities"
 	"github.com/fogo-sh/borik/pkg/jobs/delivery"
 	"github.com/fogo-sh/borik/pkg/jobs/workspace"
 )
+
+func discordActivityContext(ctx workflow.Context, target delivery.Target) workflow.Context {
+	return workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		TaskQueue:           target.DiscordTaskQueue,
+		StartToCloseTimeout: 10 * time.Minute,
+		RetryPolicy: &temporal.RetryPolicy{
+			MaximumAttempts: 1,
+		},
+	})
+}
 
 func startTypingPulse(ctx workflow.Context, target delivery.Target) workflow.CancelFunc {
 	if target.Type != delivery.TargetTypeMessage || target.ChannelID == "" {
@@ -19,7 +30,12 @@ func startTypingPulse(ctx workflow.Context, target delivery.Target) workflow.Can
 	typingCtx, cancel := workflow.WithCancel(ctx)
 	workflow.Go(typingCtx, func(ctx workflow.Context) {
 		for {
-			if err := workflow.ExecuteActivity(ctx, activities.SendDiscordTypingActivityName, target).Get(ctx, nil); err != nil {
+			future := workflow.ExecuteActivity(
+				discordActivityContext(ctx, target),
+				activities.SendDiscordTypingActivityName,
+				target,
+			)
+			if err := future.Get(ctx, nil); err != nil {
 				workflow.GetLogger(ctx).Warn("Error sending typing indicator", "error", err)
 			}
 
@@ -37,7 +53,12 @@ func notifyFailure(ctx workflow.Context, target delivery.Target, err error) {
 		return
 	}
 
-	future := workflow.ExecuteActivity(ctx, activities.SendDiscordFailureActivityName, target, err.Error())
+	future := workflow.ExecuteActivity(
+		discordActivityContext(ctx, target),
+		activities.SendDiscordFailureActivityName,
+		target,
+		err.Error(),
+	)
 	if notifyErr := future.Get(ctx, nil); notifyErr != nil {
 		workflow.GetLogger(ctx).Warn("Error sending failure message", "error", notifyErr)
 	}
@@ -60,7 +81,13 @@ func sendResult(
 		return nil
 	}
 
-	future := workflow.ExecuteActivity(ctx, activities.SendDiscordResultActivityName, jobWorkspace, artifact, target)
+	future := workflow.ExecuteActivity(
+		discordActivityContext(ctx, target),
+		activities.SendDiscordResultActivityName,
+		jobWorkspace,
+		artifact,
+		target,
+	)
 	if err := future.Get(ctx, nil); err != nil {
 		return fmt.Errorf("error sending result: %w", err)
 	}

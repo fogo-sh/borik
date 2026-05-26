@@ -12,6 +12,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/rs/zerolog/log"
 
+	configPkg "github.com/fogo-sh/borik/pkg/config"
 	"github.com/fogo-sh/borik/pkg/jobs/delivery"
 )
 
@@ -82,6 +83,7 @@ func (ctx *OperationContext) DeliveryTarget(failureMessagePrefix string) deliver
 			GuildID:              ctx.Message.GuildID,
 			MessageID:            ctx.Message.ID,
 			FailureMessagePrefix: failureMessagePrefix,
+			DiscordTaskQueue:     configPkg.Instance.TemporalDiscordQueueName,
 		}
 	}
 	if ctx.Interaction != nil {
@@ -93,6 +95,7 @@ func (ctx *OperationContext) DeliveryTarget(failureMessagePrefix string) deliver
 			AppID:                ctx.Interaction.AppID,
 			InteractionToken:     ctx.Interaction.Token,
 			FailureMessagePrefix: failureMessagePrefix,
+			DiscordTaskQueue:     configPkg.Instance.TemporalDiscordQueueName,
 		}
 	}
 	return delivery.Target{}

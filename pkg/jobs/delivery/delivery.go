@@ -25,6 +25,7 @@ type Target struct {
 	FilenameBase         string
 	ContentType          string
 	FailureMessagePrefix string
+	DiscordTaskQueue     string
 }
 
 func (t Target) IsZero() bool {
