@@ -53,6 +53,9 @@ func notifyFailure(ctx workflow.Context, target delivery.Target, err error) {
 		return
 	}
 
+	ctx, cancel := workflow.NewDisconnectedContext(ctx)
+	defer cancel()
+
 	future := workflow.ExecuteActivity(
 		discordActivityContext(ctx, target),
 		activities.SendDiscordFailureActivityName,
@@ -65,6 +68,9 @@ func notifyFailure(ctx workflow.Context, target delivery.Target, err error) {
 }
 
 func cleanupWorkspace(ctx workflow.Context, jobWorkspace workspace.Workspace) {
+	ctx, cancel := workflow.NewDisconnectedContext(ctx)
+	defer cancel()
+
 	future := workflow.ExecuteActivity(ctx, activities.CleanupWorkspace, jobWorkspace)
 	if cleanupErr := future.Get(ctx, nil); cleanupErr != nil {
 		workflow.GetLogger(ctx).Warn("Error cleaning up workspace", "error", cleanupErr)

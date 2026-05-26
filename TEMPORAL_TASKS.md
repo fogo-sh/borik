@@ -18,15 +18,6 @@ Bot code starts workflows by string name with anonymous argument structs. This b
 - Update `triggerJob`, `triggerGenerateImage`, `triggerGif`, and `triggerAPNGToGIF`.
 - Keep workflow registration names stable unless an intentional compatibility plan is in place.
 
-## T-003 Run cleanup and failure notification from disconnected workflow contexts
-
-Cleanup and failure-notification activities currently use the normal workflow context. If the workflow is cancelled, those follow-up activities can be cancelled or skipped as well, leaving workspaces behind and preventing users from seeing the failure message.
-
-- Use `workflow.NewDisconnectedContext` for cleanup/compensation paths that should run after cancellation.
-- Apply this to `notifyFailure` and `cleanupWorkspace`, or introduce explicit `notifyFailureAfterCancellation` / `cleanupWorkspaceAfterCancellation` helpers.
-- Keep normal workflow context for ordinary result delivery where cancellation should still stop the workflow.
-- Add workflow tests for cancelled workflows to verify cleanup still runs.
-
 ## T-004 Make workspace cleanup an explicit workflow responsibility
 
 `SendDiscordResult` currently deletes the workspace inside the Discord delivery activity. That makes the activity non-idempotent: if the Discord send fails after the artifact is read, a retry cannot send the result because the workspace has already been removed. It also returns workflow results containing workspace/artifact references that no longer exist.
