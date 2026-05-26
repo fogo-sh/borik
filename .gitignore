@@ -1,7 +1,8 @@
-.env
-borik
-.idea/
-result
-*.swp
 .DS_Store
+.env
+.idea/
+*.swp
+/borik
+/workspace/
+result
 tmp

@@ -35,9 +35,18 @@
 
             nativeBuildInputs = [ pkgs.makeWrapper pkgs.pkg-config ];
             buildInputs = [ pkgs.imagemagick ];
+            subPackages = [
+              "cmd/borik"
+              "cmd/borik-dev"
+              "cmd/borik-worker"
+            ];
 
             postInstall = ''
               wrapProgram $out/bin/borik \
+                --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.ffmpeg ]}
+              wrapProgram $out/bin/borik-dev \
+                --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.ffmpeg ]}
+              wrapProgram $out/bin/borik-worker \
                 --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.ffmpeg ]}
             '';
 
@@ -49,6 +58,21 @@
               license = licenses.mit;
               platforms = platforms.linux ++ platforms.darwin;
             };
+          };
+
+          apps.bot = {
+            type = "app";
+            program = "${self.packages.${system}.default}/bin/borik";
+          };
+
+          apps.worker = {
+            type = "app";
+            program = "${self.packages.${system}.default}/bin/borik-worker";
+          };
+
+          apps.dev = {
+            type = "app";
+            program = "${self.packages.${system}.default}/bin/borik-dev";
           };
 
           apps.default = {

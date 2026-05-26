@@ -1,4 +1,5 @@
 rules:
   unpinned-uses:
     ignore:
-      - docker-image.yml:16
+      - docker-image.yml:39
+      - docker-image.yml:52
