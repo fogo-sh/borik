@@ -27,7 +27,12 @@ func GenerateImageWorkflow(ctx workflow.Context, args GenerateImageArgs) (Proces
 	})
 	cancelTyping := startTypingPulse(ctx, args.Delivery)
 
-	jobWorkspace, err := workspace.InitJobWorkspace(workflow.GetInfo(ctx).WorkflowExecution.ID)
+	var jobWorkspace workspace.Workspace
+	err := workflow.ExecuteActivity(
+		ctx,
+		activities.InitJobWorkspace,
+		workflow.GetInfo(ctx).WorkflowExecution.ID,
+	).Get(ctx, &jobWorkspace)
 	if err != nil {
 		cancelTyping()
 		notifyFailure(ctx, args.Delivery, fmt.Errorf("error initializing job workspace: %w", err))

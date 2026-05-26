@@ -28,7 +28,12 @@ func ConvertVideoToGIFWorkflow(ctx workflow.Context, args ConvertVideoToGIFArgs)
 	cancelTyping := startTypingPulse(ctx, args.Delivery)
 
 	// TODO: Don't need to use the workspace for this - can use a tmpdir
-	jobWorkspace, err := workspace.InitJobWorkspace(workflow.GetInfo(ctx).WorkflowExecution.ID)
+	var jobWorkspace workspace.Workspace
+	err := workflow.ExecuteActivity(
+		ctx,
+		activities.InitJobWorkspace,
+		workflow.GetInfo(ctx).WorkflowExecution.ID,
+	).Get(ctx, &jobWorkspace)
 	if err != nil {
 		cancelTyping()
 		notifyFailure(ctx, args.Delivery, fmt.Errorf("error initializing job workspace: %w", err))

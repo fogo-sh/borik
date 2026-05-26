@@ -7,6 +7,7 @@ import (
 )
 
 func RegisterActivities(worker worker.Worker) {
+	worker.RegisterActivity(InitJobWorkspace)
 	worker.RegisterActivity(LoadImage)
 	worker.RegisterActivity(SplitImage)
 	worker.RegisterActivity(JoinImage)
