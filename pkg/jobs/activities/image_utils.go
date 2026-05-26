@@ -14,11 +14,20 @@ import (
 )
 
 func LoadImage(ctx context.Context, jobWorkspace workspace.Workspace, imageUrl string) (workspace.Artifact, error) {
-	resp, err := http.Get(imageUrl)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, imageUrl, nil)
+	if err != nil {
+		return "", fmt.Errorf("error creating image request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("error downloading image: %w", err)
 	}
 	defer utils.CloseBody(resp.Body, "error closing image response body")
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return "", fmt.Errorf("error downloading image: unexpected status %s", resp.Status)
+	}
 
 	buffer := new(bytes.Buffer)
 

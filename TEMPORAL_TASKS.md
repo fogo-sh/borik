@@ -72,15 +72,6 @@ Most activities are registered under default Go function names, while job argume
 - Update job argument `ActivityName` values to use the shared constants.
 - Avoid changing registered names unless there is an intentional compatibility plan.
 
-## T-009 Make image downloads context-aware
-
-`LoadImage` accepts an activity context but currently downloads with `http.Get`, so cancellation does not abort the request promptly. Video downloads already use `http.NewRequestWithContext`; image downloads should follow the same pattern.
-
-- Replace `http.Get` in `LoadImage` with `http.NewRequestWithContext` and `http.DefaultClient.Do`.
-- Return an error for non-2xx image responses before persisting data.
-- Consider sharing a small download helper between image and video activity code.
-- Add tests for cancellation and HTTP status handling where practical.
-
 ## T-010 Use activity-specific timeout policies
 
 Main workflows currently apply one broad one-hour `StartToCloseTimeout` to all activities. That gives quick operations like workspace initialization, image download, split/join, cleanup, and Discord delivery far longer than they should need.
