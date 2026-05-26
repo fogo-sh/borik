@@ -27,7 +27,7 @@ type Workspace struct {
 	Path string
 }
 
-func (w Workspace) Persist(data []byte) (Artifact, error) {
+func (w Workspace) Persist(data []byte) (artifact Artifact, err error) {
 	artifactIdentifier := uuid.New().String()
 
 	artifactPath := path.Join(w.Path, artifactIdentifier)
@@ -36,6 +36,11 @@ func (w Workspace) Persist(data []byte) (Artifact, error) {
 	if err != nil {
 		return "", fmt.Errorf("error creating artifact file: %w", err)
 	}
+	defer func() {
+		if closeErr := f.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("error closing artifact file: %w", closeErr)
+		}
+	}()
 
 	_, err = f.Write(data)
 	if err != nil {
@@ -45,15 +50,20 @@ func (w Workspace) Persist(data []byte) (Artifact, error) {
 	return Artifact(artifactIdentifier), nil
 }
 
-func (w Workspace) Retrieve(artifact Artifact) ([]byte, error) {
+func (w Workspace) Retrieve(artifact Artifact) (data []byte, err error) {
 	artifactPath := path.Join(w.Path, string(artifact))
 
 	f, err := os.Open(artifactPath)
 	if err != nil {
 		return nil, fmt.Errorf("error opening artifact file: %w", err)
 	}
+	defer func() {
+		if closeErr := f.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("error closing artifact file: %w", closeErr)
+		}
+	}()
 
-	data, err := io.ReadAll(f)
+	data, err = io.ReadAll(f)
 	if err != nil {
 		return nil, fmt.Errorf("error reading artifact data: %w", err)
 	}

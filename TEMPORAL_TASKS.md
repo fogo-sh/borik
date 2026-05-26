@@ -63,15 +63,6 @@ Main workflows currently apply one broad one-hour `StartToCloseTimeout` to all a
 - Keep longer timeouts only for operations that genuinely need them, such as video conversion and multi-step AI work.
 - Revisit timeout values alongside retry and heartbeat policies so each activity has a coherent failure envelope.
 
-## T-011 Close workspace files after reads and writes
-
-Workspace persistence opens artifact files without closing them after writes, and retrieval opens files without closing them after reads. Temporal workers are long-lived, so leaked file descriptors can accumulate across many activity executions.
-
-- Add `defer f.Close()` in `Workspace.Persist` and `Workspace.Retrieve`.
-- Check close errors after writes so failed flushes are surfaced.
-- Consider replacing manual open/write/read code with `os.WriteFile` and `os.ReadFile` if that keeps the code simpler.
-- Add a small workspace unit test for persist/retrieve behavior.
-
 ## T-012 Use bounded contexts for workflow starts
 
 Discord command handlers start Temporal workflows with `context.Background()`. If Temporal is unhealthy or unreachable, command handling can wait longer than is useful for an interactive Discord response.
