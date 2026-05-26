@@ -37,13 +37,15 @@ func notifyFailure(ctx workflow.Context, target delivery.Target, err error) {
 		return
 	}
 
-	if notifyErr := workflow.ExecuteActivity(ctx, activities.SendDiscordFailureActivityName, target, err.Error()).Get(ctx, nil); notifyErr != nil {
+	future := workflow.ExecuteActivity(ctx, activities.SendDiscordFailureActivityName, target, err.Error())
+	if notifyErr := future.Get(ctx, nil); notifyErr != nil {
 		workflow.GetLogger(ctx).Warn("Error sending failure message", "error", notifyErr)
 	}
 }
 
 func cleanupWorkspace(ctx workflow.Context, jobWorkspace workspace.Workspace) {
-	if cleanupErr := workflow.ExecuteActivity(ctx, activities.CleanupWorkspace, jobWorkspace).Get(ctx, nil); cleanupErr != nil {
+	future := workflow.ExecuteActivity(ctx, activities.CleanupWorkspace, jobWorkspace)
+	if cleanupErr := future.Get(ctx, nil); cleanupErr != nil {
 		workflow.GetLogger(ctx).Warn("Error cleaning up workspace", "error", cleanupErr)
 	}
 }
@@ -58,7 +60,8 @@ func sendResult(
 		return nil
 	}
 
-	if err := workflow.ExecuteActivity(ctx, activities.SendDiscordResultActivityName, jobWorkspace, artifact, target).Get(ctx, nil); err != nil {
+	future := workflow.ExecuteActivity(ctx, activities.SendDiscordResultActivityName, jobWorkspace, artifact, target)
+	if err := future.Get(ctx, nil); err != nil {
 		return fmt.Errorf("error sending result: %w", err)
 	}
 	return nil

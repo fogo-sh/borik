@@ -30,7 +30,11 @@ func (a DiscordDeliveryActivities) SendDiscordTyping(ctx context.Context, target
 	return a.Session.ChannelTyping(target.ChannelID)
 }
 
-func (a DiscordDeliveryActivities) SendDiscordFailure(ctx context.Context, target delivery.Target, message string) error {
+func (a DiscordDeliveryActivities) SendDiscordFailure(
+	ctx context.Context,
+	target delivery.Target,
+	message string,
+) error {
 	if target.IsZero() {
 		return nil
 	}
@@ -41,6 +45,8 @@ func (a DiscordDeliveryActivities) SendDiscordFailure(ctx context.Context, targe
 	}
 
 	switch target.Type {
+	case delivery.TargetTypeNone:
+		return nil
 	case delivery.TargetTypeMessage:
 		_, err := a.Session.ChannelMessageSendReply(target.ChannelID, content, messageReference(target))
 		if err != nil {
@@ -87,6 +93,8 @@ func (a DiscordDeliveryActivities) SendDiscordResult(
 	}
 
 	switch target.Type {
+	case delivery.TargetTypeNone:
+		return nil
 	case delivery.TargetTypeMessage:
 		_, err := a.Session.ChannelMessageSendComplex(target.ChannelID, &discordgo.MessageSend{
 			Reference: messageReference(target),

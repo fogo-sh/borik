@@ -184,7 +184,8 @@ func Sticker(message *discordgo.MessageCreate, args struct{}) {
 	var filename string
 	if targetSticker.FormatType == discordgo.StickerFormatTypeAPNG {
 		parsedURL, _ := url.Parse(stickerUrl)
-		target := NewOperationContextFromMessage(Instance.session, message).DeliveryTarget("Error converting APNG sticker to GIF")
+		target := NewOperationContextFromMessage(Instance.session, message).
+			DeliveryTarget("Error converting APNG sticker to GIF")
 		target.Filename = path.Base(parsedURL.Path) + ".gif"
 		target.ContentType = contentType
 
