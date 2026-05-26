@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/temporal"
 
 	"github.com/fogo-sh/borik/pkg/config"
 	"github.com/fogo-sh/borik/pkg/jobs/args"
@@ -20,10 +22,7 @@ func (b *Bot) triggerJob(
 ) error {
 	_, err := b.temporalClient.ExecuteWorkflow(
 		ctx,
-		client.StartWorkflowOptions{
-			ID:        workflowID,
-			TaskQueue: config.Instance.TemporalQueueName,
-		},
+		discordWorkflowStartOptions(workflowID),
 		"ProcessImageWorkflow",
 		struct {
 			ImageURL     string
@@ -37,11 +36,7 @@ func (b *Bot) triggerJob(
 			Delivery:     target,
 		},
 	)
-	if err != nil {
-		return fmt.Errorf("error executing workflow: %w", err)
-	}
-
-	return nil
+	return handleExecuteWorkflowError(err)
 }
 
 func (b *Bot) triggerGenerateImage(
@@ -52,10 +47,7 @@ func (b *Bot) triggerGenerateImage(
 ) error {
 	_, err := b.temporalClient.ExecuteWorkflow(
 		ctx,
-		client.StartWorkflowOptions{
-			ID:        workflowID,
-			TaskQueue: config.Instance.TemporalQueueName,
-		},
+		discordWorkflowStartOptions(workflowID),
 		"GenerateImageWorkflow",
 		struct {
 			ImageGen args.ImageGen
@@ -65,11 +57,7 @@ func (b *Bot) triggerGenerateImage(
 			Delivery: target,
 		},
 	)
-	if err != nil {
-		return fmt.Errorf("error executing workflow: %w", err)
-	}
-
-	return nil
+	return handleExecuteWorkflowError(err)
 }
 
 func (b *Bot) triggerGif(
@@ -80,10 +68,7 @@ func (b *Bot) triggerGif(
 ) error {
 	_, err := b.temporalClient.ExecuteWorkflow(
 		ctx,
-		client.StartWorkflowOptions{
-			ID:        workflowID,
-			TaskQueue: config.Instance.TemporalQueueName,
-		},
+		discordWorkflowStartOptions(workflowID),
 		"ConvertVideoToGIFWorkflow",
 		struct {
 			Gif      args.Gif
@@ -93,11 +78,7 @@ func (b *Bot) triggerGif(
 			Delivery: target,
 		},
 	)
-	if err != nil {
-		return fmt.Errorf("error executing workflow: %w", err)
-	}
-
-	return nil
+	return handleExecuteWorkflowError(err)
 }
 
 func (b *Bot) triggerAPNGToGIF(
@@ -108,10 +89,7 @@ func (b *Bot) triggerAPNGToGIF(
 ) error {
 	_, err := b.temporalClient.ExecuteWorkflow(
 		ctx,
-		client.StartWorkflowOptions{
-			ID:        workflowID,
-			TaskQueue: config.Instance.TemporalQueueName,
-		},
+		discordWorkflowStartOptions(workflowID),
 		"ConvertAPNGToGIFWorkflow",
 		struct {
 			APNGToGIF args.APNGToGIF
@@ -121,9 +99,25 @@ func (b *Bot) triggerAPNGToGIF(
 			Delivery:  target,
 		},
 	)
-	if err != nil {
-		return fmt.Errorf("error executing workflow: %w", err)
+	return handleExecuteWorkflowError(err)
+}
+
+func discordWorkflowStartOptions(workflowID string) client.StartWorkflowOptions {
+	return client.StartWorkflowOptions{
+		ID:        workflowID,
+		TaskQueue: config.Instance.TemporalQueueName,
+
+		WorkflowIDConflictPolicy: enumspb.WORKFLOW_ID_CONFLICT_POLICY_FAIL,
+		WorkflowIDReusePolicy:    enumspb.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
+
+		WorkflowExecutionErrorWhenAlreadyStarted: true,
+	}
+}
+
+func handleExecuteWorkflowError(err error) error {
+	if err == nil || temporal.IsWorkflowExecutionAlreadyStartedError(err) {
+		return nil
 	}
 
-	return nil
+	return fmt.Errorf("error executing workflow: %w", err)
 }
