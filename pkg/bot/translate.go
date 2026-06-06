@@ -19,13 +19,14 @@ func aiTranslate(ctx *OperationContext, args AiTranslateArgs) {
 	resp, err := Instance.openAiClient.Responses.New(
 		context.Background(),
 		responses.ResponseNewParams{
-			Instructions: param.Opt[string]{Value: fmt.Sprintf(
-				"Translate the given text from %s to %s. Respond with only the translation result - NO OTHER TEXT.",
-				args.Source,
-				args.Target,
-			)},
+			Instructions: param.Opt[string]{Value: "You are a Translator you are to respond with only the resultant text of translation based on your chat history"},
 			Input: responses.ResponseNewParamsInputUnion{
-				OfString: param.Opt[string]{Value: args.Text},
+				OfString: param.Opt[string]{Value: fmt.Sprintf(
+					"Sure I'll translate the text \"%s\" from %s to %s.",
+					args.Text,
+					args.Source,
+					args.Target,
+				)},
 			},
 			Model: Instance.config.OpenaiTextModel,
 		},
