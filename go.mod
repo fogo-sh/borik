@@ -3,7 +3,7 @@ module github.com/fogo-sh/borik
 go 1.25.1
 
 require (
-	github.com/bwmarrin/discordgo v0.29.1-0.20260214123928-f43dd94faaac
+	github.com/bwmarrin/discordgo v0.29.0
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/nint8835/parsley v1.3.0
@@ -25,5 +25,6 @@ require (
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 )
