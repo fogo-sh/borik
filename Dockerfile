@@ -1,4 +1,4 @@
-FROM golang:1.25-trixie
+FROM golang:1.27-trixie
 
 WORKDIR /deps
 ENV IMAGEMAGICK_VERSION=7.1.2-3
