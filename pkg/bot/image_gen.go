@@ -77,7 +77,9 @@ func generateImage(ctx *OperationContext, args ImageGenArgs) {
 			upscalerParams,
 		)
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to generate upscaled prompt")
+			if sendErr := ctx.SendText("Error generating upscaled prompt: `" + err.Error() + "`"); sendErr != nil {
+				log.Error().Err(sendErr).Msg("Failed to send error response")
+			}
 			return
 		}
 
