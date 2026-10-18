@@ -266,9 +266,10 @@ func ImageEdit(
 }
 
 type LoopEditArgs struct {
-	Prompt   string `description:"Prompt to edit the image with."`
-	ImageURL string `default:"" description:"URL of the image to edit."`
-	Steps    uint   `default:"4" description:"Number of edit iterations to perform."`
+	Prompt        string `description:"Prompt to edit the image with."`
+	ImageURL      string `default:"" description:"URL of the image to edit."`
+	Steps         uint   `default:"4" description:"Number of edit iterations to perform."`
+	UpscalePrompt bool   `description:"Whether to upscale your prompt before each edit." default:"true"`
 }
 
 func (args LoopEditArgs) GetImageURL() string {
@@ -283,7 +284,8 @@ func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, metadata AISessionMet
 	for range args.Steps {
 		metadata.Seed++ // Increment the seed for each iteration to produce different results
 		currentWand, err = editImage(currentWand, ImageEditArgs{
-			Prompt: args.Prompt,
+			Prompt:        args.Prompt,
+			UpscalePrompt: args.UpscalePrompt,
 		}, metadata, nil)
 		if err != nil {
 			return nil, err
@@ -295,10 +297,11 @@ func LoopEdit(wand *imagick.MagickWand, args LoopEditArgs, metadata AISessionMet
 }
 
 type FlipFlopArgs struct {
-	Prompt1  string `description:"First prompt to edit the image with."`
-	Prompt2  string `description:"Second prompt to edit the image with."`
-	ImageURL string `default:"" description:"URL of the image to edit."`
-	Steps    uint   `default:"4" description:"Number of edit iterations to perform."`
+	Prompt1       string `description:"First prompt to edit the image with."`
+	Prompt2       string `description:"Second prompt to edit the image with."`
+	ImageURL      string `default:"" description:"URL of the image to edit."`
+	Steps         uint   `default:"4" description:"Number of edit iterations to perform."`
+	UpscalePrompt bool   `description:"Whether to upscale your prompts before each edit." default:"true"`
 }
 
 func (args FlipFlopArgs) GetImageURL() string {
@@ -315,14 +318,16 @@ func FlipFlop(wand *imagick.MagickWand, args FlipFlopArgs, metadata AISessionMet
 	for range args.Steps {
 		metadata.Seed++ // Increment the seed for each iteration to produce different results
 		currentWand, err = editImage(currentWand, ImageEditArgs{
-			Prompt: args.Prompt1,
+			Prompt:        args.Prompt1,
+			UpscalePrompt: args.UpscalePrompt,
 		}, metadata, nil)
 		if err != nil {
 			return nil, err
 		}
 		editedFrames = append(editedFrames, currentWand)
 		currentWand, err = editImage(currentWand, ImageEditArgs{
-			Prompt: args.Prompt2,
+			Prompt:        args.Prompt2,
+			UpscalePrompt: args.UpscalePrompt,
 		}, metadata, nil)
 		if err != nil {
 			return nil, err
@@ -334,9 +339,10 @@ func FlipFlop(wand *imagick.MagickWand, args FlipFlopArgs, metadata AISessionMet
 }
 
 type AiZoomArgs struct {
-	ImageURL string `default:"" description:"URL of the image to edit."`
-	Prompt   string `default:"Expand the image outwards." description:"Prompt to edit the image with."`
-	Steps    uint   `default:"2" description:"Number of zoom steps to perform."`
+	ImageURL      string `default:"" description:"URL of the image to edit."`
+	Prompt        string `default:"Expand the image outwards." description:"Prompt to edit the image with."`
+	Steps         uint   `default:"2" description:"Number of zoom steps to perform."`
+	UpscalePrompt bool   `description:"Whether to upscale your prompt before each zoom step." default:"true"`
 }
 
 func (args AiZoomArgs) GetImageURL() string {
@@ -345,7 +351,7 @@ func (args AiZoomArgs) GetImageURL() string {
 
 func performAiZoomStep(
 	wand *imagick.MagickWand,
-	prompt string,
+	args ImageEditArgs,
 	metadata AISessionMetadata,
 ) (*imagick.MagickWand, error) {
 	originalWidth := wand.GetImageWidth()
@@ -408,9 +414,7 @@ func performAiZoomStep(
 		return nil, fmt.Errorf("error negating mask for zoom: %w", err)
 	}
 
-	editedImage, err := editImage(canvas, ImageEditArgs{
-		Prompt: prompt,
-	}, metadata, mask)
+	editedImage, err := editImage(canvas, args, metadata, mask)
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +426,10 @@ func AiZoom(wand *imagick.MagickWand, args AiZoomArgs, metadata AISessionMetadat
 	var err error
 
 	for range args.Steps {
-		wand, err = performAiZoomStep(wand, args.Prompt, metadata)
+		wand, err = performAiZoomStep(wand, ImageEditArgs{
+			Prompt:        args.Prompt,
+			UpscalePrompt: args.UpscalePrompt,
+		}, metadata)
 		if err != nil {
 			return nil, err
 		}
@@ -432,9 +439,10 @@ func AiZoom(wand *imagick.MagickWand, args AiZoomArgs, metadata AISessionMetadat
 }
 
 type AiLoopZoomArgs struct {
-	ImageURL string `default:"" description:"URL of the image to edit."`
-	Prompt   string `default:"Expand the image outwards." description:"Prompt to edit the image with."`
-	Steps    uint   `default:"5" description:"Number of zoom steps to perform."`
+	ImageURL      string `default:"" description:"URL of the image to edit."`
+	Prompt        string `default:"Expand the image outwards." description:"Prompt to edit the image with."`
+	Steps         uint   `default:"5" description:"Number of zoom steps to perform."`
+	UpscalePrompt bool   `description:"Whether to upscale your prompt before each zoom step." default:"true"`
 }
 
 func (args AiLoopZoomArgs) GetImageURL() string {
@@ -454,7 +462,10 @@ func AiLoopZoom(
 
 	for range args.Steps {
 		wand = wand.Clone()
-		wand, err = performAiZoomStep(wand, args.Prompt, metadata)
+		wand, err = performAiZoomStep(wand, ImageEditArgs{
+			Prompt:        args.Prompt,
+			UpscalePrompt: args.UpscalePrompt,
+		}, metadata)
 		if err != nil {
 			return nil, err
 		}
