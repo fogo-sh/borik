@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand/v2"
+	"net/http"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -156,6 +157,42 @@ func editImage(
 		maskReader = bytes.NewReader(maskBlob)
 	}
 
+	if args.UpscalePrompt {
+		upscalerParams := responses.ResponseNewParams{
+			Instructions: param.Opt[string]{Value: AI_I2I_UPSCALE_PROMPT},
+			Input: responses.ResponseNewParamsInputUnion{
+				OfInputItemList: responses.ResponseInputParam{
+					responses.ResponseInputItemParamOfMessage(responses.ResponseInputMessageContentListParam{
+						responses.ResponseInputContentParamOfInputText(args.Prompt),
+						{
+							OfInputImage: &responses.ResponseInputImageParam{
+								Detail: responses.ResponseInputImageDetailAuto,
+								ImageURL: param.Opt[string]{Value: fmt.Sprintf(
+									"data:%s;base64,%s",
+									http.DetectContentType(imageBlob),
+									base64.StdEncoding.EncodeToString(imageBlob),
+								)},
+							},
+						},
+					}, responses.EasyInputMessageRoleUser),
+				},
+			},
+			Model: Instance.config.OpenaiTextModel,
+		}
+
+		attachSessionMetadata(&upscalerParams, metadata)
+
+		resp, err := Instance.openAiClient.Responses.New(
+			context.Background(),
+			upscalerParams,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error generating upscaled prompt: %w", err)
+		}
+
+		args.Prompt = resp.OutputText()
+	}
+
 	stableDiffusionOpts := fmt.Sprintf(`<sd_cpp_extra_args>{"seed": %d}</sd_cpp_extra_args>`, metadata.Seed)
 	finalPrompt := args.Prompt + stableDiffusionOpts
 
@@ -204,8 +241,9 @@ func editImage(
 }
 
 type ImageEditArgs struct {
-	Prompt   string `description:"Prompt to edit the image with."`
-	ImageURL string `default:"" description:"URL of the image to edit."`
+	Prompt        string `description:"Prompt to edit the image with."`
+	ImageURL      string `default:"" description:"URL of the image to edit."`
+	UpscalePrompt bool   `description:"Whether to upscale your prompt before editing the image." default:"true"`
 }
 
 func (args ImageEditArgs) GetImageURL() string {
