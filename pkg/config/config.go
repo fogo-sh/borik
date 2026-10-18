@@ -33,8 +33,9 @@ type Config struct {
 
 	OpenaiBaseUrl        string `default:"https://llm.ops.bootleg.technology/v1" split_words:"true"`
 	OpenaiApiKey         string `default:"" split_words:"true"`
-	OpenaiImageGenModel  string `default:"flux-2-klein-4b" split_words:"true"`
-	OpenaiImageEditModel string `default:"flux-2-klein-4b" split_words:"true"`
+	OpenaiImageGenModel  string `default:"flux-3-klein" split_words:"true"`
+	OpenaiImageEditModel string `default:"flux-3-klein" split_words:"true"`
+	OpenaiTextModel      string `default:"Qwen3-VL-Instruct-4B" split_words:"true"`
 }
 
 var Instance *Config
